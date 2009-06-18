@@ -1,0 +1,10 @@
+include AUTHORS
+include INSTALL
+include COPYING
+include LICENSE
+include MANIFEST.in
+include README
+include Makefile
+recursive-include kobo *.py *.conf *.json *.sql
+recursive-include scripts *
+recursive-include tests *

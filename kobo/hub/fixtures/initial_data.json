@@ -1,0 +1,96 @@
+[
+
+
+    {
+        "pk": "1",
+        "model": "hub.arch",
+        "fields": {
+            "name": "noarch",
+            "pretty_name": "noarch"
+        }
+    },
+    {
+        "pk": "2",
+        "model": "hub.arch",
+        "fields": {
+            "name": "i386",
+            "pretty_name": "i386"
+        }
+    },
+    {
+        "pk": "3",
+        "model": "hub.arch",
+        "fields": {
+            "name": "x86_64",
+            "pretty_name": "x86_64"
+        }
+    },
+    {
+        "pk": "4",
+        "model": "hub.arch",
+        "fields": {
+            "name": "ppc",
+            "pretty_name": "ppc"
+        }
+    },
+    {
+        "pk": "5",
+        "model": "hub.arch",
+        "fields": {
+            "name": "ppc64",
+            "pretty_name": "ppc64"
+        }
+    },
+    {
+        "pk": "6",
+        "model": "hub.arch",
+        "fields": {
+            "name": "s390",
+            "pretty_name": "s390"
+        }
+    },
+    {
+        "pk": "7",
+        "model": "hub.arch",
+        "fields": {
+            "name": "s390x",
+            "pretty_name": "s390x"
+        }
+    },
+    {
+        "pk": "8",
+        "model": "hub.arch",
+        "fields": {
+            "name": "ia64",
+            "pretty_name": "ia64"
+        }
+    },
+
+
+    {
+        "pk": "1",
+        "model": "hub.channel",
+        "fields": {
+            "name": "default"
+        }
+    },
+
+
+    {
+        "pk": "1",
+        "model": "hub.worker",
+        "fields": {
+            "name": "localhost",
+            "enabled": true,
+            "max_load": 2,
+            "ready": true,
+            "current_load": 0,
+            "task_count": 0,
+            "worker_key": "jItBFo7n9qPimGMvCVpx2vhS2vAcYypHKqxIDtumD8GMYeFAK4Wp758rSYsLfoQz",
+            "arches": [1],
+            "channels": [1]
+        }
+    }
+
+
+]
