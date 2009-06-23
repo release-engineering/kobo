@@ -3,6 +3,7 @@
 
 
 import unittest
+import run_tests # set sys.path
 
 from kobo.shortcuts import *
 
