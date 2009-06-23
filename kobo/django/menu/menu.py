@@ -12,9 +12,9 @@ __all__ = (
 
 class Menu(object):
     """
-    @summary: Menu object
+    @summary: Menu class which generates mainmenu and submenus for Django apps.
     """
-    
+
     __slots__ = (
         "mainmenu",
         "submenus",
@@ -34,7 +34,7 @@ class Menu(object):
 
             try:
                 menu_module = __import__("%s.menu" % app_name, {}, {}, [""])
-            except:
+            except ImportError:
                 continue
 
             mainmenu_item = {
@@ -63,20 +63,28 @@ class Menu(object):
         """
         @param request: http request object
         @type request: django.http.HttpRequest
-        @return: active menu
-        @rtype: dict
+        @return: (active mainmenu, active submenu)
+        @rtype: (dict, dict)
         """
         current_url = request.get_full_path()
 
         # list of submenu items matching current url
-        matches = [ value for key, value in self.submenus.iteritems() if current_url.startswith(key) ]
+        submenu_matches = [ value for key, value in self.submenus.iteritems() if current_url.startswith(key) ]
 
-        if not matches:
-            return None
+        if submenu_matches:
+            # find the longest submenu match
+            submenu_matches.sort(lambda x, y: cmp(len(x["url"]), len(y["url"])), reverse=True)
+            submenu = submenu_matches[0]
+            return submenu["mainmenu"], submenu
 
-        # return the longest match
-        matches.sort(lambda x, y: cmp(len(x["url"]), len(y["url"])), reverse=True)
-        return matches[0]
+        mainmenu_matches = [ i for i in self.mainmenu if current_url.startswith(i["url"]) ]
+        # find the longest mainmenu match
+        mainmenu_matches.sort(lambda x, y: cmp(len(x["url"]), len(y["url"])), reverse=True)
+        if mainmenu_matches:
+            mainmenu = mainmenu_matches[0]
+            return mainmenu, None
+
+        return None, None
 
 
     def get_current_menu(self, request):
@@ -86,14 +94,15 @@ class Menu(object):
         @return: dict with main menu, active menu and submenu of active menu
         @rtype: dict
         """
-        
-        active = self.find_active_menu(request)
 
-        if active is None:
+        active_mainmenu, active_submenu = self.find_active_menu(request)
+
+        if active_mainmenu is None:
             return None
 
         return {
             "mainmenu": self.mainmenu,
-            "active": active,
-            "submenu": active["mainmenu"]["submenu"],
+            "submenu": active_mainmenu["submenu"],
+            "active_mainmenu": active_mainmenu,
+            "active_submenu": active_submenu,
         }
