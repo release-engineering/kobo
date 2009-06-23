@@ -101,6 +101,9 @@ class PluginContainer(object):
     def register_plugin(cls, plugin):
         """Register a new plugin. Return normalized plugin name."""
 
+        if cls is PluginContainer:
+            raise TypeError("Can't register plugin to the PluginContainer base class.")
+
         if "_class_plugins" not in cls.__dict__:
             cls._class_plugins = {}
 
