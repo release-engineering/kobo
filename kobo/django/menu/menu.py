@@ -99,7 +99,7 @@ class Menu(object):
 
         return {
             "mainmenu": self.mainmenu,
-            "submenu": active_mainmenu.get("submenu", []),
+            "submenu": active_mainmenu and active_mainmenu["submenu"] or [],
             "active_mainmenu": active_mainmenu,
             "active_submenu": active_submenu,
         }
