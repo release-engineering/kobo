@@ -97,12 +97,9 @@ class Menu(object):
 
         active_mainmenu, active_submenu = self.find_active_menu(request)
 
-        if active_mainmenu is None:
-            return None
-
         return {
             "mainmenu": self.mainmenu,
-            "submenu": active_mainmenu["submenu"],
+            "submenu": active_mainmenu.get("submenu", []),
             "active_mainmenu": active_mainmenu,
             "active_submenu": active_submenu,
         }
