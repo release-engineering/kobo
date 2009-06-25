@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
 
+"""
+Various useful shortcuts.
+"""
+
+
 import os
 import sys
 import subprocess
@@ -27,18 +32,30 @@ __all__ = (
 
 
 def force_list(value):
+    """Convert a value to list.
+
+    @rtype: list
+    """
     if type(value) in (list, tuple):
         return list(value)
     return [value]
 
 
 def force_tuple(value):
+    """Convert a value to tuple.
+
+    @rtype: tuple
+    """
     if type(value) in (list, tuple):
         return tuple(value)
     return (value,)
 
 
 def allof(*args, **kwargs):
+    """Test if all values are True.
+
+    @rtype: bool
+    """
     for i in list(args) + kwargs.values():
         if not i:
             return False
@@ -46,6 +63,10 @@ def allof(*args, **kwargs):
 
 
 def anyof(*args, **kwargs):
+    """Test if at least one of the values is True.
+
+    @rtype: bool
+    """
     for i in list(args) + kwargs.values():
         if i:
             return True
@@ -53,6 +74,10 @@ def anyof(*args, **kwargs):
 
 
 def noneof(*args, **kwargs):
+    """Test if all values are False.
+
+    @rtype: bool
+    """
     for i in list(args) + kwargs.values():
         if i:
             return False
@@ -60,6 +85,10 @@ def noneof(*args, **kwargs):
 
 
 def oneof(*args, **kwargs):
+    """Test if just one of the values is True.
+
+    @rtype: bool
+    """
     found = False
     for i in list(args) + kwargs.values():
         if i:
@@ -70,7 +99,10 @@ def oneof(*args, **kwargs):
 
 
 def is_empty(value):
-    """Test if value is None, empty string, list, tuple or dict."""
+    """Test if value is None, empty string, list, tuple or dict.
+
+    @rtype: bool
+    """
     if value is None:
         return True
     if type(value) in (list, tuple, dict):
@@ -81,20 +113,29 @@ def is_empty(value):
 
 
 def random_string(length=32, alphabet=None):
+    """Return random string of given lenght which consists of characters from the alphabet.
+
+    @rtype: str
+    """
     alphabet = alphabet or "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     return "".join([ random.choice(alphabet) for i in xrange(length) ])
 
 
 def hex_string(string):
-    """Convert a string to a string of hex digits."""
+    """Convert a string to a string of hex digits.
+
+    @rtype: str
+    """
     return "".join(( "%02x" % ord(i) for i in string ))
 
 
 def touch(filename):
+    """Touch a file."""
     open(filename, "a").close()
 
 
 def save(filename, text, append=False):
+    """Save text to a file."""
     if append:
         fo = open(filename, "a+")
     else:
@@ -104,6 +145,16 @@ def save(filename, text, append=False):
 
 
 def find_symlinks_to(target, directory):
+    """Find symlinks which point to a target.
+    
+    @param target: the symlink target we're looking for
+    @type target: str
+    @param directory: directory with symlinks
+    @type directory: str
+    @return: list of symlinks to the target
+    @rtype: list
+    """
+
     target = os.path.abspath(target)
     directory = os.path.abspath(directory)
     result = []
@@ -120,7 +171,17 @@ def find_symlinks_to(target, directory):
 
 
 def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir=None):
-    """Run a command in shell and return (returncode, merged stdout+stderr)."""
+    """Run a command in shell.
+    
+    @param show_cmd: show command in stdout/log
+    @type show_cmd: bool
+    @param stdout: print output to stdout
+    @type stdout: bool
+    @param logfile: save output to logfile
+    @type logfile: str
+    @return: (command return code, merged stdout+stderr)
+    @rtype: (int, str)
+    """
 
     cwd = os.getcwd()
     if workdir is not None:
@@ -159,7 +220,13 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
 
 CHECKSUM_FILE_RE = re.compile("^(?P<checksum>\w+) [ \*](?P<path>.*)$")
 def parse_checksum_line(line):
-    """Parse a line of md5sum, sha256sum, ... file. Return (checksum, path)."""
+    """Parse a line of md5sum, sha256sum, ... file.
+
+    @param line: line of a *sum file
+    @type line: str
+    @return: (checksum, path)
+    @rtype: (str, str)
+    """
 
     line = line.replace("\n", "").replace("\r", "")
     if line.strip() == "":
@@ -173,7 +240,14 @@ def parse_checksum_line(line):
 
 
 def read_checksum_file(file_name):
-    """Read checksums from a file. Return [(checksum, path)]."""
+    """Read checksums from a file.
+    
+    @param file_name: checksum file
+    @type file_name: str
+    @return [(checksum, path)]
+    @rtype: [(str, str)]
+    """
+
     result = []
     fo = open(file_name, "rb")
     
