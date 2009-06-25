@@ -188,8 +188,9 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         os.chdir(workdir)
 
     proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    proc.wait()
-    output = proc.stdout.read()
+    output = ""
+    while proc.poll() is None:
+        output += proc.stdout.read()
 
     command = "COMMAND: %s\n%s\n" % (cmd, "-" * (len(cmd)+9))
 
