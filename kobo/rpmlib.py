@@ -23,27 +23,45 @@ body_header_tags = ["siggpg", "sigpgp"]
 head_header_tags = ["dsaheader", "rsaheader"]
 
 
-def get_rpm_header(f, ts=None):
-    """Return the rpm header."""
+def get_rpm_header(file_name, ts=None):
+    """Read rpm header.
+    
+    @param file_name: rpm file name (or file object)
+    @type file_name: str (or file)
+    @param ts: transaction set instance
+    @type ts: rpm.TransactionSet
+    @return: rpm header
+    @rtype: rpm.hdr
+    """
+
     if ts is None:
         ts = rpm.TransactionSet()
         ts.setVSFlags(rpm._RPMVSF_NOSIGNATURES|rpm._RPMVSF_NODIGESTS)
 
-    if type(f) in (str, unicode):
-        fo = open(f, "r")
+    if type(file_name) in (str, unicode):
+        fo = open(file_name, "r")
     else:
-        fo = f
+        fo = file_name
 
     hdr = ts.hdrFromFdno(fo.fileno())
 
-    if fo is not f:
+    if fo is not file_name:
         fo.close()
 
     return hdr
 
 
 def get_header_field(hdr, name):
-    """Extract named field from an rpm header."""
+    """Extract named field from a rpm header.
+
+    @param hdr: a rpm header
+    @type hdr: rpm.hdr
+    @param name: a rpm field name
+    @type name: str
+    @return: value of a rpm field
+    @rtype: str or list
+    """
+
     hdr_key = getattr(rpm, "RPMTAG_%s" % name.upper(), None)
 
     if hdr_key is None:
@@ -53,8 +71,11 @@ def get_header_field(hdr, name):
 
 
 def get_header_fields(hdr, fields):
-    """Extract named fields from an rpm header and return as a dictionary.
-    Hdr may be either the rpm header or the rpm filename.
+    """Extract named fields from a rpm header and return as a dictionary.
+
+    @param fields: rpm field names
+    @type fields: list
+    @rtype: dict
     """
 
     result = {}
@@ -64,7 +85,14 @@ def get_header_fields(hdr, fields):
 
 
 def split_nvr_epoch(nvre):
-    """Split N-V-R:E or E:N-V-R to (N-V-R, E)."""
+    """Split nvre to N-V-R and E.
+    
+    @param nvre: E:N-V-R or N-V-R:E string
+    @type nvre: str
+    @return: (N-V-R, E)
+    @rtype: (str, str)
+    """
+
     if ":" in nvre:
         if nvre.count(":") != 1:
             raise ValueError("Invalid NVRE: %s" % nvre)
@@ -84,7 +112,14 @@ def split_nvr_epoch(nvre):
 
 
 def parse_nvr(nvre):
-    """Split N-V-R into dictionary of data."""
+    """Split N-V-R into dictionary of data.
+    
+    @param nvre: N-V-R:E, E:N-V-R or N-E:V-R string
+    @type nvre: str
+    @return: {name, version, release, epoch}
+    @rtype: dict
+    """
+    
     nvr, epoch = split_nvr_epoch(nvre)
 
     nvr_parts = nvr.rsplit("-", 2)
@@ -108,11 +143,17 @@ def parse_nvr(nvre):
 
 
 def parse_nvra(nvra):
-    """Split N-V-R.A.rpm into dictionary of data."""
+    """Split N-V-R.A[.rpm] into dictionary of data.
+
+    @param nvra: N-V-R:E.A[.rpm], E:N-V-R.A[.rpm], N-V-R.A[.rpm]:E or N-E:V-R.A[.rpm] string
+    @type nvra: str
+    @return: {name, version, release, epoch, arch}
+    @rtype: dict
+    """
 
     epoch = ""
     for i in xrange(2):
-        # run this twice to parse N-V-R.A.RPM:E and N-V-R.A:E.rpm
+        # run this twice to parse N-V-R.A.rpm:E and N-V-R.A:E.rpm
         if nvra.endswith(".rpm"):
             # strip .rpm suffix
             nvra = nvra[:-4]
@@ -134,7 +175,16 @@ def parse_nvra(nvra):
 
 
 def make_nvr(nvrea_dict, add_epoch=False):
-    """Make N-V-R from a nvrea dictionary."""
+    """Make [E:]N-V-R from a nvrea dictionary.
+
+    @param nvrea_dict: {name, version, release, epoch}
+    @type nvrea_dict: dict
+    @param add_epoch: add epoch to the result
+    @type add_epoch: bool
+    @return: [E:]N-V-R string
+    @rtype str
+    """
+
     if add_epoch:
         epoch = nvrea_dict.get("epoch", "")
         if epoch != "":
@@ -146,7 +196,18 @@ def make_nvr(nvrea_dict, add_epoch=False):
 
 
 def make_nvra(nvrea_dict, add_epoch=False, add_rpm=False):
-    """Make N-V-R.A from a nvrea dictionary."""
+    """Make [E:]N-V-R.A[.rpm] from a nvrea dictionary.
+
+    @param nvrea_dict: {name, version, release, epoch, arch}
+    @type nvrea_dict: dict
+    @param add_epoch: add epoch to the result
+    @type add_epoch: bool
+    @param add_rpm: append '.rpm' suffix
+    @type add_rpm: bool
+    @return: [E:]N-V-R.A[.rpm] string
+    @rtype str
+    """
+
     result = "%s.%s" % (make_nvr(nvrea_dict, add_epoch), nvrea_dict["arch"])
     if add_rpm:
         result += ".rpm"
@@ -154,12 +215,29 @@ def make_nvra(nvrea_dict, add_epoch=False, add_rpm=False):
 
 
 def make_nvrea_list(nvrea_dict):
-    """Make [N, V, R, E, A] list from a nvrea dictionary."""
+    """Make [N, V, R, E, A] list from a nvrea dictionary.
+    
+    @param nvrea_dict: {name, version, release, epoch, arch}
+    @type nvrea_dict: dict
+    @return: [name, version, release, epoch, arch]
+    @rtype: str
+    """
     return [ nvrea_dict[i] for i in ("name", "version", "release", "epoch", "arch") ]
 
 
 def compare_nvr(nvr_dict1, nvr_dict2, ignore_epoch=False):
-    """Compare two N-V-R dictionaries."""
+    """Compare two N-V-R dictionaries.
+    
+    @param nvr_dict1: {name, version, release, epoch}
+    @type nvr_dict1: dict
+    @param nvr_dict2: {name, version, release, epoch}
+    @type nvr_dict2: dict
+    @param ignore_epoch: ignore epoch during the comparison
+    @type ignore_epoch: bool
+    @return: True on match, False otherwise
+    @rtype: bool
+    """
+
     nvr1 = nvr_dict1.copy()
     nvr2 = nvr_dict2.copy()
 
@@ -180,7 +258,14 @@ def compare_nvr(nvr_dict1, nvr_dict2, ignore_epoch=False):
 
 
 def get_keys_from_header(hdr):
-    """Extract signing key id from a rpm header."""
+    """Extract signing key id from a rpm header.
+
+    @param hdr: rpm header
+    @type hdr: rpm.hdr
+    @return: signing key id represented as a hex string
+    @rtype: str
+    """
+
     result = []
     head_keys = []
 
