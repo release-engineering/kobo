@@ -9,6 +9,7 @@ from kobo.shortcuts import hex_string
 
 
 __all__ = (
+    "FILE_DIGEST_ALGO_MAP",
     "get_rpm_header",
     "get_header_field",
     "get_header_fields",
@@ -16,11 +17,22 @@ __all__ = (
     "parse_nvr",
     "parse_nvra",
     "get_keys_from_header",
+    "get_digest_algo_from_header",
 )
 
 
 body_header_tags = ["siggpg", "sigpgp"]
 head_header_tags = ["dsaheader", "rsaheader"]
+
+
+FILE_DIGEST_ALGO_MAP = {
+    1: "MD5",
+    2: "SHA1",
+    8: "SHA256",
+    9: "SHA384",
+    10: "SHA512",
+}
+
 
 
 def get_rpm_header(file_name, ts=None):
@@ -288,3 +300,26 @@ def get_keys_from_header(hdr):
 
     if len(result) == 1:
         return result[0]
+
+
+def get_digest_algo_from_header(hdr):
+    """Read file digest algorithm from a rpm header.
+
+    @param hdr: rpm header
+    @type hdr: rpm.hdr
+    @return: digest algorithm name
+    @rtype: str
+    """
+
+    # RPMTAG_FILEDIGESTALGO is not defined in older rpm
+    hdr_key = getattr(rpm, "RPMTAG_FILEDIGESTALGO", 5011)
+    algo_id = hdr[hdr_key]
+
+    if algo_id == []:
+        # RPMTAG_FILEDIGESTALGO is empty, fall back to md5
+        algo_id = 1
+
+    if algo_id not in FILE_DIGEST_ALGO_MAP:
+        raise ValueError("Unknown file digest algorithm id: %s" % algo_id)
+
+    return FILE_DIGEST_ALGO_MAP[algo_id]

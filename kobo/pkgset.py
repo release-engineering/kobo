@@ -49,6 +49,11 @@ class RpmWrapper(FileWrapper):
 
 
     @property
+    def digest_algo(self):
+        return kobo.rpmlib.get_digest_algo_from_header(self.header)
+
+
+    @property
     def vr(self):
         return "%s-%s" % (self.version, self.release)
 
