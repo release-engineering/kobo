@@ -323,3 +323,21 @@ def get_digest_algo_from_header(hdr):
         raise ValueError("Unknown file digest algorithm id: %s" % algo_id)
 
     return FILE_DIGEST_ALGO_MAP[algo_id]
+
+
+def get_file_list_from_header(hdr):
+    """Read file list from a rpm header.
+
+    @param hdr: rpm header
+    @type hdr: rpm.hdr
+    @return: file_name: (color, checksum)
+    @rtype: dict
+    """
+
+    result = {}
+    fi = hdr.fiFromHeader()
+    for file_obj in fi:
+        name = file_obj[0]
+        result[name] = (fi.FColor(), fi.MD5())
+    return result
+                                
