@@ -192,6 +192,8 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     while proc.poll() is None:
         output += proc.stdout.read()
 
+    output += proc.stdout.read()
+
     command = "COMMAND: %s\n%s\n" % (cmd, "-" * (len(cmd)+9))
 
     if stdout:
