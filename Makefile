@@ -14,6 +14,7 @@ help:
 
 clean:
 	@python setup.py clean
+	rm -f MANIFEST
 	find . -\( -name "*.pyc" -o -name '*.pyo' -o -name "*~" -\) -delete
 
 
