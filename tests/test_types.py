@@ -13,7 +13,7 @@ class TestEnum(unittest.TestCase):
         self.enum = Enum(
             "A",
             "B",
-            "C",
+            EnumItem("C", help_text="help", foo="foo", bar="bar"),
         )
 
     def test_in_enum(self):
@@ -40,6 +40,28 @@ class TestEnum(unittest.TestCase):
 
     def test_get_mapping(self):
         self.assertEqual(self.enum.get_mapping(), [(0, "A"), (1, "B"), (2, "C")])
+        self.assertEqual(type(self.enum.get_mapping()[0][1]), str)
+
+    def test_get_item(self):
+        self.assertEqual(self.enum.get_item("A"), "A")
+        self.assertRaises(KeyError, self.enum.get_item, "X")
+
+    def test_get_help_text(self):
+        self.assertEqual(self.enum.get_item_help_text("A"), "")
+        self.assertEqual(self.enum.get_item_help_text("C"), "help")
+
+    def test_get_option(self):
+        self.assertEqual(self.enum.get_item_option("A", "foo"), None)
+        self.assertEqual(self.enum.get_item_option("C", "foo"), "foo")
+
+        self.assertEqual(self.enum.get_item_option("C", "bar"), "bar")
+        self.assertEqual(self.enum.get_item_option("C", "bar", "default"), "bar")
+
+        self.assertEqual(self.enum.get_item_option("C", "baz"), None)
+        self.assertEqual(self.enum.get_item_option("C", "baz", "default"), "default")
+
+        self.assertEqual(self.enum.get_item("C")["foo"], "foo")
+        self.assertRaises(KeyError, self.enum.get_item("C").__getitem__, "baz")
 
 
 if __name__ == '__main__':
