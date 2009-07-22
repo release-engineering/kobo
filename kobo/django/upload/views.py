@@ -76,6 +76,7 @@ def file_upload(request):
         os.makedirs(upload.target_dir)
     
     shutil.move(tmp_file_name, upload.target_dir)
+    shutil.rmtree(tmp_dir)
 
     upload.state = UPLOAD_STATES["FINISHED"]
     upload.dt_finished = datetime.datetime.now()
