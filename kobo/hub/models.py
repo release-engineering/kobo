@@ -384,6 +384,13 @@ class Task(models.Model):
         return Task.objects.filter(parent=self)
 
 
+    def time(self):
+        """return time spent in the task"""
+        if not self.dt_started or not self.dt_finished:
+            return None
+        return self.dt_finished - self.dt_started
+
+
     def __lock(self, worker_id, new_state=TASK_STATES["ASSIGNED"], initial_states=None):
         """Critical section. Ensures that only one worker takes the task."""
 

@@ -7,7 +7,7 @@ from models import *
 
 
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ("id", "method", "label", "state", "owner", "dt_created", "dt_finished", "arch", "channel")
+    list_display = ("id", "method", "label", "state", "owner", "dt_created", "dt_finished", "time", "arch", "channel")
     list_filter = ("method", "state", "owner")
     search_fields = ("id", "method", "label", "dt_created", "dt_finished")
 
