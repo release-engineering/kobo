@@ -10,7 +10,7 @@ class TaskAdmin(admin.ModelAdmin):
     list_display = ("id", "method", "label", "state", "owner", "dt_created", "dt_finished", "time", "arch", "channel")
     list_filter = ("method", "state")
     search_fields = ("id", "method", "label", "owner", "dt_created", "dt_finished")
-    raw_id_fields = ('parent',)
+    raw_id_fields = ("parent", "owner", "resubmitted_by", "resubmitted_from")
 
 
 admin.site.register(Arch)
