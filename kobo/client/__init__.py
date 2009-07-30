@@ -87,7 +87,8 @@ class HubProxy(object):
 
     def __init__(self, client_type=None, logger=None, transport=None, auto_logout=True, conf=None, **kwargs):
         self._conf = kobo.conf.PyConfigParser()
-        
+        self._hub = None
+
         # load default config
         default_config = os.path.abspath(os.path.join(os.path.dirname(__file__), "default.conf"))
         self._conf.load_from_file(default_config)
@@ -156,7 +157,7 @@ class HubProxy(object):
             raise ImproperlyConfigured("Unknown authentication method: %s" % self._auth_method)
 
         # create new self._hub instance (only once, when calling constructor)
-        if not hasattr(self, "_hub"):
+        if self._hub is None:
             self._hub = xmlrpclib.ServerProxy("%s/%s/" % (self._hub_url, self._client_type), allow_none=True, transport=self._transport, verbose=verbose)
 
         if force or self._hub.auth.renew_session():
