@@ -10,6 +10,7 @@ help:
 	@echo " install                 install program on current system"
 	@echo " log                     prepare changelog for spec file"
 	@echo " source                  create source tarball"
+	@echo " test                    run tests/run_tests.py"
 
 
 clean:
@@ -26,5 +27,9 @@ log:
 	@(date +"* %a %b %e %Y AUTHOR <EMAIL> - VERSION"; git log --pretty="format:- %s (%an)" | cat) | less
 
 
-source: clean
+source: test clean
 	@python setup.py sdist
+
+
+test:
+	cd tests; ./run_tests.py
