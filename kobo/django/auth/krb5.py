@@ -2,10 +2,9 @@
 
 
 from django.conf import settings
-from django.contrib.auth.models import User, AnonymousUser
-from django.contrib.auth import login, logout, authenticate, load_backend
-from django.contrib.auth import SESSION_KEY, BACKEND_SESSION_KEY, REDIRECT_FIELD_NAME
+from django.contrib.auth import login, SESSION_KEY
 from django.contrib.auth.backends import ModelBackend
+from django.contrib.auth.models import User, AnonymousUser
 from django.core.exceptions import ImproperlyConfigured
 
 
@@ -13,10 +12,9 @@ from django.core.exceptions import ImproperlyConfigured
 
 
 def get_user(request):
+    backend = Krb5Backend()
     try:
         user_id = request.session[SESSION_KEY]
-        backend_path = request.session[BACKEND_SESSION_KEY]
-        backend = load_backend(backend_path)
         user = backend.get_user(user_id) or AnonymousUser()
     except:
         # TODO: catch only some exceptions
@@ -36,7 +34,10 @@ def get_user(request):
 
     # remove @REALM from username
     username = username.split("@")[0]
-    user = authenticate(username=username, password=None)
+
+    # authenticate user
+    user = backend.authenticate(username=username)
+    user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
 
     if type(user) is AnonymousUser or user.username == username:
         login(request, user)
@@ -58,7 +59,6 @@ class Krb5AuthenticationMiddleware(object):
             if not hasattr(settings, var):
                 raise ImproperlyConfigured("Variable '%s' not set in settings." % var)
 
-
     def process_request(self, request):
         assert hasattr(request, "session"), "The Django authentication middleware requires session middleware to be installed. Edit your MIDDLEWARE_CLASSES setting to insert \"django.contrib.sessions.middleware.SessionMiddleware\"."
         request.__class__.user = LazyUser()
@@ -67,8 +67,12 @@ class Krb5AuthenticationMiddleware(object):
 
 class Krb5Backend(ModelBackend):
     """Authenticate using Kerberos"""
+    def __init__(self, *args, **kwargs):
+        if "kobo.django.auth.krb5.Krb5Backend" in getattr(settings, "AUTHENTICATION_BACKENDS", []):
+            raise ImproperlyConfigured("Krb5Backend must not be listed in AUTHENTICATION_BACKENDS. It is for internal use in Krb5AuthenticationMiddleware only.")
+        ModelBackend.__init__(self, *args, **kwargs)
 
-    def authenticate(self, username=None, password=None):
+    def authenticate(self, username=None):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
