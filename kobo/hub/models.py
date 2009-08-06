@@ -113,7 +113,7 @@ class Worker(models.Model):
         while not self.worker_key:
             # if worker_key is empty, generate a new one
             key = random_string(64)
-            if self.objects.filter(worker_key=key).count() == 0:
+            if Worker.objects.filter(worker_key=key).count() == 0:
                 self.worker_key = key
         super(self.__class__, self).save()
 
