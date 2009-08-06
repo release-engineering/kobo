@@ -1,6 +1,53 @@
 # -*- coding: utf-8 -*-
 
 
+"""
+# This is a Django middleware.
+# In settings.py you need to set:
+
+MIDDLEWARE_CLASSES = (
+    ...
+    # you can remove: 'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'kobo.django.auth.krb5.Krb5AuthenticationMiddleware',
+    ...
+)
+
+
+# Add login and logout adresses to urls.py:
+
+urlpatterns = patterns("",
+    ...
+    url(r"^auth/krb5login/$", "django.views.generic.simple.direct_to_template", kwargs={"template": "auth/krb5login.html"}),
+    url(r'^auth/logout/$', 'django.contrib.auth.views.logout', kwargs={"next_page": "/"}),
+    ...
+)
+
+
+# Set a httpd config to protect krb5login page with kerberos.
+# You need to have mod_auth_kerb installed to use kerberos auth.
+# Httpd config /etc/httpd/conf.d/<project>.conf should look like this:
+
+<Location "/">
+    SetHandler python-program
+    PythonHandler django.core.handlers.modpython
+    SetEnv DJANGO_SETTINGS_MODULE <project>.settings
+    PythonDebug On
+</Location>
+
+<Location "/auth/krb5login">
+    AuthType Kerberos
+    AuthName "<project> Kerberos Authentication"
+    KrbMethodNegotiate on
+    KrbMethodK5Passwd off
+    KrbServiceName HTTP
+    KrbAuthRealms EXAMPLE.COM
+    Krb5Keytab /etc/httpd/conf/http.<hostname>.keytab
+    KrbSaveCredentials off
+    Require valid-user
+</Location>
+"""
+
+
 from django.conf import settings
 from django.contrib.auth import login, SESSION_KEY
 from django.contrib.auth.backends import ModelBackend
@@ -53,12 +100,6 @@ class LazyUser(object):
 
 
 class Krb5AuthenticationMiddleware(object):
-    def __init__(self):
-        # check if we have all variables in settings
-        for var in ("KRB_PROXY_PRINCIPALS", "KRB_AUTH_PRINCIPAL", "KRB_AUTH_KEYTAB"):
-            if not hasattr(settings, var):
-                raise ImproperlyConfigured("Variable '%s' not set in settings." % var)
-
     def process_request(self, request):
         assert hasattr(request, "session"), "The Django authentication middleware requires session middleware to be installed. Edit your MIDDLEWARE_CLASSES setting to insert \"django.contrib.sessions.middleware.SessionMiddleware\"."
         request.__class__.user = LazyUser()
