@@ -41,6 +41,10 @@ class RpmWrapper(FileWrapper):
 
 
     @property
+    def files(self):
+        return kobo.rpmlib.get_file_list_from_header(self.header)
+
+    @property
     def signature(self):
         result = kobo.rpmlib.get_keys_from_header(self.header)
         if result is not None:
