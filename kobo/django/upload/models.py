@@ -30,7 +30,7 @@ class FileUpload(models.Model):
     dt_finished = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ("dt_created", "name", )
+        ordering = ("-dt_created", "name", )
 #        unique_together = (
 #            ("name", "target_dir")
 #        )
