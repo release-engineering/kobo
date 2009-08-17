@@ -19,6 +19,7 @@ boolean1 = True
 boolean2 = False
 
 dict = {"a": 1, "b": True, "c": None, True: False, "tuple": (1, "a"), "list": [1, "a"]}
+dict_with_default = {"*": 0, "a": 1, "b": 2}
 
 tuple1 = ()
 tuple2 = (1, )
@@ -62,6 +63,13 @@ class TestConf(unittest.TestCase):
 
     def test_dict(self):
         self.assertEqual(self.conf["dict"], {"a": 1, "b": True, "c": None, True: False, "tuple": (1, "a"), "list": [1, "a"]})
+
+    def test_dict_with_default(self):
+        self.assertEqual(self.conf.get_dict_value(self.conf["dict_with_default"], "a"), 1)
+        self.assertEqual(get_dict_value(self.conf["dict_with_default"], "b"), 2)
+        self.assertEqual(self.conf.get_dict_value(self.conf["dict_with_default"], "c"), 0)
+        self.assertRaises(TypeError, self.conf.get_dict_value, self.conf["string1"], "a")
+        self.assertRaises(KeyError, self.conf.get_dict_value, self.conf["dict"], "not_found")
 
     def test_tuple(self):
         self.assertEqual(self.conf["tuple1"], ())

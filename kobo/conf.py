@@ -32,9 +32,29 @@ from kobo.exceptions import ImproperlyConfigured
 
 
 __all__ = (
+    "get_dict_value",
     "PyConfigParser",
     "ImproperlyConfigured",
 )
+
+
+def get_dict_value(dictionary, key):
+    """Return a value from a dictionary, if not found, use default value with '*' key."""
+    if dictionary is None:
+        return None
+
+    if type(dictionary) is not dict:
+        raise TypeError("Dictionary expected, got %s." % type(dictionary))
+
+    result = None
+    try:
+        result = dictionary[key]
+    except KeyError:
+        if "*" in dictionary:
+            result = dictionary["*"]
+        else:
+            raise
+    return result
 
 
 class PyConfigParser(dict):
@@ -52,6 +72,9 @@ class PyConfigParser(dict):
         "_debug",
         "_open_file",
     )
+
+
+    get_dict_value = staticmethod(get_dict_value)
 
 
     def __init__(self, config_file_suffix="conf", debug=False):
@@ -91,7 +114,8 @@ class PyConfigParser(dict):
         """Load data from a string."""
         if input_string:
             self._tokens = tokenize.generate_tokens(StringIO(input_string).readline)
-            self._parse()
+            for key, value in self._parse():
+                self[key] = value
 
 
     def load_from_dict(self, input_dict):
@@ -127,7 +151,7 @@ class PyConfigParser(dict):
             self._assert_token(("OP", "="))
 
             value = self._get_value()
-            self[key] = value
+            yield key, value
 
 
     def _assert_token(self, *args):
