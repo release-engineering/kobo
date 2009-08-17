@@ -23,7 +23,9 @@ __all__ = (
     "random_string",
     "hex_string",
     "touch",
+    "read_from_file",
     "save",
+    "save_to_file",
     "find_symlinks_to",
     "run",
     "parse_checksum_line",
@@ -134,7 +136,28 @@ def touch(filename):
     open(filename, "a").close()
 
 
-def save(filename, text, append=False):
+
+def read_from_file(filename, lines=None, re_filter=None):
+    """Read a text file."""
+    result = []
+    fo = open(filename, "rt")
+
+    if re_filter is not None:
+        re_filter_compiled = re.compile(re_filter)
+
+    for i, line in enumerate(fo):
+        if lines is not None and i+1 not in lines:
+            continue
+        line = line.rstrip("\r\n")
+        if re_filter is not None and not re_filter_compiled.match(line):
+            continue
+        result.append(line)
+
+    fo.close()
+    return result
+
+
+def save_to_file(filename, text, append=False):
     """Save text to a file."""
     if append:
         fo = open(filename, "a+")
@@ -142,6 +165,11 @@ def save(filename, text, append=False):
         fo = open(filename, "wb")
     fo.write(text)
     fo.close()
+
+
+def save(*args, **kwargs):
+    print >> sys.stderr, "DeprecationWarning: kobo.shortcuts.save() is deprecated, use kobo.shortcuts.save_to_file() instead."
+    return save_to_file(*args, **kwargs)
 
 
 def find_symlinks_to(target, directory):
