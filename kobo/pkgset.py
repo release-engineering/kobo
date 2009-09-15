@@ -102,9 +102,11 @@ class FileCache(object):
 
     def add(self, file_name, **kwargs):
         file_name = os.path.abspath(file_name)
+        if file_name in self.file_cache:
+            return self.file_cache[file_name]
+
         st = os.stat(file_name)
         cache_key = (st.st_dev, st.st_ino)
-
         if cache_key in self.inode_cache:
             return self.inode_cache[cache_key]
 
