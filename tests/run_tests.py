@@ -20,7 +20,7 @@ from kobo.shortcuts import run
 
 if __name__ == '__main__':
     failed = False
-    for test in os.listdir(os.path.dirname(__file__)):
+    for test in sorted(os.listdir(os.path.dirname(__file__))):
         # run all tests that match the 'test_*.py" pattern
         if not test.startswith("test_"):
             continue
