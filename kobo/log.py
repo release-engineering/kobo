@@ -19,11 +19,51 @@ BRIEF_LOG_FORMAT = "%(asctime)s [%(levelname)-8s] %(message)s"
 VERBOSE_LOG_FORMAT = "%(asctime)s [%(levelname)-8s] {%(process)5d} %(name)s:%(lineno)4d %(message)s"
 
 
+###########
+# Following hack enables 'VERBOSE' log level in the python logging module and Logger class.
+# This means you need to import kobo.log before you can use 'VERBOSE' logging.
+
+
+logging.VERBOSE = 15
+logging.addLevelName(15, "VERBOSE")
+
+
+def verbose(self, msg, *args, **kwargs):
+    """
+    Log 'msg % args' with severity 'VERBOSE'.
+
+    To pass exception information, use the keyword argument exc_info with
+    a true value, e.g.
+
+    logger.info("Houston, we have a %s", "interesting problem", exc_info=1)
+    """
+    if self.manager.disable >= logging.VERBOSE:
+        return
+    if logging.VERBOSE >= self.getEffectiveLevel():
+        self._log(*(logging.VERBOSE, msg, args), **kwargs)
+logging.Logger.verbose = verbose
+
+
+def verbose(msg, *args, **kwargs):
+    """
+    Log a message with severity 'VERBOSE' on the root logger.
+    """
+    if len(logging.root.handlers) == 0:
+        logging.basicConfig()
+    logging.root.verbose(*((msg,) + args), **kwargs)
+logging.verbose = verbose
+del verbose
+
+
+# end of hack
+###########
+
+
 def add_stderr_logger(logger, log_level=None, format=None):
     """Add a stderr logger to the logger."""
     log_level = log_level or logging.DEBUG
     format = format or BRIEF_LOG_FORMAT
-    
+
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter(format, datefmt="%Y-%m-%d %H:%M:%S"))
     handler.setLevel(log_level)
