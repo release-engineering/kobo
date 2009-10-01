@@ -419,17 +419,29 @@ class TaskManager(object):
 
         try:
             task.run()
-            self.hub.worker.close_task(task.task_id, get_stdout())
 
         except (ShutdownException, KeyboardInterrupt):
             if TaskClass.exclusive and TaskClass.foreground:
                 self.hub.worker.close_task(task.task_id, "")
             raise
+
+        # TODO: once we drop py2.4 support, catch one exception and compare types - that should make code more readable
         except FailTaskException, ex:
             self.hub.worker.fail_task(task.task_id, get_stdout())
+
+        except SystemExit, ex:
+            if len(ex.args) == 0 or ex.args[0] == 0:
+                self.hub.worker.close_task(task.task_id, get_stdout())
+            else:
+                sys.stdout.write("Program has exited with return code '%s'." % ex.args[0])
+                self.hub.worker.fail_task(task.task_id, get_stdout())
+
         except Exception:
             traceback = Traceback()
             self.hub.worker.fail_task(task.task_id, get_stdout(), traceback.get_traceback())
+
+        else:
+            self.hub.worker.close_task(task.task_id, get_stdout())
 
 
     def is_finished_task(self, task_id):
