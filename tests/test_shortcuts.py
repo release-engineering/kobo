@@ -5,6 +5,10 @@
 import unittest
 import run_tests # set sys.path
 
+import os
+import shutil
+import tempfile
+
 from kobo.shortcuts import *
 
 
@@ -57,22 +61,38 @@ class TestEnum(unittest.TestCase):
 
 
 class TestUtils(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+        self.tmp_file = os.path.join(self.tmp_dir, "tmp_file")
+        save_to_file(self.tmp_file, "test")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
     def test_run(self):
         ret, out = run("echo hello")
         self.assertEqual(ret, 0)
         self.assertEqual(out, "hello\n")
+
         ret, out = run("exit 1", can_fail=True)
         self.assertEqual(ret, 1)
+
+        self.assertRaises(RuntimeError, run, "exit 1")
 
     def test_parse_checksum_line(self):
         line_text = "d4e64fc7f3c6849888bc456d77e511ca  shortcuts.py"
         checksum, path = parse_checksum_line(line_text)
         self.assertEqual(checksum, "d4e64fc7f3c6849888bc456d77e511ca")
         self.assertEqual(path, "shortcuts.py")
+
         line_binary = "d4e64fc7f3c6849888bc456d77e511ca *shortcuts.py"
         checksum, path = parse_checksum_line(line_binary)
         self.assertEqual(checksum, "d4e64fc7f3c6849888bc456d77e511ca")
         self.assertEqual(path, "shortcuts.py")
+
+    def test_compute_file_checksums(self):
+        self.assertEqual(compute_file_checksums(self.tmp_file, "md5"), dict(md5="098f6bcd4621d373cade4e832627b4f6"))
+        self.assertEqual(compute_file_checksums(self.tmp_file, ["md5", "sha256"]), dict(md5="098f6bcd4621d373cade4e832627b4f6", sha256="9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"))
 
 
 if __name__ == '__main__':

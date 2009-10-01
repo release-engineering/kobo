@@ -11,6 +11,7 @@ import sys
 import subprocess
 import random
 import re
+import hashlib
 
 
 __all__ = (
@@ -28,6 +29,7 @@ __all__ = (
     "save_to_file",
     "find_symlinks_to",
     "run",
+    "compute_file_checksums",
     "parse_checksum_line",
     "read_checksum_file",
 )
@@ -247,6 +249,43 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         raise RuntimeError(err_msg)
 
     return (proc.returncode, output)
+
+
+def compute_file_checksums(filename, checksum_types):
+    """
+    Compute a file checksum of given type.
+    Checksum must be supported by hashlib.
+
+    @param filename: path to a file
+    @type filename: str
+    @param checksum_type: checksum types, supported by hashlib
+    @type checksum_type: str or list
+    @return: {checksum_type: digest in lowercase hex}
+    @rtype: dict
+    """
+
+    checksum_types = force_tuple(checksum_types)
+    checksums = {}
+
+    for checksum_type in checksum_types:
+        try:
+            checksums[checksum_type] = getattr(hashlib, checksum_type)()
+        except ValueError:
+            raise ValueError("Checksum is not supported in hashlib: %s" % checksum_type)
+
+    fo = open(filename, "r")
+    while True:
+        chunk = fo.read(1024**2)
+        if not chunk:
+            break
+        for checksum_type in checksum_types:
+            checksums[checksum_type].update(chunk)
+    fo.close()
+
+    result = {}
+    for checksum_type, checksum in checksums.iteritems():
+        result[checksum_type] = checksum.hexdigest().lower()
+    return result
 
 
 CHECKSUM_FILE_RE = re.compile("^(?P<checksum>\w+) [ \*](?P<path>.*)$")

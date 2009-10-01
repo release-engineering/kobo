@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
+
 import os
 
 import kobo.rpmlib
+from kobo.shortcuts import compute_file_checksums, force_tuple
 
 
 __all__ = (
@@ -14,14 +16,35 @@ __all__ = (
 
 class FileWrapper(object):
     __slots__ = (
+        "_checksums",
         "file_name",
     )
 
     def __init__(self, file_name, **kwargs):
+        self._checksums = {}
         self.file_name = file_name
 
     def __str__(self):
         return self.file_name
+
+    def compute_checksums(self, checksum_types):
+        """Compute and cache checksums of given types."""
+
+        result = {}
+        missing = []
+        checksum_types = force_tuple(checksum_types)
+
+        for checksum_type in checksum_types:
+            if checksum_type in self._checksums:
+                result[checksum_type] = self._checksums[checksum_type]
+            else:
+                missing.append(checksum_type)
+
+        if missing:
+            result.update(compute_file_checksums(self.file_name, missing))
+            self._checksums.update(result)
+
+        return result
 
 
 class RpmWrapper(FileWrapper):
