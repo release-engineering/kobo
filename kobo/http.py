@@ -53,7 +53,7 @@ class POSTTransport(object):
         data = []
         for key, value in self._variables:
             data.extend((
-                "--%s" % self._boundary, 
+                "--%s" % self._boundary,
                 'Content-Disposition: form-data; name="%s"' % key,
                 "",
                 value,
@@ -75,7 +75,7 @@ class POSTTransport(object):
         if not data:
             return None
 
-        data.extend(("--%s--" % self._boundary,""))
+        data.extend(("--%s--" % self._boundary, ""))
         content = "\r\n".join(data)
         content_type = "multipart/form-data; boundary=" + self._boundary
 
@@ -83,7 +83,7 @@ class POSTTransport(object):
             request = httplib.HTTPSConnection(host, port)
         else:
             request = httplib.HTTPConnection(host, port)
-        
+
         request.putrequest("POST", selector)
         request.putheader("content-type", content_type)
         request.putheader("content-length", str(len(content)))
@@ -91,7 +91,7 @@ class POSTTransport(object):
         request.send(content)
         response = request.getresponse()
 
-        if flush: 
+        if flush:
             self.flush_data()
 
         return response.status, response.read()

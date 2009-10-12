@@ -84,7 +84,7 @@ class DjangoXMLRPCDispatcher(SimpleXMLRPCDispatcher):
         params, method = xmlrpclib.loads(data)
 
         # add request to params
-        params = (request,) + params
+        params = (request, ) + params
 
         # generate response
         try:

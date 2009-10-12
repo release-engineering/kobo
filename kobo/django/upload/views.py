@@ -58,7 +58,7 @@ def file_upload(request):
     # transaction, commit save()
     upload.state = UPLOAD_STATES["STARTED"]
     upload.save()
-    
+
     for chunk in fu.chunks():
         tmp_file.write(chunk)
         sum.update(chunk)
@@ -74,7 +74,7 @@ def file_upload(request):
 
     if not os.path.isdir(upload.target_dir):
         os.makedirs(upload.target_dir)
-    
+
     shutil.move(tmp_file_name, upload.target_dir)
     shutil.rmtree(tmp_dir)
 

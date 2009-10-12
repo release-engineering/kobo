@@ -199,7 +199,7 @@ class TaskManager(object):
         for task_info in self.hub.worker.get_worker_tasks():
             self.logger.debug("Checking task: %s." % self._task_str(task_info))
 
-            if task_info["state"] == TASK_STATES["OPEN"] and not self.pid_dict.has_key(task_info["id"]):
+            if task_info["state"] == TASK_STATES["OPEN"] and task_info["id"] not in self.pid_dict:
                 # an interrupted task appears to be open, but running task manager doesn't track it in it's pid list
                 # this happens after a power outage, for example
                 interrupted_list.append(task_info["id"])
@@ -242,11 +242,11 @@ class TaskManager(object):
                 # the subprocess handles most everything, we just need to clear things out
                 if self.cleanup_task(task_id):
                     del self.pid_dict[task_id]
-                if self.task_dict.has_key(task_id):
+                if task_id in self.task_dict:
                     del self.task_dict[task_id]
 
         for task_id, pid in self.pid_dict.items():
-            if not self.task_dict.has_key(task_id):
+            if task_id not in self.task_dict:
                 # expected to happen when:
                 #  - we are in the narrow gap between the time the task records its result
                 #    and the time the process actually exits.

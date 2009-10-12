@@ -37,7 +37,7 @@ FILE_DIGEST_ALGO_MAP = {
 
 def get_rpm_header(file_name, ts=None):
     """Read rpm header.
-    
+
     @param file_name: rpm file name (or file object)
     @type file_name: str (or file)
     @param ts: transaction set instance
@@ -98,7 +98,7 @@ def get_header_fields(hdr, fields):
 
 def split_nvr_epoch(nvre):
     """Split nvre to N-V-R and E.
-    
+
     @param nvre: E:N-V-R or N-V-R:E string
     @type nvre: str
     @return: (N-V-R, E)
@@ -125,13 +125,13 @@ def split_nvr_epoch(nvre):
 
 def parse_nvr(nvre):
     """Split N-V-R into dictionary of data.
-    
+
     @param nvre: N-V-R:E, E:N-V-R or N-E:V-R string
     @type nvre: str
     @return: {name, version, release, epoch}
     @rtype: dict
     """
-    
+
     nvr, epoch = split_nvr_epoch(nvre)
 
     nvr_parts = nvr.rsplit("-", 2)
@@ -228,7 +228,7 @@ def make_nvra(nvrea_dict, add_epoch=False, add_rpm=False):
 
 def make_nvrea_list(nvrea_dict):
     """Make [N, V, R, E, A] list from a nvrea dictionary.
-    
+
     @param nvrea_dict: {name, version, release, epoch, arch}
     @type nvrea_dict: dict
     @return: [name, version, release, epoch, arch]
@@ -239,7 +239,7 @@ def make_nvrea_list(nvrea_dict):
 
 def compare_nvr(nvr_dict1, nvr_dict2, ignore_epoch=False):
     """Compare two N-V-R dictionaries.
-    
+
     @param nvr_dict1: {name, version, release, epoch}
     @type nvr_dict1: dict
     @param nvr_dict2: {name, version, release, epoch}
@@ -340,4 +340,3 @@ def get_file_list_from_header(hdr):
         name = file_obj[0]
         result[name] = (fi.FColor(), fi.MD5())
     return result
-                                

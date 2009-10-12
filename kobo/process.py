@@ -141,7 +141,7 @@ def get_proc_stat(pid):
         result = match.groupdict()
         for key in result:
             # keep following field as string
-            if key in ("comm",):
+            if key in ("comm", ):
                 continue
 
             # covert rest to integer

@@ -225,7 +225,7 @@ class PyConfigParser(dict):
 
         if negative:
             return -result
-        return result        
+        return result
 
 
     def _get_value(self, get_next=True, basic_types_only=False):

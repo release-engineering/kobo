@@ -58,7 +58,7 @@ class Enum(object):
         """
         self._items = []
         self._order = []
-        
+
         for i in args:
             if type(i) is not EnumItem:
                 i = EnumItem(str(i))

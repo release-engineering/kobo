@@ -367,7 +367,7 @@ class Task(models.Model):
             "is_finished": self.is_finished(),
             "is_failed": self.is_failed(),
         }
-        
+
         if not flat:
             result.update({
                 "worker": self.worker and self.worker.export() or None,
@@ -376,7 +376,7 @@ class Task(models.Model):
                 "channel": self.channel.export(),
                 "subtask_id_list": [ i.id for i in self.subtasks() ],
             })
-            
+
         return result
 
 
@@ -399,9 +399,9 @@ class Task(models.Model):
             initial_states = [ i for i, j in TASK_STATES.get_mapping() if i in initial_states ]
             if not initial_states:
                 # initial_states is empty
-                initial_states = (TASK_STATES["FREE"],)
+                initial_states = (TASK_STATES["FREE"], )
         else:
-            initial_states = (TASK_STATES["FREE"],)
+            initial_states = (TASK_STATES["FREE"], )
 
         # it is safe to pass initial_states directly to query,
         # because these values are checked in the code above
@@ -464,7 +464,7 @@ WHERE
             worker_id = self.worker_id
 
         try:
-            self.__lock(worker_id, new_state=TASK_STATES["ASSIGNED"], initial_states=(TASK_STATES["FREE"],))
+            self.__lock(worker_id, new_state=TASK_STATES["ASSIGNED"], initial_states=(TASK_STATES["FREE"], ))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot assign task %d" % (self.id))
 
@@ -487,7 +487,7 @@ WHERE
             self.result = result
             self.save()
         try:
-            self.__lock(self.worker_id, new_state=TASK_STATES["CLOSED"], initial_states=(TASK_STATES["OPEN"],))
+            self.__lock(self.worker_id, new_state=TASK_STATES["CLOSED"], initial_states=(TASK_STATES["OPEN"], ))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot close task %d, state is %s" % (self.id, self.state))
 
@@ -524,7 +524,7 @@ WHERE
     def interrupt_task(self, recursive=True):
         """Set the task state to interrupted."""
         try:
-            self.__lock(self.worker_id, new_state=TASK_STATES["INTERRUPTED"], initial_states=(TASK_STATES["OPEN"],))
+            self.__lock(self.worker_id, new_state=TASK_STATES["INTERRUPTED"], initial_states=(TASK_STATES["OPEN"], ))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot interrupt task %d, state is %s" % (self.id, self.state))
 
@@ -537,7 +537,7 @@ WHERE
     def timeout_task(self, recursive=True):
         """Set the task state to timeout."""
         try:
-            self.__lock(self.worker_id, new_state=TASK_STATES["TIMEOUT"], initial_states=(TASK_STATES["OPEN"],))
+            self.__lock(self.worker_id, new_state=TASK_STATES["TIMEOUT"], initial_states=(TASK_STATES["OPEN"], ))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot interrupt task %d, state is %s" % (self.id, self.state))
 
@@ -557,7 +557,7 @@ WHERE
             self.save()
 
         try:
-            self.__lock(self.worker_id, new_state=TASK_STATES["FAILED"], initial_states=(TASK_STATES["OPEN"],))
+            self.__lock(self.worker_id, new_state=TASK_STATES["FAILED"], initial_states=(TASK_STATES["OPEN"], ))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot fail task %i, state is %s" % (self.id, self.state))
 

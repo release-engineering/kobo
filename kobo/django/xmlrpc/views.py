@@ -100,7 +100,7 @@ class XMLRPCHandlerFactory(object):
                 try:
                     module = __import__(module_name, {}, {}, [fn])
                 except ImportError, ex:
-                    raise ImproperlyConfigured, "Error registering XML-RPC method, module '%s' cannot be imported: %s" % (module_name, ex)
+                    raise ImproperlyConfigured("Error registering XML-RPC method, module '%s' cannot be imported: %s" % (module_name, ex))
 
                 # *attr* is a function, register it as a function
                 if callable(fn):

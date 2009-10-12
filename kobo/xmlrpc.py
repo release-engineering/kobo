@@ -83,7 +83,7 @@ class CookieTransport(xmlrpclib.Transport):
             h.set_debuglevel(1)
 
         request_url = "%s://%s/" % (self.scheme, host)
-        cookie_request  = urllib2.Request(request_url)
+        cookie_request = urllib2.Request(request_url)
 
         self.send_request(h, handler, request_body)
         self.send_host(h, host, {})

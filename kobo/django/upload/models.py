@@ -16,7 +16,7 @@ UPLOAD_STATES = Enum(
     "FINISHED",
     "FAILED",
 )
-                                
+
 
 class FileUpload(models.Model):
     owner       = models.ForeignKey(User)
@@ -44,7 +44,7 @@ class FileUpload(models.Model):
             "target_dir": self.target_dir,
             "state": self.state,
         }
-        return result        
+        return result
 
     def get_full_path(self):
         return os.path.join(self.target_dir, self.name)

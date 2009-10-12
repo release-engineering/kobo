@@ -50,7 +50,7 @@ def verbose(msg, *args, **kwargs):
     """
     if len(logging.root.handlers) == 0:
         logging.basicConfig()
-    logging.root.verbose(*((msg,) + args), **kwargs)
+    logging.root.verbose(*((msg, ) + args), **kwargs)
 logging.verbose = verbose
 del verbose
 

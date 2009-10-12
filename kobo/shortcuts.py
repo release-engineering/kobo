@@ -52,7 +52,7 @@ def force_tuple(value):
     """
     if type(value) in (list, tuple):
         return tuple(value)
-    return (value,)
+    return (value, )
 
 
 def allof(*args, **kwargs):
@@ -176,7 +176,7 @@ def save(*args, **kwargs):
 
 def find_symlinks_to(target, directory):
     """Find symlinks which point to a target.
-    
+
     @param target: the symlink target we're looking for
     @type target: str
     @param directory: directory with symlinks
@@ -202,7 +202,7 @@ def find_symlinks_to(target, directory):
 
 def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir=None):
     """Run a command in shell.
-    
+
     @param show_cmd: show command in stdout/log
     @type show_cmd: bool
     @param stdout: print output to stdout
@@ -301,7 +301,7 @@ def parse_checksum_line(line):
     line = line.replace("\n", "").replace("\r", "")
     if line.strip() == "":
         return None
-        
+
     match = CHECKSUM_FILE_RE.match(line)
     if match is None:
         return None
@@ -311,7 +311,7 @@ def parse_checksum_line(line):
 
 def read_checksum_file(file_name):
     """Read checksums from a file.
-    
+
     @param file_name: checksum file
     @type file_name: str
     @return [(checksum, path)]
@@ -320,11 +320,11 @@ def read_checksum_file(file_name):
 
     result = []
     fo = open(file_name, "rb")
-    
+
     for line in fo:
         checksum_tuple = parse_checksum_line(line)
         if checksum_tuple is not None:
             result.append(checksum_tuple)
-        
+
     fo.close()
     return result

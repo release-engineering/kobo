@@ -276,7 +276,7 @@ class HubProxy(object):
             sum.update(chunk)
         fo.close()
         checksum = sum.hexdigest().lower()
-        
+
         fsize = os.path.getsize(file_name)
         upload_id, upload_key = self.upload.register_upload(os.path.basename(file_name), checksum, fsize, target_dir)
 
