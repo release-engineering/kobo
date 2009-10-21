@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-from kobo.django.menu.menu import Menu
+from kobo.django.menu.menu import menu
 
 
 __all__ = (
@@ -15,7 +15,7 @@ class LazyMenu(object):
     """
     def __get__(self, request, obj_type=None):
         if not hasattr(request, "_cached_menu"):
-            request._cached_menu = Menu(request)
+            request._cached_menu = menu(request)
         return request._cached_menu
 
 
