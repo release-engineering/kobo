@@ -176,8 +176,8 @@ def get_tasks_to_assign(request):
         task_info = task.export(flat=False)
         task_list.append(task_info)
 
-    # first 50 of free tasks
-    for task in Task.objects.free().filter(awaited=False).order_by("id")[:50]:
+    # first 50 free tasks, ordered by priority
+    for task in Task.objects.free().filter(awaited=False).order_by("-priority", "id")[:50]:
         task_info = task.export(flat=False)
         task_list.append(task_info)
 
