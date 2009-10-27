@@ -22,13 +22,17 @@ menu = (
         ("Submenu 1b", "/url/path/2/", (), (), ()),
     ),
     ("Menu item 2", reverse('url_label'), ('Developers',), ('app.change_data',), ()),
+    menu_item("Menu item 3", 'url_label'),
     include('project.app'),
 )
 css_active_class = "active_menu" # can be specified only once in project-wide
 menu
 
 In this example is first submenu tree accessible for anybody, second only for
-users in group Developers with specific permission.
+users in group Developers with specific permission. Third menu item is
+specified via simple wrapper function, which can be used if you want to
+simplify description little bit. Fourth on is included menu via helper
+function similar to urls.py include.
 
 Instead of specifying complete tree in one file, you can use include()
 command in similar way as it is used in urls.py. It is used as third submenu
@@ -56,12 +60,21 @@ __all__ = (
     "Menu",
     "menu",
     'include',
+    'menu_item',
 )
 
 def include(module):
     '''helper function to load nested menus'''
     m = __import__(module, {}, {}, [""])
     return m.menu
+
+def menu_item(label, url, absolute_url = None, menu = (), groups = (), perms = ()):
+    '''helper function to nicer menu item definition'''
+    if absolute_url:
+        url = absolute_url
+    else:
+        url = reverse(url)
+    return (label, url, groups, perms, menu)
 
 class MenuItem(object):
     '''basic menu item - every menuitem can have submenu collections of
