@@ -53,6 +53,8 @@ import logging
 import signal
 import time
 import datetime
+import Queue
+import threading
 from xmlrpclib import Fault, ProtocolError
 from cStringIO import StringIO
 
@@ -400,10 +402,6 @@ class TaskManager(object):
             sys.stdout.seek(0)
             return sys.stdout.read()
 
-        # redirect stdout and stderr
-        sys.stdout = StringIO()
-        sys.stderr = sys.stdout
-
         TaskClass = self.task_container[task_info["method"]]
 
         # add *task_manager* attribute to foreground tasks
@@ -417,30 +415,39 @@ class TaskManager(object):
 
         task = TaskClass(hub, task_info["id"], task_info["args"])
 
+
+
+        # redirect stdout and stderr
+        sys.stdout = LoggingStringIO()
+        sys.stderr = sys.stdout
+        thread = LoggingThread(hub, task_info["id"], sys.stdout._queue)
+        thread.start()
+
         try:
             task.run()
-
-        except (ShutdownException, KeyboardInterrupt):
-            if TaskClass.exclusive and TaskClass.foreground:
-                self.hub.worker.close_task(task.task_id, "")
-            raise
-
-        # TODO: once we drop py2.4 support, catch one exception and compare types - that should make code more readable
-        except FailTaskException, ex:
-            self.hub.worker.fail_task(task.task_id, get_stdout())
-
-        except SystemExit, ex:
-            if len(ex.args) == 0 or ex.args[0] == 0:
-                self.hub.worker.close_task(task.task_id, get_stdout())
-            else:
-                sys.stdout.write("Program has exited with return code '%s'." % ex.args[0])
+        except (Exception, SystemExit), outer_ex:
+            thread.terminate = True
+            thread.join()
+            try:
+                raise outer_ex
+            except (ShutdownException, KeyboardInterrupt):
+                if TaskClass.exclusive and TaskClass.foreground:
+                    self.hub.worker.close_task(task.task_id, "")
+                raise
+            except SystemExit, ex:
+                if len(ex.args) == 0 or ex.args[0] == 0:
+                    self.hub.worker.close_task(task.task_id, get_stdout())
+                else:
+                    sys.stdout.write("\nProgram has exited with return code '%s'." % ex.args[0])
+                    self.hub.worker.fail_task(task.task_id, get_stdout())
+            except FailTaskException, ex:
                 self.hub.worker.fail_task(task.task_id, get_stdout())
-
-        except Exception:
-            traceback = Traceback()
-            self.hub.worker.fail_task(task.task_id, get_stdout(), traceback.get_traceback())
-
+            except Exception:
+                traceback = Traceback()
+                self.hub.worker.fail_task(task.task_id, get_stdout(), traceback.get_traceback())
         else:
+            thread.terminate = True
+            thread.join()
             self.hub.worker.close_task(task.task_id, get_stdout())
 
 
@@ -523,3 +530,101 @@ class TaskManager(object):
         """Lock the task manager to finish all assigned tasks and exit."""
         self.locked = True
         self.logger.info("Locking...")
+
+
+class LoggingThread(threading.Thread):
+    """Send stdout data to hub in a background thread."""
+    __slots__ = (
+        "hub",
+        "task_id",
+        "queue",
+        "terminate",
+        "last_sent",
+        "data_to_send",
+    )
+
+
+    def __init__(self, hub, task_id, queue, *args, **kwargs):
+        threading.Thread.__init__(self, *args, **kwargs)
+        self.hub = hub
+        self.task_id = task_id
+        self.queue = queue
+        self.terminate = False
+        self.last_sent = datetime.datetime.now()
+        self.data_to_send = ""
+
+
+    def _has_data_to_send(self, force):
+        if force:
+            return True
+        if self.data_to_send:
+            return True
+        if self.queue.qsize() > 500:
+            return True
+        if not self.queue.empty() and (datetime.datetime.now() > self.last_sent + datetime.timedelta(seconds=1)):
+            return True
+        return False
+
+
+    def send(self, force=False):
+        if self._has_data_to_send(force):
+            while True:
+                try:
+                    self.data_to_send += self.queue.get(block=False)
+                except Queue.Empty:
+                    break
+
+            if not self.data_to_send:
+                return
+
+            try:
+                self.hub.upload_task_log(StringIO(self.data_to_send), self.task_id, "stdout.log", append=True)
+            except Fault:
+                from kobo.tback import Traceback
+                open("/tmp/log_fault", "w").write(Traceback().get_traceback())
+
+                # send failed, keep data for the next send() call
+                pass
+            else:
+                self.data_to_send = ""
+
+
+    def finish(self):
+        for i in xrange(3):
+            if self.send(force=True):
+                return True
+            time.sleep(1)
+        return False
+
+
+    def run(self):
+        try:
+            while not self.terminate:
+                time.sleep(1)
+                self.send()
+            self.finish()
+        except:
+            from kobo.tback import Traceback
+            open("/tmp/log", "w").write(Traceback().get_traceback())
+
+
+class LoggingStringIO(object):
+    """StringIO wrapper also appends all written data to a Queue."""
+    __slots__ = (
+        "_stringio",
+        "_queue",
+    )
+
+
+    def __init__(self, *args, **kwargs):
+        self._stringio = StringIO(*args, **kwargs)
+        self._queue = Queue.Queue()
+
+
+    def write(self, buff):
+        self._queue.put(buff)
+        return self._stringio.write(buff)
+
+
+    def __getattr__(self, name):
+        return getattr(self._stringio, name)

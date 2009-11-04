@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
 
 
+import os
+
+from django.conf import settings
+
+from kobo.client.constants import TASK_STATES
 from kobo.hub.models import Task
 from kobo.hub.decorators import validate_worker
+from kobo.xmlrpc import decode_xmlrpc_chunk
 
 
 __all__ = (
@@ -27,13 +33,16 @@ __all__ = (
     "create_subtask",
     "wait",
     "check_wait",
+    "upload_task_log",
 )
 
 
 @validate_worker
 def get_worker_info(request):
-    """Get information about a worker.
-        @return: dict
+    """
+    Get information about a worker.
+
+    @rtype: dict
     """
     return request.worker.export()
 
@@ -48,8 +57,10 @@ def get_worker_id(request):
 
 @validate_worker
 def get_worker_tasks(request):
-    """Get list of tasks running on a worker.
-        @return: list
+    """
+    Get list of tasks running on a worker.
+
+    @rtype: list
     """
     task_list = []
     for task in request.worker.running_tasks().order_by("-exclusive", "-awaited", "id"):
@@ -67,10 +78,12 @@ def get_worker_tasks(request):
 
 @validate_worker
 def get_task(request, task_id):
-    """Get information about a task.
-        @param task_id: a task ID
-        @type  task_id: int
-        @return: dict
+    """
+    Get information about a task.
+
+    @param task_id: a task ID
+    @type  task_id: int
+    @rtype: dict
     """
     task = Task.objects.get_and_verify(task_id=task_id, worker=request.worker)
     return task.export()
@@ -78,10 +91,12 @@ def get_task(request, task_id):
 
 @validate_worker
 def get_task_no_verify(request, task_id):
-    """Get information about a task, do not verify whether is assigned to a worker.
-        @param task_id: a task ID
-        @type  task_id: int
-        @return: dict
+    """
+    Get information about a task, do not verify whether is assigned to a worker.
+
+    @param task_id: a task ID
+    @type  task_id: int
+    @rtype: dict
     """
     task = Task.objects.get(id=task_id)
     return task.export()
@@ -176,8 +191,8 @@ def get_tasks_to_assign(request):
         task_info = task.export(flat=False)
         task_list.append(task_info)
 
-    # first 50 free tasks, ordered by priority
-    for task in Task.objects.free().filter(awaited=False).order_by("-priority", "id")[:50]:
+    # first 50 of free tasks
+    for task in Task.objects.free().filter(awaited=False).order_by("id")[:50]:
         task_info = task.export(flat=False)
         task_list.append(task_info)
 
@@ -212,3 +227,41 @@ def wait(request, task_id, child_list=None):
 def check_wait(request, task_id, child_list=None):
     task = Task.objects.get(id=task_id)
     return task.check_wait(child_list)
+
+
+@validate_worker
+def upload_task_log(request, task_id, relative_path, chunk_start, chunk_len, chunk_checksum, encoded_chunk):
+    """
+    Upload a task log.
+
+    @param task_id: task ID
+    @type  task_id: int
+    @param relative_path: relative path (under settings.TASK_DIR) to the log file
+    @type  relative_path: str
+    @param chunk_start: chunk start position in the file (-1 for append)
+    @type  chunk_start: str
+    @param chunk_len: chunk length
+    @type  chunk_len: str
+    @param chunk_checksum: sha256 checksum (lower case)
+    @type  chunk_checksum: str
+    @param encoded_chunk: base64 encoded chunk
+    @type  encoded_chunk: str
+    @rtype: bool
+    """
+
+    relative_path = os.path.normpath(relative_path)
+    if relative_path.startswith(".."):
+        raise ValueError("Invalid upload path: %s" % relative_path)
+
+    full_path = os.path.join(settings.TASK_DIR, str(int(task_id)), relative_path)
+
+    task = Task.objects.get(id=task_id)
+    if task.state != TASK_STATES["OPEN"]:
+        raise ValueError("Can't upload file for a task which is not OPEN: %s" % task_id)
+
+    try:
+        decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, write_to=full_path)
+    except:
+        return False
+
+    return True

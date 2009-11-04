@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
 
+import base64
 import cookielib
+import fcntl
+import hashlib
 import httplib
 import os
 import socket
@@ -10,11 +13,15 @@ import time
 import urllib2
 import xmlrpclib
 
+import kobo.shortcuts
+
 
 __all__ = (
     "CookieTransport",
     "SafeCookieTransport",
-    "retry_request_decorator"
+    "retry_request_decorator",
+    "encode_xmlrpc_chunks_iterator",
+    "decode_xmlrpc_chunk",
 )
 
 
@@ -158,3 +165,90 @@ def retry_request_decorator(transport_class):
     RetryTransportClass.__name__ = transport_class.__name__
     RetryTransportClass.__doc__ = transport_class.__name__
     return RetryTransportClass
+
+
+def encode_xmlrpc_chunks_iterator(file_obj):
+    """
+    Prepare data for a xml-rpc transfer.
+    Iterate through (chunk_start, chunk_len, chunk_checksum, encoded_chunk) tuples.
+    Final tuple is (total_length, -1, total_checksum, "").
+
+    @param file_obj: file object (or StringIO, etc.)
+    @type  file_obj: file
+    @return: (chunk_start, chunk_len, chunk_checksum, encoded_chunk)
+    @rtype:  (str, str, str, str)
+    """
+
+    CHUNK_SIZE = 1024**2
+    checksum = hashlib.sha256()
+    chunk_start = file_obj.tell()
+
+    while True:
+        chunk = file_obj.read(CHUNK_SIZE)
+        if not chunk:
+            break
+        checksum.update(chunk)
+        encoded_chunk = base64.encodestring(chunk)
+        yield (str(chunk_start), str(len(chunk)), hashlib.sha256(chunk).hexdigest().lower(), encoded_chunk)
+        chunk_start += len(chunk)
+
+    yield (str(chunk_start), -1, checksum.hexdigest().lower(), "")
+
+
+def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, write_to=None):
+    """
+    Decode a data chunk and optionally write it to a file.
+
+    @param chunk_start: chunk start position in the file (-1 for append)
+    @type  chunk_start: str
+    @param chunk_len: chunk length
+    @type  chunk_len: str
+    @param chunk_checksum: sha256 checksum (lower case)
+    @type  chunk_checksum: str
+    @param encoded_chunk: base64 encoded chunk
+    @type  encoded_chunk: str
+    @param write_to: path to a file in which the decoded data will be written
+    @type  write_to: str
+    @return: decoded data
+    @rtype:  str
+    """
+
+    chunk_start = int(chunk_start)
+    chunk_len = int(chunk_len)
+    chunk = base64.decodestring(encoded_chunk)
+
+    if chunk_len not in (-1, len(chunk)):
+        raise ValueError("Chunk length doesn't match.")
+
+    if chunk_len == -1:
+        chunk = ""
+    elif chunk_checksum != hashlib.sha256(chunk).hexdigest().lower():
+        raise ValueError("Chunk checksum doesn't match.")
+
+    if not write_to:
+        return chunk
+
+    # code below handles writing to a file
+
+    target_dir = os.path.dirname(write_to)
+    if not os.path.isdir(target_dir):
+        os.makedirs(target_dir, mode=0755)
+
+    fd = os.open(write_to, os.O_RDWR | os.O_CREAT, 0644)
+    fcntl.lockf(fd, fcntl.LOCK_EX|fcntl.LOCK_NB)
+    try:
+        if chunk_start != -1:
+            os.ftruncate(fd, chunk_start)
+        os.lseek(fd, 0, 2) # 2=os.SEEK_END
+        os.write(fd, chunk)
+    finally:
+        fcntl.lockf(fd, fcntl.LOCK_UN)
+        os.close(fd)
+
+    if chunk_start != -1 and chunk_len == -1:
+        # final chunk, compute checksum of whole file
+        file_checksum = kobo.shortcuts.compute_file_checksums(write_to, ["sha256"])["sha256"]
+        if file_checksum != chunk_checksum:
+            raise ValueError("File checksum does not match.")
+
+    return chunk

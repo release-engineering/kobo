@@ -13,7 +13,7 @@ import xmlrpclib
 import kobo.conf
 from kobo.cli import *
 from kobo.exceptions import ImproperlyConfigured
-from kobo.xmlrpc import CookieTransport, SafeCookieTransport, retry_request_decorator
+from kobo.xmlrpc import CookieTransport, SafeCookieTransport, retry_request_decorator, encode_xmlrpc_chunks_iterator
 from kobo.http import POSTTransport
 
 
@@ -288,3 +288,26 @@ class HubProxy(object):
 
         err_code, err_msg = upload.send_to_host(host, path, port, secure)
         return upload_id, err_code, err_msg
+
+
+    def upload_task_log(self, file_obj, task_id, remote_file_name, append=True):
+        """
+        Upload a task log to the hub.
+
+        @param file_obj: file object (or StringIO, etc.) with the log
+        @type  file_obj: file
+        @param task_id: task ID
+        @type  task_id: int
+        @param remove_file_name: relative path on hub to the log file
+        @type  remove_file_name: str
+        @param append: append at the end of existing file instead of rewriting it
+        @type  append: bool
+        """
+
+        for (chunk_start, chunk_len, chunk_checksum, encoded_chunk) in encode_xmlrpc_chunks_iterator(file_obj):
+            if append:
+                chunk_start = -1
+                if chunk_len == -1:
+                    # skip finializing chunk
+                    break
+            self._hub.worker.upload_task_log(task_id, remote_file_name, chunk_start, chunk_len, chunk_checksum, encoded_chunk)
