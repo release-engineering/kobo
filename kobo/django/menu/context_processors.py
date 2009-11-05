@@ -5,6 +5,7 @@ __all__ = (
     "menu_context_processor",
 )
 
+
 def menu_context_processor(request):
     """
     @summary: Context processor for menu object.

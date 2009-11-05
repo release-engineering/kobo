@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-from kobo.django.menu.menu import menu
+from kobo.django.menu import menu
 
 
 __all__ = (
