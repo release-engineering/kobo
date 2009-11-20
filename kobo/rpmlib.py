@@ -4,6 +4,7 @@
 # Some code comes from koji: https://fedorahosted.org/koji/
 
 
+import koji
 import rpm
 from kobo.shortcuts import hex_string
 
@@ -274,7 +275,7 @@ def get_keys_from_header(hdr):
 
     @param hdr: rpm header
     @type hdr: rpm.hdr
-    @return: signing key id represented as a hex string
+    @return: signing key id represented as an uppercase hex string
     @rtype: str
     """
 
@@ -284,12 +285,12 @@ def get_keys_from_header(hdr):
     for field in head_header_tags:
         sigkey = get_header_field(hdr, field)
         if sigkey:
-            head_keys.append(hex_string(sigkey[13:17]))
+            head_keys.append(koji.get_sigpacket_key_id(sigkey).upper())
 
     for field in body_header_tags:
         sigkey = get_header_field(hdr, field)
         if sigkey:
-            key_id = hex_string(sigkey[13:17])
+            key_id = koji.get_sigpacket_key_id(sigkey).upper()
             if key_id in head_keys:
                 result.append(key_id)
             else:
