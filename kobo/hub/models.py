@@ -384,11 +384,24 @@ class Task(models.Model):
         return Task.objects.filter(parent=self)
 
 
+    @property
     def time(self):
         """return time spent in the task"""
         if not self.dt_started or not self.dt_finished:
             return None
         return self.dt_finished - self.dt_started
+
+
+    def get_time_display(self):
+        """display time in human readable form"""
+        if self.time is None:
+            return ""
+
+        time = "%02d:%02d:%02d" % ((self.time.seconds/60/24), (self.time.seconds/60 % 24), (self.time.seconds % 60))
+        if self.time.days:
+            time = _("%s days, %s") % (self.time.days, time)
+        return time
+    get_time_display.short_description = "Time"
 
 
     def __lock(self, worker_id, new_state=TASK_STATES["ASSIGNED"], initial_states=None):
