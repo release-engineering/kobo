@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+
+'''
+Conversion of db format from 0.2.0 format. Tracebacks were saved into db
+prior 0.3.0 version. From now we are saving tracebacks to TASK_DIR instead of
+db.
+'''
+
+import os
+import sys
+from django.db import connection
+from django.core import management
+from django.conf import settings
+from kobo.hub.models import Task
+
+def main():
+    c = connection.cursor()
+    # copy data from db to disk
+    print 'copying data'
+    c.execute('SELECT id, traceback FROM hub_task')
+    l = c.fetchone()
+    while l:
+        task_id, traceback = l
+        print 'task', task_id
+        if not traceback:
+            l = c.fetchone()
+            continue
+
+        fpath = os.path.join(Task.get_task_dir(task_id), 'traceback.log')
+        f = open(fpath, 'wt')
+        f.write(traceback)
+        f.close()
+
+        l = c.fetchone()
+
+    # alter table
+    #c.execute('ALTER TABLE hub_task DROP COLUMN traceback')
+    c.execute('DROP TABLE IF EXISTS hub_task_save')
+    c.execute('ALTER TABLE hub_task RENAME TO hub_task_save')
+    print 'syncing db models'
+    management.call_command('syncdb')
+    c = connection.cursor()
+    c.execute('INSERT INTO hub_task (id,archive,owner_id,worker_id,parent_id,state,label,exclusive,method,args,result,comment,arch_id,channel_id,timeout,waiting,awaited,dt_created,dt_started,dt_finished,priority,weight,resubmitted_by_id,resubmitted_from_id,subtask_count) SELECT id,archive,owner_id,worker_id,parent_id,state,label,exclusive,method,args,result,comment,arch_id,channel_id,timeout,waiting,awaited,dt_created,dt_started,dt_finished,priority,weight,resubmitted_by_id,resubmitted_from_id,subtask_count FROM hub_task_save')
+    print 'cleanup'
+    c.execute('DROP TABLE hub_task_save')
+    c.execute('VACUUM')
+    c.execute('ANALYZE')
+
+if __name__ == "__main__":
+    if len(sys.argv) == 2 and sys.argv[1] == '--force':
+        main()
+    else:
+        print 'If you really want to convert db, please save old one and then run this command with parameter --force.'
