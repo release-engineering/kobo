@@ -254,6 +254,9 @@ def compare_nvr(nvr_dict1, nvr_dict2, ignore_epoch=False):
     nvr1 = nvr_dict1.copy()
     nvr2 = nvr_dict2.copy()
 
+    nvr1["epoch"] = nvr1.get("epoch", None)
+    nvr2["epoch"] = nvr2.get("epoch", None)
+
     if nvr1["name"] != nvr2["name"]:
         raise ValueError("Package names doesn't match: %s, %s" % (nvr1["name"], nvr2["name"]))
 
@@ -267,8 +270,7 @@ def compare_nvr(nvr_dict1, nvr_dict2, ignore_epoch=False):
     if nvr2["epoch"] is None:
         nvr2["epoch"] = ""
 
-    return rpm.labelCompare((str(nvr1["epoch"]), nvr1["version"], nvr1["release"]), (str(nvr2["epoch"]), nvr2["version"], nvr2["release"]))
-
+    return rpm.labelCompare((str(nvr1["epoch"]), str(nvr1["version"]), str(nvr1["release"])), (str(nvr2["epoch"]), str(nvr2["version"]), str(nvr2["release"])))
 
 def get_keys_from_header(hdr):
     """Extract signing key id from a rpm header.
