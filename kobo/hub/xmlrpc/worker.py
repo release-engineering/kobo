@@ -236,7 +236,7 @@ def upload_task_log(request, task_id, relative_path, chunk_start, chunk_len, chu
 
     @param task_id: task ID
     @type  task_id: int
-    @param relative_path: relative path (under settings.TASK_DIR) to the log file
+    @param relative_path: relative path (under task_dir) to the log file
     @type  relative_path: str
     @param chunk_start: chunk start position in the file (-1 for append)
     @type  chunk_start: str
@@ -253,9 +253,8 @@ def upload_task_log(request, task_id, relative_path, chunk_start, chunk_len, chu
     if relative_path.startswith(".."):
         raise ValueError("Invalid upload path: %s" % relative_path)
 
-    full_path = os.path.join(settings.TASK_DIR, str(int(task_id)), relative_path)
-
     task = Task.objects.get(id=task_id)
+    full_path = os.path.join(Task.task_dir, relative_path)
     if task.state != TASK_STATES["OPEN"]:
         raise ValueError("Can't upload file for a task which is not OPEN: %s" % task_id)
 

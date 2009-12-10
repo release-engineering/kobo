@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
-
-import base64
+import os
 import datetime
-import xmlrpclib
-import zlib
 import simplejson
 
 from django.conf import settings
@@ -222,7 +219,6 @@ class Task(models.Model):
     method              = models.CharField(max_length=255, help_text=_("Method name represents appropriate task handler."))
     args                = models.TextField(blank=True, help_text=_("Method arguments. JSON serialized dictionary."))
     result              = models.TextField(null=True, blank=True, help_text=_("Can be used for logging task progress."))
-    traceback           = models.TextField(null=True, blank=True, help_text=_("When an exception occurs, traceback is stored in this field."))
     comment             = models.TextField(null=True, blank=True)
 
     arch                = models.ForeignKey(Arch)
@@ -248,6 +244,12 @@ class Task(models.Model):
     objects = TaskManager()
 
 
+    def __init__(self, *args, **kwargs):
+        traceback = kwargs.pop('traceback', None)
+        if traceback:
+            self.traceback = traceback
+        return super(Task, self).__init__(*args, **kwargs)
+
     class Meta:
         ordering = ("-id", )
 
@@ -259,6 +261,19 @@ class Task(models.Model):
 
 
     def save(self):
+        # save traceback
+        if getattr(self, '_traceback_changed', False):
+            try:
+                path = os.path.join(self.task_dir(create=True), 'traceback.log')
+                # TODO: default permissions?
+                f = open(path, 'wt')
+                f.write(value)
+                f.close()
+                self._traceback_changed = False # reset save flag
+            except IOError, ex:
+                raise ex
+
+        # db save
         self.subtask_count = self.subtasks().count()
         super(self.__class__, self).save()
 
@@ -266,6 +281,49 @@ class Task(models.Model):
             # save parent as well to compute new subtask count
             self.parent.save()
 
+
+    def _get_traceback(self):
+        if self.id is None:
+            raise ValueError('You need to save task, before you can use tracebacks.')
+        if not getattr(self, '_traceback_cache', None):
+            path = os.path.join(self.task_dir(self.id), 'traceback.log')
+            try:
+                self._traceback_cache = open(path, 'rt').read()
+            except IOError:
+                self._traceback_cache = ''
+        return self._traceback_cache
+
+    def _set_traceback(self, value):
+        if self.id is None:
+            raise ValueError('You need to save task, before you can use tracebacks.')
+        self._traceback_cache = value
+        self._traceback_changed = True
+
+    traceback = property(_get_traceback, _set_traceback)
+
+    @classmethod
+    def get_task_dir(cls, task_id, create=False):
+        '''Task files (logs, etc.) are saved in TASK_DIR in following structure based on task_id:
+        TASK_DIR/millions/tens_of_thousands/task_id/*
+        '''
+        task_id = int(task_id)
+        third = task_id
+        second = task_id // 10000 * 10000
+        first = task_id // 1000000 * 1000000
+
+        task_dir = os.path.abspath(settings.TASK_DIR)
+        path = os.path.join(task_dir, str(first), str(second), str(third))
+        path = os.path.abspath(path)
+        if not path.startswith(task_dir):
+            raise Exception('Possible hack, trying to read path "%s"' % path)
+
+        if create and not os.path.isdir(path):
+            os.makedirs(path, mode=0755)
+
+        return path
+
+    def task_dir(self, create=False):
+        return Task.get_task_dir(task_id, create)
 
     @classmethod
     def create_task(cls, owner_name, label, method, args=None, comment=None, parent_id=None, worker_name=None, arch_name="noarch", channel_name="default", timeout=None, priority=10, weight=1, exclusive=False, resubmitted_by=None, resubmitted_from=None):
