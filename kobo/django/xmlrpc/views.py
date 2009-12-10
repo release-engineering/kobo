@@ -80,7 +80,7 @@ class XMLRPCHandlerFactory(object):
 
     def setup_dispatcher(self):
         for path, name in settings.XMLRPC_METHODS[self.name]:
-            # *path* is a function, register it as a function
+            # *path* is a function, register it as *name*
             if callable(path):
                 self.xmlrpc_dispatcher.register_function(path, name)
                 continue
@@ -93,21 +93,27 @@ class XMLRPCHandlerFactory(object):
             except ImportError:
                 pass
 
-            if path.count(".") > 0:
-                # try to find callable function
-                module_name, fn = path.rsplit(".", 1)
+            if path.count(".") == 0:
+                raise ImproperlyConfigured("Error registering XML-RPC method: '%s' must be one of (function, 'module' or 'module.function')" % path)
 
-                try:
-                    module = __import__(module_name, {}, {}, [fn])
-                except ImportError, ex:
-                    raise ImproperlyConfigured("Error registering XML-RPC method, module '%s' cannot be imported: %s" % (module_name, ex))
+            # try to find callable function
+            module_name, fn = path.rsplit(".", 1)
 
-                # *attr* is a function, register it as a function
-                if callable(fn):
-                    self.xmlrpc_dispatcher.register_function(fn, name)
-                    continue
+            try:
+                module = __import__(module_name, {}, {}, [fn])
+            except ImportError, ex:
+                raise ImproperlyConfigured("Error registering XML-RPC method: module '%s' cannot be imported: %s" % (module_name, ex))
 
-            raise ImproperlyConfigured("Error registering XML-RPC method: '%s' is not callable in module %s" % (fn, module_name))
+            try:
+                func = getattr(module, fn)
+            except AttributeError:
+                raise ImproperlyConfigured("Error registering XML-RPC method: module '%s' doesn't define function '%s'" % (module, fn))
+
+            if not callable(func):
+                raise ImproperlyConfigured("Error registering XML-RPC method: '%s' is not callable in module '%s'" % (fn, module_name))
+
+            # *path* is a module.function, register it as *name*
+            self.xmlrpc_dispatcher.register_function(func, name)
 
 
     def register(self):
