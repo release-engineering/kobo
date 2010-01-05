@@ -102,7 +102,7 @@ class TaskBase(Plugin):
 
     def spawn_subtask(self, method, args, label=""):
         """Spawn a new subtask."""
-        subtask_id = self.hub.worker.create_subtask(label, method, args, parent=self.task_id)
+        subtask_id = self.hub.worker.create_subtask(label, method, args, self.task_id)
         self._subtask_list.append(subtask_id)
         return subtask_id
 
