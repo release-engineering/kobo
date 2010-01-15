@@ -24,7 +24,7 @@ install:
 
 
 log:
-	@(date +"* %a %b %e %Y AUTHOR <EMAIL> - VERSION"; git log --pretty="format:- %s (%an)" | cat) | less
+	@(LC_ALL=C date +"* %a %b %e %Y `git config --get user.name` <`git config --get user.email`> - VERSION"; git log --pretty="format:- %s (%an)" | cat) | less
 
 
 source: test clean
