@@ -324,7 +324,7 @@ class Task(models.Model):
         return path
 
     def task_dir(self, create=False):
-        return Task.get_task_dir(task_id, create)
+        return Task.get_task_dir(self.task_id, create)
 
     @classmethod
     def create_task(cls, owner_name, label, method, args=None, comment=None, parent_id=None, worker_name=None, arch_name="noarch", channel_name="default", timeout=None, priority=10, weight=1, exclusive=False, resubmitted_by=None, resubmitted_from=None):
