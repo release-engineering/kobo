@@ -15,6 +15,10 @@ from kobo.hub.models import Task
 
 def main():
     c = connection.cursor()
+
+    # add Worker.max_tasks
+    c.execute('ALTER TABLE hub_worker ADD COLUMN "max_tasks" integer CHECK ("max_tasks" >= 0) NOT NULL DEFAULT 0;')
+
     # copy data from db to disk
     print 'copying data'
     c.execute('SELECT id, traceback FROM hub_task')
@@ -35,12 +39,14 @@ def main():
 
     # alter table
     #c.execute('ALTER TABLE hub_task DROP COLUMN traceback')
+
     c.execute('DROP TABLE IF EXISTS hub_task_save')
     c.execute('ALTER TABLE hub_task RENAME TO hub_task_save')
     print 'syncing db models'
     management.call_command('syncdb')
     c = connection.cursor()
     c.execute('INSERT INTO hub_task (id,archive,owner_id,worker_id,parent_id,state,label,exclusive,method,args,result,comment,arch_id,channel_id,timeout,waiting,awaited,dt_created,dt_started,dt_finished,priority,weight,resubmitted_by_id,resubmitted_from_id,subtask_count) SELECT id,archive,owner_id,worker_id,parent_id,state,label,exclusive,method,args,result,comment,arch_id,channel_id,timeout,waiting,awaited,dt_created,dt_started,dt_finished,priority,weight,resubmitted_by_id,resubmitted_from_id,subtask_count FROM hub_task_save')
+
     print 'cleanup'
     c.execute('DROP TABLE hub_task_save')
     c.execute('VACUUM')

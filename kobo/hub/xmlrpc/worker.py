@@ -2,8 +2,7 @@
 
 
 import os
-
-from django.conf import settings
+import random
 
 from kobo.client.constants import TASK_STATES
 from kobo.hub.models import Task
@@ -175,26 +174,51 @@ def update_worker(request, enabled, ready, task_count):
 @validate_worker
 def get_tasks_to_assign(request):
     task_list = []
+    max_tasks = max(request.worker.max_tasks, 10) # return info about at least 10 tasks
 
-    # all exclusive tasks
-    for task in request.worker.assigned_tasks().filter(exclusive=True).order_by("id"):
+    # Limit each query by max_tasks.
+    # Worker sometimes doesn't succeed in taking all tasks from task_list,
+    # but it can take another tasks next time. This can be good for load balancing
+    # (not all tasks are taken by one worker).
+    # If task_list is longer than max_tasks, return it not to perform another queries.
+
+    # exclusive tasks
+    for task in request.worker.assigned_tasks().filter(exclusive=True).order_by("-priority", "id")[:max_tasks]:
         task_info = task.export(flat=False)
         task_list.append(task_info)
 
-    # all awaited tasks
-    for task in Task.objects.free().filter(awaited=True).order_by("id"):
+    if len(task_list) >= max_tasks:
+        return task_list
+
+    # awaited tasks
+    for task in Task.objects.free().filter(awaited=True).order_by("-priority", "id")[:max_tasks]:
         task_info = task.export(flat=False)
         task_list.append(task_info)
 
-    # first 50 tasks assigned to this worker
-    for task in request.worker.assigned_tasks().filter(exclusive=False).order_by("id")[:50]:
+    if len(task_list) >= max_tasks:
+        return task_list
+
+    # tasks assigned to this worker
+    for task in request.worker.assigned_tasks().filter(exclusive=False).order_by("-priority", "id")[:max_tasks]:
         task_info = task.export(flat=False)
         task_list.append(task_info)
 
-    # first 50 of free tasks
-    for task in Task.objects.free().filter(awaited=False).order_by("id")[:50]:
-        task_info = task.export(flat=False)
-        task_list.append(task_info)
+    if len(task_list) >= max_tasks:
+        return task_list
+
+    # free tasks for each channel relevant to the worker
+    tasks = []
+    for channel in request.worker.channels.all():
+        for task in Task.objects.free().filter(awaited=False, channel=channel).order_by("-priority", "id")[:max_tasks]:
+            task_info = task.export(flat=False)
+            tasks.append(task_info)
+
+    # Shuffle the list to prevent task starvation in some channels.
+    # It could also help to lower task assignment conflicts.
+    # After that, sort it by priority again.
+    random.shuffle(tasks)
+    tasks.sort(lambda x, y: cmp(x["priority"], y["priority"]), reverse=True)
+    task_list.extend(tasks[:max_tasks])
 
     return task_list
 

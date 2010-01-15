@@ -86,6 +86,7 @@ class Worker(models.Model):
     channels            = models.ManyToManyField(Channel)
     enabled             = models.BooleanField(default=True, help_text=_("Enabled workers are allowed to process tasks."))
     max_load            = models.PositiveIntegerField(blank=True, default=1, help_text=_("Maximum allowed load (sum of task weights)."))
+    max_tasks           = models.PositiveIntegerField(blank=True, default=0, help_text=_("Maximum assigned tasks. (0 = no limit)"))
 
     # redundant fields to improve performance
     ready               = models.BooleanField(default=True, help_text=_("Is the worker ready to take new tasks?<br />This is a generated field."))

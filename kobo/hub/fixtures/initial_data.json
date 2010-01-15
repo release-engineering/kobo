@@ -83,6 +83,7 @@
             "name": "localhost",
             "enabled": true,
             "max_load": 2,
+            "max_tasks": 0,
             "ready": true,
             "current_load": 0,
             "task_count": 0,
