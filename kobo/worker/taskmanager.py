@@ -215,6 +215,7 @@ class TaskManager(object):
                     continue
 
             task_list[task_info["id"]] = task_info
+            self.wakeup_task(task_info)
 
         self.task_dict = task_list
         self.logger.debug("Current tasks: %r" % self.task_dict.keys())

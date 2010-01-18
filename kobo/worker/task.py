@@ -6,6 +6,7 @@ import signal
 
 from kobo.plugins import Plugin
 from kobo.shortcuts import force_list
+from kobo.client.constants import TASK_STATES
 
 
 __all__ = (
@@ -131,6 +132,20 @@ class TaskBase(Plugin):
             signal.pause()
             # wake up on signal to check the status
 
-        # remove finished subtasks from the list
+        # remove finished subtasks from the list, check results
         for i in finished:
             self._subtask_list.remove(i)
+
+        # remove finished subtasks from the list, check results
+        fail = False
+        for i in finished:
+            state = self.hub.worker.get_task(i)
+            if state != TASK_STATES['CLOSED']:
+                fail = True
+            self._subtask_list.remove(i)
+
+        if fail:
+            print "Failing because of at least one subtask hasn't closed properly."
+            self.fail()
+
+        return finished
