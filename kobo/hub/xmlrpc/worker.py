@@ -213,7 +213,7 @@ def create_subtask(request, label, method, args, parent_id):
     parent_task = Task.objects.get_and_verify(task_id=parent_id, worker=request.worker)
 #    def create_task(cls, owner_name, label, method, args=None, parent_id=None, worker_name=None, arch_name="noarch", channel_name="default", priority=10, weight=1, exclusive=False):
 #    subtask_id = self.__hub.worker.createSubtask(label, method, args, self.__task_id)
-    return Task.create_task(parent_task.owner.username, label, method, args, parent_id)#, arch=parent_task.arch, channel=parent_task.channel, priority=priority, weight=weight)
+    return Task.create_task(parent_task.owner.username, label, method, args=args, parent_id=parent_id)#, arch=parent_task.arch, channel=parent_task.channel, priority=priority, weight=weight)
 
 
 @validate_worker
