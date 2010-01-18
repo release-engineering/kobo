@@ -147,7 +147,7 @@ class Traceback(object):
 
     def print_traceback(self):
         """Print a traceback string to stderr."""
-        sys.stderr.write(self.get_traceback())
+        print >>sys.stderr, self.get_traceback()
 
 
     def _get_lines_from_file(self, filename, lineno, context_lines):
