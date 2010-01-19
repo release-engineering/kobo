@@ -17,11 +17,19 @@ class Plugin(object):
         "author",
         "version",
         "enabled",
+        "container",
     )
 
     author = None
     version = None
     enabled = False
+
+    def __getattr__(self, name):
+        """
+        Get missing attribute from a container.
+        This is quite hackish but it allows to define settings and methods per container.
+        """
+        return getattr(self.container, name)
 
 
 class PluginContainer(object):
@@ -57,11 +65,24 @@ class PluginContainer(object):
     @classmethod
     def _get_plugins(cls):
         """Return dictionary of registered plugins."""
-        plugins = {}
-
+        all_plugins = []
         if hasattr(cls, "_class_plugins"):
-            plugins.update(cls._class_plugins)
+            all_plugins += cls._class_plugins.values()
+        all_plugins += cls._get_parent_plugins()
 
+        plugins = {}
+        for plugin_class in all_plugins:
+            name = plugin_class.__name__
+            normalized_name = cls.normalize_name(name)
+            if normalized_name in plugins:
+               raise RuntimeError("Cannot register plugin '%s'. Another plugin with the same normalized name (%s) is already in the container." % (name, normalized_name))
+            plugins[normalized_name] = type(plugin_class.__name__, (plugin_class, ), {"container": cls})
+        return plugins
+
+
+    @classmethod
+    def _get_parent_plugins(cls):
+        result = []
         for parent in cls.__bases__:
             if parent is PluginContainer:
                 # don't use PluginContainer itself - plugins have to be registered to subclasses
@@ -71,13 +92,11 @@ class PluginContainer(object):
                 # skip parents which are not PluginContainer subclasses
                 continue
 
-            for name, value in parent._get_plugins().iteritems():
-                normalized_name = cls.normalize_name(name)
-                if normalized_name in plugins:
-                    continue
-                plugins[normalized_name] = value
+            if hasattr(parent, "_class_plugins"):
+                result.extend(parent._class_plugins.values())
+            result.extend(parent._get_parent_plugins())
 
-        return plugins
+        return result
 
 
     @property
