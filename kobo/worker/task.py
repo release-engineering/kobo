@@ -133,10 +133,6 @@ class TaskBase(Plugin):
             # wake up on signal to check the status
 
         # remove finished subtasks from the list, check results
-        for i in finished:
-            self._subtask_list.remove(i)
-
-        # remove finished subtasks from the list, check results
         fail = False
         for i in finished:
             state = self.hub.worker.get_task(i)
