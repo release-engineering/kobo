@@ -1,0 +1,20 @@
+{% load i18n %}
+
+<table class="list" width="100%">
+  <tr>
+    <th>{% trans "Name" %}</th>
+    <th>{% trans "Arches" %}</th>
+    <th>{% trans "Enabled" %}</th>
+    <th>{% trans "Ready" %}</th>
+    <th>{% trans "Last update" %}</th>
+  </tr>
+{% for worker in worker_list %}
+  <tr>
+    <td><a href="{% url worker/detail worker.id %}">{{ worker.name }}</a></td>
+    <td>{{ worker.get_arches_display }}</td>
+    <td>{% if worker.enabled %}<span class="FREE">YES</span>{% else %}<span class="FAILED">NO</span>{% endif %}</td>
+    <td>{% if worker.ready %}<span class="FREE">YES</span>{% else %}<span class="FAILED">NO</span>{% endif %}</td>
+    <td>{{ worker.dt_last_update|date:"Y-m-d H:i:s" }}</td>
+  </tr>
+{% endfor %}
+</table>

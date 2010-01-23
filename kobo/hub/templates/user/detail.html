@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+
+{% block content %}
+<h2>User #{{ usr.id }}: {{ usr.username }}</h2>
+
+<h3>Details</h3>
+<table class="details">
+  <tr>
+    <th>{% trans "ID" %}</th>
+    <td>{{ usr.id }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Name" %}</th>
+    <td>{{ usr.username }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Admin" %}</th>
+    <td>{% if user.is_superuser %}<span class="FREE">YES</span>{% else %}<span class="FAILED">NO</span>{% endif %}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Staff" %}</th>
+    <td>{% if user.is_staff %}<span class="FREE">YES</span>{% else %}<span class="FAILED">NO</span>{% endif %}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Active" %}</th>
+    <td>{% if user.is_active %}<span class="FREE">YES</span>{% else %}<span class="FAILED">NO</span>{% endif %}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Tasks" %}</th>
+    <td>{{ tasks }}</td>
+  </tr>
+</table>
+
+{% endblock %}

@@ -1,0 +1,22 @@
+{% load i18n %}
+
+{% if is_paginated %}
+<div class="paginator">
+  {% trans "Page" %} {{ page }}/{{ pages }}. {% trans "Records" %} {{ first_on_page }} - {{ last_on_page }} {% trans "of" %} {{ hits }}.
+{% ifequal page 1 %}
+  <img src="{{ MEDIA_URL }}/img/list-first-disabled.png" />
+  <img src="{{ MEDIA_URL }}/img/list-prev-disabled.png" />
+{% else %}
+  <a href="?page=1{{ get_vars }}"><img src="{{ MEDIA_URL }}/img/list-first.png" /></a>
+  <a href="?page={{ previous }}{{ get_vars }}"><img src="{{ MEDIA_URL }}/img/list-prev.png" /></a>
+{% endifequal %}
+{% ifequal page pages %}
+  <img src="{{ MEDIA_URL }}/img/list-next-disabled.png" />
+  <img src="{{ MEDIA_URL }}/img/list-last-disabled.png" />
+{% else %}
+  <a href="?page={{ next }}{{ get_vars }}"><img src="{{ MEDIA_URL }}/img/list-next.png" /></a>
+  <a href="?page={{ pages }}{{ get_vars }}"><img src="{{ MEDIA_URL }}/img/list-last.png" /></a>
+{% endifequal %}
+</div>
+<div style="clear: both" />
+{% endif %}

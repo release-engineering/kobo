@@ -48,6 +48,13 @@ class Arch(models.Model):
         }
 
 
+    @property
+    def worker_count(self):
+        if self.id is None:
+            return 0
+        return Worker.objects.filter(arches__id=self.id).count()
+
+
 class Channel(models.Model):
     """Model for hub_channel table."""
     name        = models.CharField(max_length=128, help_text=_("Channel name"))
@@ -63,6 +70,13 @@ class Channel(models.Model):
             "id": self.id,
             "name": self.name,
         }
+
+
+    @property
+    def worker_count(self):
+        if self.id is None:
+            return 0
+        return Worker.objects.filter(channels__id=self.id).count()
 
 
 class WorkerManager(models.Manager):

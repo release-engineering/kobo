@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<h2>Channel #{{ channel.id }}: {{ channel.name }}</h2>
+
+<h3>Details</h3>
+<table class="details">
+  <tr>
+    <th>{% trans "ID" %}</th>
+    <td>{{ channel.id }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Name" %}</th>
+    <td>{{ channel.name }}</td>
+  </tr>
+</table>
+
+<h3>Workers</h3>
+{% include "worker/list_include.html" %}
+
+{% endblock %}

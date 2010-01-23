@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% load i18n %}
+
+{% block css %}
+  <link rel="stylesheet" href="{{ MEDIA_URL }}css/style.css" type="text/css" media="screen" />
+{% endblock %}
+
+{% block header_site_name %}
+site/tool name
+{% endblock %}
+
+{% block header_login %}
+{% endblock %}
+
+{% block footer %}
+email, copyright, ...
+{% endblock %}

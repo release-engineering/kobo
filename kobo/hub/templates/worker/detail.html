@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<h2>Worker #{{ worker.id }}: {{ worker.name }}</h2>
+
+<h3>Details</h3>
+<table class="details">
+  <tr>
+    <th>{% trans "ID" %}</th>
+    <td>{{ worker.id }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Name" %}</th>
+    <td>{{ worker.name }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Arches" %}</th>
+    <td>{{ worker.get_arches_display }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Load" %}</th>
+    <td>{{ worker.current_load }} / {{ worker.max_load }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Tasks" %}</th>
+    <td>{{ worker.task_count }} / {{ worker.max_tasks }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Enabled" %}</th>
+    <td>{% if worker.enabled %}<span class="FREE">YES</span>{% else %}<span class="FAILED">NO</span>{% endif %}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Ready" %}</th>
+    <td>{% if worker.ready %}<span class="FREE">YES</span>{% else %}<span class="FAILED">NO</span>{% endif %}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Last update" %}</th>
+    <td>{{ worker.dt_last_update|date:"Y-m-d H:i:s" }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Channels" %}</th>
+    <td>{{ worker.get_channels_display }}</td>
+  </tr>
+</table>
+
+{% endblock %}

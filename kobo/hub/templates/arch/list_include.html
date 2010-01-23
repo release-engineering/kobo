@@ -1,0 +1,14 @@
+{% load i18n %}
+
+<table class="list" width="100%">
+  <tr>
+    <th>{% trans "Name" %}</th>
+    <th>{% trans "Workers" %}</th>
+  </tr>
+{% for arch in arch_list %}
+  <tr>
+    <td><a href="{% url arch/detail arch.id %}">{{ arch.name }}</a></td>
+    <td>{{ arch.worker_count }}</td>
+  </tr>
+{% endfor %}
+</table>

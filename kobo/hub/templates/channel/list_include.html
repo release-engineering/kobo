@@ -1,0 +1,14 @@
+{% load i18n %}
+
+<table class="list" width="100%">
+  <tr>
+    <th>{% trans "Name" %}</th>
+    <th>{% trans "Workers" %}</th>
+  </tr>
+{% for channel in channel_list %}
+  <tr>
+    <td><a href="{% url channel/detail channel.id %}">{{ channel.name }}</a></td>
+    <td>{{ channel.worker_count }}</td>
+  </tr>
+{% endfor %}
+</table>

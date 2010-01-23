@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<h2>Task #{{ task.id }}: {{ task.method }}</h2>
+
+<h3>Details</h3>
+<table class="details">
+  <tr>
+    <th>{% trans "ID" %}</th>
+    <td>{{ task.id }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Method" %}</th>
+    <td>{{ task.method }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Args" %}</th>
+    <td>{% for arg in task.get_args_display.iteritems %}<b>{{ arg.0 }}:</b> {{ arg.1 }}<br />{% endfor %}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Label" %}</th>
+    <td>{{ task.label }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "State" %}</th>
+    <td class="{{ task.get_state_display }}">{{ task.get_state_display }}</td>
+  </tr>
+
+  <tr>
+    <th>{% trans "Worker" %}</th>
+    <td>{% if task.worker %}{{ task.worker }}{% endif %}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Channel" %}</th>
+    <td>{{ task.channel }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Arch" %}</th>
+    <td>{{ task.arch }}</td>
+  </tr>
+
+  <tr>
+    <th>{% trans "Exclusive" %}</th>
+    <td>{{ task.exclusive }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Priority" %}</th>
+    <td>{{ task.exclusive }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Waiting" %}</th>
+    <td>{{ task.waiting }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Awaited" %}</th>
+    <td>{{ task.awaited }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Owner" %}</th>
+    <td>{{ task.owner }}</td>
+  </tr>
+{% if task.resubmitted_by %}
+  <tr>
+    <th>{% trans "Resubmitted by" %}</th>
+    <td>{{ task.resubmitted_by }}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Resubmitted from" %}</th>
+    <td>#{{ task.resubmitted_from.id }} <a href="{{ URL_PREFIX }}/task/{{ task.resubmitted_from.id }}/">task</a></td>
+  </tr>
+{% endif %}
+  <tr>
+    <th>{% trans "Comment" %}</th>
+    <td>{% if task.comment %}{{ task.comment }}{% endif %}</td>
+  </tr>
+</table>
+
+
+<h3>Log</h3>
+<pre class="log">
+{{ task.result }}
+</pre>
+
+
+{% if task.traceback %}
+{% if user.is_superuser %}
+<h3>Traceback</h3>
+<pre class="log">
+{{ task.traceback }}
+</pre>
+{% endif %}
+{% endif %}
+
+
+{% if task_list %}
+<h3>Subtask list</h3>
+{% include "task/list_include.html" %}
+{% endif %}
+
+{% endblock %}

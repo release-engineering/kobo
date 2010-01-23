@@ -1,0 +1,28 @@
+{% load i18n %}
+
+<table class="list" width="100%">
+  <tr>
+    <th>{% trans "ID" %}</th>
+    <th>{% trans "Method" %}</th>
+    <th>{% trans "Owner" %}</th>
+    <th>{% trans "State" %}</th>
+    <th>{% trans "Label" %}</th>
+    <th>{% trans "Worker" %}</th>
+    <th>{% trans "Created" %}</th>
+    <th>{% trans "Finished" %}</th>
+    <th>{% trans "Subtask #" %}</th>
+  </tr>
+{% for task in task_list %}
+  <tr>
+    <td><a href="{% url task/detail task.id %}">{{ task.id }}</a></td>
+    <td>{{ task.method }}</td>
+    <td>{{ task.owner }}</td>
+    <td class="{{ task.get_state_display }}">{{ task.get_state_display }}</td>
+    <td>{{ task.label }}</td>
+    <td>{% if task.worker %}{{ task.worker }}{% endif %}</td>
+    <td>{{ task.dt_created|date:"Y-m-d H:i:s" }}</td>
+    <td>{{ task.dt_finished|date:"Y-m-d H:i:s" }}</td>
+    <td>{{ task.subtask_count }}</td>
+  </tr>
+{% endfor %}
+</table>
