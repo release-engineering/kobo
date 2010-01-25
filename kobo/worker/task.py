@@ -136,7 +136,7 @@ class TaskBase(Plugin):
         fail = False
         for i in finished:
             state = self.hub.worker.get_task(i)
-            if state != TASK_STATES['CLOSED']:
+            if state['state'] != TASK_STATES['CLOSED']:
                 fail = True
             self._subtask_list.remove(i)
 
