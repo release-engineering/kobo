@@ -31,6 +31,14 @@ class ContainerC(ContainerB):
     def normalize_name(cls, name):
         return name.upper()
 
+class ContainerD(PluginContainer):
+    pass
+
+class ContainerE(ContainerC, ContainerD):
+    @classmethod
+    def normalize_name(cls, name):
+        return name.upper()
+
 
 class TestConf(unittest.TestCase):
     def setUp(self):
@@ -87,16 +95,16 @@ class TestConf(unittest.TestCase):
         ContainerC.register_plugin(PluginC)
 
         container_a = ContainerA()
-        self.assertEqual(container_a["PluginA"].container, container_a.__class__)
+        self.assertEqual(container_a["PluginA"].container, container_a)
 
         container_b = ContainerB()
-        self.assertEqual(container_b["PluginA"].container, container_b.__class__)
-        self.assertEqual(container_b["PluginB"].container, container_b.__class__)
+        self.assertEqual(container_b["PluginA"].container, container_b)
+        self.assertEqual(container_b["PluginB"].container, container_b)
 
         container_c = ContainerC()
-        self.assertEqual(container_c["PluginA"].container, container_c.__class__)
-        self.assertEqual(container_c["PluginB"].container, container_c.__class__)
-        self.assertEqual(container_c["PluginC"].container, container_c.__class__)
+        self.assertEqual(container_c["PluginA"].container, container_c)
+        self.assertEqual(container_c["PluginB"].container, container_c)
+        self.assertEqual(container_c["PluginC"].container, container_c)
 
 
     def test_disabled_plugin(self):
@@ -110,12 +118,17 @@ class TestConf(unittest.TestCase):
         class PLUGINA(Plugin):
             enabled = True
 
+        class pluginA(Plugin):
+            enabled = True
+
         ContainerA.register_plugin(PluginA)
         container_a = ContainerA()
 
-        ContainerC.register_plugin(PLUGINA)
-        container_c = ContainerC()
-        self.assertRaises(RuntimeError, getattr, container_c, "plugins")
+        ContainerD.register_plugin(PLUGINA)
+        container_d = ContainerD()
+
+        container_e = ContainerE()
+        self.assertRaises(RuntimeError, getattr, container_e, "plugins")
 
 
 if __name__ == '__main__':

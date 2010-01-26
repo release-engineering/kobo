@@ -1,6 +1,24 @@
 # -*- coding: utf-8 -*-
 
 
+"""
+IMPORTANT: Avoid cycles in container inheritance.
+
+If you need multiple inheritance, never do this:
+  - class A(PluginContainer)
+  - class B(A)
+  - class C(A)
+  - class D(B, C) # wrong! both C and B inherit from A; this ends with TypeError: Cannot create a consistent method resolution order (MRO)...
+
+Always make sure all trees inherit from PluginContainer:
+  - class A(PluginContainer)
+  - class B(A)
+  - class C(PluginContainer)
+  - class D(C)
+  - class E(C, D) # correct, the only common predecesor is PluginContainer
+"""
+
+
 import os
 
 
@@ -65,24 +83,18 @@ class PluginContainer(object):
     @classmethod
     def _get_plugins(cls):
         """Return dictionary of registered plugins."""
-        all_plugins = []
-        if hasattr(cls, "_class_plugins"):
-            all_plugins += cls._class_plugins.values()
-        all_plugins += cls._get_parent_plugins()
 
-        plugins = {}
-        for plugin_class in all_plugins:
-            name = plugin_class.__name__
-            normalized_name = cls.normalize_name(name)
-            if normalized_name in plugins:
-               raise RuntimeError("Cannot register plugin '%s'. Another plugin with the same normalized name (%s) is already in the container." % (name, normalized_name))
-            plugins[normalized_name] = type(plugin_class.__name__, (plugin_class, ), {"container": cls})
-        return plugins
+        result = {}
+        parent_plugins = cls._get_parent_plugins(cls.normalize_name).items()
+        class_plugins = getattr(cls, "_class_plugins", {}).items()
+        for name, plugin_class in parent_plugins + class_plugins:
+            result[name] = type(plugin_class.__name__, (plugin_class, ), {})
+        return result
 
 
     @classmethod
-    def _get_parent_plugins(cls):
-        result = []
+    def _get_parent_plugins(cls, normalize_function):
+        result = {}
         for parent in cls.__bases__:
             if parent is PluginContainer:
                 # don't use PluginContainer itself - plugins have to be registered to subclasses
@@ -92,9 +104,20 @@ class PluginContainer(object):
                 # skip parents which are not PluginContainer subclasses
                 continue
 
+            # read inherited plugins first (conflicts are resolved recursively)
+            plugins = parent._get_parent_plugins(normalize_function)
+
+            # read class plugins, override inherited on name conflicts
             if hasattr(parent, "_class_plugins"):
-                result.extend(parent._class_plugins.values())
-            result.extend(parent._get_parent_plugins())
+                for plugin_class in parent._class_plugins.values():
+                    normalized_name = normalize_function(plugin_class.__name__)
+                    plugins[normalized_name] = plugin_class
+
+            for name, value in plugins.iteritems():
+                if result.get(name, value) != value:
+                   raise RuntimeError("Cannot register plugin '%s'. Another plugin with the same normalized name (%s) is already in the container." % (str(value), normalized_name))
+
+            result.update(plugins)
 
         return result
 
@@ -113,7 +136,9 @@ class PluginContainer(object):
         if normalized_name not in self.plugins:
             raise KeyError("Plugin not found: %s" % normalized_name)
 
-        return self.plugins[normalized_name]
+        plugin = self.plugins[normalized_name]
+        plugin.container = self
+        return plugin
 
 
     @classmethod
