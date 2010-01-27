@@ -69,6 +69,20 @@ class TestUtils(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
 
+    def test_save_to_file(self):
+        save_to_file(self.tmp_file, "foo")
+        self.assertEqual("\n".join(read_from_file(self.tmp_file)), "foo")
+
+        save_to_file(self.tmp_file, "\nbar", append=True, mode=600)
+        self.assertEqual("\n".join(read_from_file(self.tmp_file)), "foo\nbar")
+
+        # append doesn't modify existing perms
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0777, 0644)
+
+        os.unlink(self.tmp_file)
+        save_to_file(self.tmp_file, "foo", append=True, mode=0600)
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0777, 0600)
+
     def test_run(self):
         ret, out = run("echo hello")
         self.assertEqual(ret, 0)

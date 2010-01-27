@@ -159,14 +159,14 @@ def read_from_file(filename, lines=None, re_filter=None):
     return result
 
 
-def save_to_file(filename, text, append=False):
+def save_to_file(filename, text, append=False, mode=0644):
     """Save text to a file."""
-    if append:
-        fo = open(filename, "a+")
+    if append and os.path.exists(filename):
+        fd = os.open(filename, os.O_RDWR | os.O_APPEND, mode)
     else:
-        fo = open(filename, "wb")
-    fo.write(text)
-    fo.close()
+        fd = os.open(filename, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
+    os.write(fd, text)
+    os.close(fd)
 
 
 def save(*args, **kwargs):
