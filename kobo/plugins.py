@@ -57,11 +57,8 @@ class PluginContainer(object):
     """
 
     __slots__ = (
-        "lower_case",
         "_plugins"
     )
-
-    lower_case = False
 
 
     def __getitem__(self, name):
@@ -74,10 +71,7 @@ class PluginContainer(object):
 
     @classmethod
     def normalize_name(cls, name):
-        result = name
-        if getattr(cls, "lower_case", False):
-            return result.lower()
-        return result
+        return name
 
 
     @classmethod

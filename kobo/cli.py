@@ -119,15 +119,11 @@ class Command(Plugin):
 
 class CommandContainer(PluginContainer):
     """Container for Command classes."""
-    lower_case = True
 
     @classmethod
     def normalize_name(cls, name):
         """Replace some characters in command names."""
-        result = super(cls, cls).normalize_name(name)
-        result = result.replace('_', '-')
-        result = result.replace(' ', '-')
-        return result
+        return name.lower().replace('_', '-').replace(' ', '-')
 
 
 class CommandOptionParser(OptionParser):
@@ -183,7 +179,7 @@ class CommandOptionParser(OptionParser):
             command = self.default_command
             # keep args as is
 
-        if not command in self.container:
+        if not command in self.container.plugins:
             self.error("unknown command: %s" % command)
 
         CommandClass = self.container[command]
