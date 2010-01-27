@@ -427,6 +427,7 @@ class TaskManager(object):
         try:
             task.run()
         except (Exception, SystemExit), outer_ex:
+            exc_info = sys.exc_info()
             thread.terminate = True
             thread.join()
             try:
@@ -443,8 +444,8 @@ class TaskManager(object):
                     self.hub.worker.fail_task(task.task_id, get_stdout())
             except FailTaskException, ex:
                 self.hub.worker.fail_task(task.task_id, get_stdout())
-            except Exception:
-                traceback = Traceback()
+            except:
+                traceback = Traceback(exc_info=exc_info)
                 self.hub.worker.fail_task(task.task_id, get_stdout(), traceback.get_traceback())
         else:
             thread.terminate = True
