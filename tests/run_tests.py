@@ -12,6 +12,7 @@ import sys
 # prepare environment for tests
 PROJECT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 os.environ["PYTHONPATH"] = PROJECT_DIR
+os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 sys.path.insert(0, PROJECT_DIR)
 
 
