@@ -254,7 +254,7 @@ def check_wait(request, task_id, child_list=None):
 
 
 @validate_worker
-def upload_task_log(request, task_id, relative_path, chunk_start, chunk_len, chunk_checksum, encoded_chunk):
+def upload_task_log(request, task_id, relative_path, mode, chunk_start, chunk_len, chunk_checksum, encoded_chunk):
     """
     Upload a task log.
 
@@ -262,6 +262,8 @@ def upload_task_log(request, task_id, relative_path, chunk_start, chunk_len, chu
     @type  task_id: int
     @param relative_path: relative path (under task_dir) to the log file
     @type  relative_path: str
+    @param mode: file perms (example: 0644)
+    @type  mode: int
     @param chunk_start: chunk start position in the file (-1 for append)
     @type  chunk_start: str
     @param chunk_len: chunk length
@@ -278,13 +280,13 @@ def upload_task_log(request, task_id, relative_path, chunk_start, chunk_len, chu
         raise ValueError("Invalid upload path: %s" % relative_path)
 
     task = Task.objects.get(id=task_id)
-    full_path = os.path.join(Task.task_dir, relative_path)
+    full_path = os.path.join(task.task_dir(), relative_path)
     if task.state != TASK_STATES["OPEN"]:
         raise ValueError("Can't upload file for a task which is not OPEN: %s" % task_id)
 
     try:
-        decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, write_to=full_path)
-    except:
+        decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, write_to=full_path, mode=mode)
+    except ValueError:
         return False
 
     return True

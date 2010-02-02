@@ -290,7 +290,7 @@ class HubProxy(object):
         return upload_id, err_code, err_msg
 
 
-    def upload_task_log(self, file_obj, task_id, remote_file_name, append=True):
+    def upload_task_log(self, file_obj, task_id, remote_file_name, append=True, mode=0644):
         """
         Upload a task log to the hub.
 
@@ -302,6 +302,8 @@ class HubProxy(object):
         @type  remove_file_name: str
         @param append: append at the end of existing file instead of rewriting it
         @type  append: bool
+        @param mode: file perms (example: 0644)
+        @type  mode: int
         """
 
         for (chunk_start, chunk_len, chunk_checksum, encoded_chunk) in encode_xmlrpc_chunks_iterator(file_obj):
@@ -310,4 +312,4 @@ class HubProxy(object):
                 if chunk_len == -1:
                     # skip finializing chunk
                     break
-            self._hub.worker.upload_task_log(task_id, remote_file_name, chunk_start, chunk_len, chunk_checksum, encoded_chunk)
+            self._hub.worker.upload_task_log(task_id, remote_file_name, mode, chunk_start, chunk_len, chunk_checksum, encoded_chunk)
