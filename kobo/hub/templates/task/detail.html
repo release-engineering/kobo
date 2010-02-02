@@ -71,13 +71,25 @@
   </tr>
 {% endif %}
   <tr>
+    <th>{% trans "Created" %}</th>
+    <td>{% if task.dt_created %}{{ task.dt_created|date:"Y-m-d H:i:s" }}{% endif %}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Started" %}</th>
+    <td>{% if task.dt_started %}{{ task.dt_started|date:"Y-m-d H:i:s" }}{% endif %}</td>
+  </tr>
+  <tr>
+    <th>{% trans "Finished" %}</th>
+    <td>{% if task.dt_finished %}{{ task.dt_finished|date:"Y-m-d H:i:s" }}{% endif %}</td>
+  </tr>
+  <tr>
     <th>{% trans "Comment" %}</th>
     <td>{% if task.comment %}{{ task.comment }}{% endif %}</td>
   </tr>
 </table>
 
 
-<h3>Log</h3>
+<h3>Result</h3>
 <pre class="log">
 {{ task.result }}
 </pre>
