@@ -404,6 +404,15 @@ class Task(models.Model):
         return load_dict(self.args)
 
 
+    def get_args_display(self):
+        """Deserialize args dictionary to human readable form"""
+        from django.utils.datastructures import SortedDict
+        result = SortedDict()
+        for key, value in sorted(self.get_args().items()):
+           result[key] = simplejson.dumps(value)
+        return result
+
+
     def export(self, flat=True):
         """Export data for xml-rpc."""
 
