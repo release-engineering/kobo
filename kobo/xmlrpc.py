@@ -195,7 +195,7 @@ def encode_xmlrpc_chunks_iterator(file_obj):
     yield (str(chunk_start), -1, checksum.hexdigest().lower(), "")
 
 
-def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, write_to=None, perms=0644):
+def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, write_to=None, mode=0644):
     """
     Decode a data chunk and optionally write it to a file.
 
@@ -209,8 +209,8 @@ def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, w
     @type  encoded_chunk: str
     @param write_to: path to a file in which the decoded data will be written
     @type  write_to: str
-    @param perms: file permissions (umask format)
-    @type  perms: int
+    @param mode: file permissions (example: 0644)
+    @type  mode: int
     @return: decoded data
     @rtype:  str
     """
@@ -236,7 +236,7 @@ def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, w
     if not os.path.isdir(target_dir):
         os.makedirs(target_dir, mode=0755)
 
-    fd = os.open(write_to, os.O_RDWR | os.O_CREAT, perms)
+    fd = os.open(write_to, os.O_RDWR | os.O_CREAT, mode)
     fcntl.lockf(fd, fcntl.LOCK_EX|fcntl.LOCK_NB)
     try:
         if chunk_start != -1:
