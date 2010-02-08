@@ -142,9 +142,9 @@ def open_task(request, task_id):
 
 
 @validate_worker
-def close_task(request, task_id, result=None):
+def close_task(request, task_id, task_result):
     task = Task.objects.get_and_verify(task_id=task_id, worker=request.worker)
-    return task.close_task(result)
+    return task.close_task(task_result=task_result)
 
 
 @validate_worker
@@ -154,9 +154,9 @@ def cancel_task(request, task_id):
 
 
 @validate_worker
-def fail_task(request, task_id, result=None, traceback=None):
+def fail_task(request, task_id, task_result):
     task = Task.objects.get_and_verify(task_id=task_id, worker=request.worker)
-    return task.fail_task(result, traceback)
+    return task.fail_task(task_result=task_result)
 
 
 @validate_worker

@@ -2,16 +2,16 @@
 
 import os
 import datetime
-import simplejson
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models, connection, transaction
+from django.utils.simplejson import simplejson
 from django.utils.translation import ugettext_lazy as _
 
 from kobo.client.constants import *
-from kobo.shortcuts import random_string
+from kobo.shortcuts import random_string, read_from_file, save_to_file
 
 
 def dump_dict(**kwargs):
@@ -221,6 +221,96 @@ class TaskManager(models.Manager):
         return self.filter(state=TASK_STATES["TIMEOUT"]).order_by("-exclusive", "id")
 
 
+class TaskLogs(object):
+    """Task log wrapper."""
+    __slots__ = (
+        "cache",   # log cache
+        "changed", # changed logs, will be written on save()
+        "task",
+    )
+
+
+    def __init__(self, task_obj):
+        self.cache = {}
+        self.changed = {}
+        self.task = task_obj
+
+
+    def _get_absolute_log_path(self, name):
+        task_dir = self.task.task_dir(self.task.id)
+        log_path = os.path.abspath(os.path.join(self.task.task_dir(), name))
+        if not log_path.startswith(task_dir):
+            # make sure log is under task_dir
+            raise RuntimeError("Invalid log abspath.")
+        return log_path
+
+
+    def _get_relative_log_path(self, name):
+        log_path = os.path.normpath(name)
+        if log_path.startswith(".."):
+            raise RuntimeError("Invalid log normpath.")
+        return log_path
+
+
+    def __getitem__(self, name):
+        name = self._get_relative_log_path(name)
+        if name not in self.cache:
+            # task.id is still not set. Return empty string.
+            if self.task.id is None:
+                return ""
+
+            log_path = self._get_absolute_log_path(name)
+            if os.path.isfile(log_path):
+                self.cache[name] = "\n".join(read_from_file(log_path))
+            else:
+                self.cache[name] = ""
+            self.changed[name] = False
+
+
+        return self.cache[name]
+
+
+    def __setitem__(self, name, value):
+        name = self._get_relative_log_path(name)
+        self.cache[name] = value
+        self.changed[name] = True
+
+
+    def save(self):
+        for log in self.cache:
+            if not self.changed.get(log, True):
+                continue
+            log_path = self._get_absolute_log_path(log)
+            if os.path.basename(log).startswith("traceback"):
+                mode = 0600
+            else:
+                mode = 0644
+            save_to_file(log_path, self.cache[log], mode=mode)
+            self.changed[log] = False
+
+
+    @property
+    def list(self):
+        result = []
+
+        if self.task.id is not None:
+            task_dir = self.task.task_dir()
+            if not task_dir.endswith("/"):
+                task_dir += "/"
+
+            # logs on disk
+            for root, dirs, files in os.walk(task_dir):
+                for i in files:
+                    result.append(os.path.join(root, i)[len(task_dir):])
+
+        # cached logs
+        for log in self.cache:
+            if log not in result:
+                result.append(log)
+
+        return result
+
+
 class Task(models.Model):
     """Model for hub_task table."""
     archive             = models.BooleanField(default=False, help_text=_("When a task is archived, it disappears from admin interface and cannot be accessed by taskd.<br />Make sure that archived tasks are finished and you won't need them anymore."))
@@ -233,7 +323,7 @@ class Task(models.Model):
 
     method              = models.CharField(max_length=255, help_text=_("Method name represents appropriate task handler."))
     args                = models.TextField(blank=True, help_text=_("Method arguments. JSON serialized dictionary."))
-    result              = models.TextField(null=True, blank=True, help_text=_("Can be used for logging task progress."))
+    result              = models.TextField(blank=True, help_text=_("Task result. Do not store a lot of data here (use HubProxy.upload_task_log instead)."))
     comment             = models.TextField(null=True, blank=True)
 
     arch                = models.ForeignKey(Arch)
@@ -260,10 +350,17 @@ class Task(models.Model):
 
 
     def __init__(self, *args, **kwargs):
-        traceback = kwargs.pop('traceback', None)
+        self.logs = TaskLogs(self)
+        traceback = kwargs.pop("traceback", None)
         if traceback:
-            self.traceback = traceback
-        return super(Task, self).__init__(*args, **kwargs)
+            self.logs["traceback.log"] = traceback
+
+        stdout = kwargs.pop("stdout", None)
+        if stdout:
+            self.logs["stdout.log"] = stdout
+
+        super(Task, self).__init__(*args, **kwargs)
+
 
     class Meta:
         ordering = ("-id", )
@@ -276,45 +373,13 @@ class Task(models.Model):
 
 
     def save(self):
-        # save traceback
-        if getattr(self, '_traceback_changed', False):
-            try:
-                path = os.path.join(self.task_dir(create=True), 'traceback.log')
-                # TODO: default permissions?
-                f = open(path, 'wt')
-                f.write(value)
-                f.close()
-                self._traceback_changed = False # reset save flag
-            except IOError, ex:
-                raise ex
-
-        # db save
+        # save to db to precalculate subtask counts and obtain an ID (on insert) for stdout and traceback
         self.subtask_count = self.subtasks().count()
         super(self.__class__, self).save()
-
+        self.logs.save()
         if self.parent:
-            # save parent as well to compute new subtask count
             self.parent.save()
 
-
-    def _get_traceback(self):
-        if self.id is None:
-            raise ValueError('You need to save task, before you can use tracebacks.')
-        if not getattr(self, '_traceback_cache', None):
-            path = os.path.join(self.task_dir(self.id), 'traceback.log')
-            try:
-                self._traceback_cache = open(path, 'rt').read()
-            except IOError:
-                self._traceback_cache = ''
-        return self._traceback_cache
-
-    def _set_traceback(self, value):
-        if self.id is None:
-            raise ValueError('You need to save task, before you can use tracebacks.')
-        self._traceback_cache = value
-        self._traceback_changed = True
-
-    traceback = property(_get_traceback, _set_traceback)
 
     @classmethod
     def get_task_dir(cls, task_id, create=False):
@@ -337,8 +402,10 @@ class Task(models.Model):
 
         return path
 
+
     def task_dir(self, create=False):
-        return Task.get_task_dir(self.task_id, create)
+        return Task.get_task_dir(self.id, create)
+
 
     @classmethod
     def create_task(cls, owner_name, label, method, args=None, comment=None, parent_id=None, worker_name=None, arch_name="noarch", channel_name="default", timeout=None, priority=10, weight=1, exclusive=False, resubmitted_by=None, resubmitted_from=None):
@@ -409,7 +476,7 @@ class Task(models.Model):
         from django.utils.datastructures import SortedDict
         result = SortedDict()
         for key, value in sorted(self.get_args().items()):
-           result[key] = simplejson.dumps(value)
+            result[key] = simplejson.dumps(value)
         return result
 
 
@@ -427,7 +494,6 @@ class Task(models.Model):
             "method": self.method,
             "args": self.get_args(),
             "result": self.result,
-#            "traceback": self.traceback,
 
             "exclusive": self.exclusive,
             "arch": self.arch_id,
@@ -435,8 +501,8 @@ class Task(models.Model):
             "timeout": self.timeout,
             "waiting": self.waiting,
             "awaited": self.awaited,
-            "dt_started": self.dt_started and datetime.datetime.strftime(self.dt_started, "%Y-%m-%d %H:%M:%S") or None,
             "dt_created": datetime.datetime.strftime(self.dt_created, "%F %R:%S"),
+            "dt_started": self.dt_started and datetime.datetime.strftime(self.dt_started, "%Y-%m-%d %H:%M:%S") or None,
             "dt_finished": self.dt_finished and datetime.datetime.strftime(self.dt_finished, "%F %R:%S") or None,
             "priority": self.priority,
             "weight": self.weight,
@@ -515,9 +581,18 @@ WHERE
   and (worker_id is null or worker_id=%%s)
 """ % { "initial_states": ",".join(( "'%s'" % i for i in initial_states )), }
 
-        dt_started = (self.dt_started, datetime.datetime.now())[new_state == TASK_STATES["OPEN"]]
-        dt_finished = (None, datetime.datetime.now())[new_state in [TASK_STATES["CLOSED"], TASK_STATES["INTERRUPTED"], TASK_STATES["CANCELED"], TASK_STATES["FAILED"]]]
-        new_worker_id = (worker_id, None)[new_state == TASK_STATES["FREE"]]
+        dt_started = self.dt_started
+        if new_state == TASK_STATES["OPEN"]:
+            dt_started = datetime.datetime.now()
+
+        dt_finished = self.dt_finished
+        if new_state in FINISHED_STATES:
+            dt_finished = datetime.datetime.now()
+
+        new_worker_id = worker_id
+        if new_state == TASK_STATES["FREE"]:
+            new_worker_id = None
+
         waiting = False
 
         transaction.enter_transaction_management()
@@ -537,7 +612,7 @@ WHERE
         transaction.commit()
         transaction.leave_transaction_management()
 
-        # is this necessary?
+        self.dt_started = dt_started
         self.dt_finished = dt_finished
         if new_worker_id is not None:
             self.worker = Worker.objects.get(id=new_worker_id)
@@ -576,11 +651,12 @@ WHERE
 
 
     @transaction.commit_on_success
-    def close_task(self, result=None):
+    def close_task(self, task_result=""):
         """Close the task and save result."""
-        if result:
-            self.result = result
+        if task_result:
+            self.result = task_result
             self.save()
+
         try:
             self.__lock(self.worker_id, new_state=TASK_STATES["CLOSED"], initial_states=(TASK_STATES["OPEN"], ))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
@@ -601,7 +677,7 @@ WHERE
 
         if recursive:
             for task in self.subtasks():
-                task.cancel(recursive=True)
+                task.cancel_task(recursive=True)
 
 
     def cancel_subtasks(self):
@@ -642,13 +718,10 @@ WHERE
 
 
     @transaction.commit_on_success
-    def fail_task(self, result=None, traceback=None):
-        """Fail this task and save result and traceback."""
-        if result is not None:
-            self.result = result
-        if traceback is not None:
-            self.traceback = traceback
-        if result is not None or traceback is not None:
+    def fail_task(self, task_result=""):
+        """Fail this task and save result."""
+        if task_result:
+            self.result = task_result
             self.save()
 
         try:
@@ -680,7 +753,8 @@ WHERE
             raise Exception("Cannot resubmit exclusive task: %s" % self.id)
 
         if self.state not in FAILED_STATES:
-            raise Exception("Task must be failed, canceled or interrupted: %s" % self.id)
+            states = [ TASK_STATES.get_value(i) for i in FAILED_STATES ]
+            raise Exception("Task '%s' must be in: %s" % (self.id, states))
 
         kwargs = {
             "owner_name": self.owner.username,

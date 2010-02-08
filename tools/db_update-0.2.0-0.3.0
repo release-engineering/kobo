@@ -8,10 +8,13 @@ db.
 
 import os
 import sys
+import pipes
 from django.db import connection
 from django.core import management
 from django.conf import settings
 from kobo.hub.models import Task
+from kobo.shortcuts import save_to_file, run
+
 
 def main():
     c = connection.cursor()
@@ -21,19 +24,18 @@ def main():
 
     # copy data from db to disk
     print 'copying data'
-    c.execute('SELECT id, traceback FROM hub_task')
+    c.execute('SELECT id, traceback, result FROM hub_task')
     l = c.fetchone()
     while l:
-        task_id, traceback = l
+        task_id, traceback, stdout = l
         print 'task', task_id
-        if not traceback:
-            l = c.fetchone()
-            continue
+        if traceback:
+            fpath = os.path.join(Task.get_task_dir(task_id, create=True), 'traceback.log')
+            save_to_file(fpath, traceback, mode=0600)
 
-        fpath = os.path.join(Task.get_task_dir(task_id), 'traceback.log')
-        f = open(fpath, 'wt')
-        f.write(traceback)
-        f.close()
+        if stdout:
+            fpath = os.path.join(Task.get_task_dir(task_id, create=True), 'stdout.log')
+            save_to_file(fpath, stdout, mode=0644)
 
         l = c.fetchone()
 
@@ -45,12 +47,16 @@ def main():
     print 'syncing db models'
     management.call_command('syncdb')
     c = connection.cursor()
-    c.execute('INSERT INTO hub_task (id,archive,owner_id,worker_id,parent_id,state,label,exclusive,method,args,result,comment,arch_id,channel_id,timeout,waiting,awaited,dt_created,dt_started,dt_finished,priority,weight,resubmitted_by_id,resubmitted_from_id,subtask_count) SELECT id,archive,owner_id,worker_id,parent_id,state,label,exclusive,method,args,result,comment,arch_id,channel_id,timeout,waiting,awaited,dt_created,dt_started,dt_finished,priority,weight,resubmitted_by_id,resubmitted_from_id,subtask_count FROM hub_task_save')
+    c.execute('INSERT INTO hub_task (id,archive,owner_id,worker_id,parent_id,state,label,exclusive,method,args,result,comment,arch_id,channel_id,timeout,waiting,awaited,dt_created,dt_started,dt_finished,priority,weight,resubmitted_by_id,resubmitted_from_id,subtask_count) SELECT id,archive,owner_id,worker_id,parent_id,state,label,exclusive,method,args,'',comment,arch_id,channel_id,timeout,waiting,awaited,dt_created,dt_started,dt_finished,priority,weight,resubmitted_by_id,resubmitted_from_id,subtask_count FROM hub_task_save')
 
     print 'cleanup'
     c.execute('DROP TABLE hub_task_save')
     c.execute('VACUUM')
     c.execute('ANALYZE')
+
+    # change TASK_DIR ownership to apache
+    run("chown -R apache:apache %s" % pipes.quote(settings.TASK_DIR))
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 2 and sys.argv[1] == '--force':

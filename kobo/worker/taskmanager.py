@@ -30,7 +30,6 @@ Struct: task_info
         "method": str,
         "args": dict,
         "result": str,
-        "traceback": str,
         "exclusive": bool,
         "arch": dict,
         "channel": dict,
@@ -399,10 +398,6 @@ class TaskManager(object):
 
 
     def run_task(self, task_info):
-        def get_stdout():
-            sys.stdout.seek(0)
-            return sys.stdout.read()
-
         TaskClass = self.task_container[task_info["method"]]
 
         # add *task_manager* attribute to foreground tasks
@@ -424,33 +419,35 @@ class TaskManager(object):
         thread = LoggingThread(hub, task_info["id"], sys.stdout._queue)
         thread.start()
 
+        failed = False
         try:
             task.run()
-        except (Exception, SystemExit), outer_ex:
-            exc_info = sys.exc_info()
+        except (ShutdownException, KeyboardInterrupt):
             thread.terminate = True
             thread.join()
-            try:
-                raise outer_ex
-            except (ShutdownException, KeyboardInterrupt):
-                if TaskClass.exclusive and TaskClass.foreground:
-                    self.hub.worker.close_task(task.task_id, "")
+            if TaskClass.foreground and TaskClass.exclusive:
+                # close task (shutdown-worker and similar control tasks) and raise
+                self.hub.worker.close_task(task.task_id, task.result)
                 raise
-            except SystemExit, ex:
-                if len(ex.args) == 0 or ex.args[0] == 0:
-                    self.hub.worker.close_task(task.task_id, get_stdout())
-                else:
-                    sys.stdout.write("\nProgram has exited with return code '%s'." % ex.args[0])
-                    self.hub.worker.fail_task(task.task_id, get_stdout())
-            except FailTaskException, ex:
-                self.hub.worker.fail_task(task.task_id, get_stdout())
-            except:
-                traceback = Traceback(exc_info=exc_info)
-                self.hub.worker.fail_task(task.task_id, get_stdout(), traceback.get_traceback())
+            # interrupt otherwise
+            self.hub.worker.interrupt_tasks([task.task_id])
+            return
+        except SystemExit, ex:
+            if len(ex.args) > 0 and ex.args[0] != 0:
+                sys.stdout.write("\nProgram has exited with return code '%s'." % ex.args[0])
+                failed = True
+        except FailTaskException, ex:
+            failed = True
+        except:
+            self.hub.upload_task_log(StringIO(Traceback().get_traceback()), task.task_id, "traceback.log", mode=0600)
+            failed = True
+
+        thread.terminate = True
+        thread.join()
+        if failed:
+            self.hub.worker.fail_task(task.task_id, task.result)
         else:
-            thread.terminate = True
-            thread.join()
-            self.hub.worker.close_task(task.task_id, get_stdout())
+            self.hub.worker.close_task(task.task_id, task.result)
 
 
     def is_finished_task(self, task_id):
@@ -582,9 +579,6 @@ class LoggingThread(threading.Thread):
             try:
                 self.hub.upload_task_log(StringIO(self.data_to_send), self.task_id, "stdout.log", append=True)
             except Fault:
-                from kobo.tback import Traceback
-                open("/tmp/log_fault", "w").write(Traceback().get_traceback())
-
                 # send failed, keep data for the next send() call
                 pass
             else:
@@ -600,14 +594,10 @@ class LoggingThread(threading.Thread):
 
 
     def run(self):
-        try:
-            while not self.terminate:
-                time.sleep(1)
-                self.send()
-            self.finish()
-        except:
-            from kobo.tback import Traceback
-            open("/tmp/log", "w").write(Traceback().get_traceback())
+        while not self.terminate:
+            time.sleep(1)
+            self.send()
+        self.finish()
 
 
 class LoggingStringIO(object):

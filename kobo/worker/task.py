@@ -39,6 +39,7 @@ class TaskBase(Plugin):
         "_task_manager",
         "_subtask_list",
         "_args",
+        "result",
     )
 
 
@@ -49,6 +50,7 @@ class TaskBase(Plugin):
         self._task_manager = None  # created by taskmanager (only for foreground tasks)
         self._args = args
         self._subtask_list = []
+        self.result = ""
 
 
     @property

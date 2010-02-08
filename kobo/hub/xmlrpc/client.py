@@ -39,7 +39,7 @@ def get_tasks(request):
 @login_required
 def cancel_task(request, task_id):
     task = models.Task.objects.get(id=task_id)
-    return task.cancel(user=request.user)
+    return task.cancel_task(user=request.user)
 
 
 @login_required
