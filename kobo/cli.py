@@ -1,6 +1,71 @@
 # -*- coding: utf-8 -*-
 
 
+"""
+CommandOptionParser HOWTO
+=========================
+
+1) setup CommandContainer
+-------------------------
+# In case you don't need any special functionality, just import default CommandContainer.
+# Otherwise it's recommended to inherit your own container and extend it's functionality.
+# Typical use cases are shared configuration or shared XML-RPC connection.
+
+from kobo.cli import CommandContainer
+class MyCommandContainer(CommandContainer):
+    def __init__(self, *args, **kwargs):
+        CommandContainer.__init__(self, *args, **kwargs)
+        self.xmlrpc_client = ...
+
+
+2) write your own Commands
+--------------------------
+# It usually makes sense to inherit directly from Command class.
+# All common methods and attributes should be in the container.
+# Specify any OptionParser options in options() method.
+# OptionParser.parse_args() result is automatically passed to run(*args, **kwargs) method.
+# A OptionParser instance os available in self.parser attribute.
+
+class Make_Dirs(Command):
+    '''create directories'''
+    enabled = True
+    admin = False
+
+    def options(self):
+        self.parser.usage = "%%prog %s [options] <user>" % self.normalized_name
+        self.parser.add_option("-m", "--mode", help="set directory perms (0xxx)")
+
+    def run(self, *args, **kwargs):
+        if len(args) < 1:
+            self.parser.error("Please specify a directory")
+        mode = kwargs.pop("mode", "0755")
+        mode = int(mode, 0) # convert oct string to int
+
+        import os
+        for directory in args:
+            os.makedirs(directory, mode=mode)
+
+
+3) register commands to a container
+-----------------------------------
+# Register either either all plugins (register_plugin)
+# or all plugins in a module (register_module) to a container.
+# All plugins must have enabled=True otherwise they won't be registered.
+
+(My)CommandContainer.register_plugin(plugin_class)
+(My)CommandContainer.register_module(module_with_plugins)
+
+
+4) Use CommandOptionParser
+--------------------------
+command_container = (My)CommandContainer()
+parser = CommandOptionParser(command_container=command_container)
+parser.run()
+
+# See kobo.client.main for slightly advanced example.
+"""
+
+
 import sys
 from optparse import OptionParser, Option
 from xmlrpclib import Fault
@@ -84,9 +149,7 @@ class Command(Plugin):
     """An abstract class representing a command for CommandOptionParser."""
 
     __slots__ = (
-        "container",
         "parser",
-        "normalized_name",
         "admin",
     )
 
@@ -100,11 +163,9 @@ class Command(Plugin):
     are_you_sure_prompt = staticmethod(are_you_sure_prompt)
 
 
-    def __init__(self, container, parser):
+    def __init__(self, parser):
         Plugin.__init__(self)
-        self.container = container
         self.parser = parser
-        self.normalized_name = self.container.normalize_name(self.__class__.__name__)
 
 
     def options(self):
@@ -183,7 +244,7 @@ class CommandOptionParser(OptionParser):
             self.error("unknown command: %s" % command)
 
         CommandClass = self.container[command]
-        cmd = CommandClass(self.container, self)
+        cmd = CommandClass(self)
         if self.command != cmd.normalized_name:
             self.command = cmd.normalized_name
             cmd.options()
