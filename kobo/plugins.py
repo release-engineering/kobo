@@ -36,6 +36,7 @@ class Plugin(object):
         "version",
         "enabled",
         "container",
+        "normalized_name",
     )
 
     author = None
@@ -132,6 +133,7 @@ class PluginContainer(object):
 
         plugin = self.plugins[normalized_name]
         plugin.container = self
+        plugin.normalized_name = normalized_name
         return plugin
 
 
