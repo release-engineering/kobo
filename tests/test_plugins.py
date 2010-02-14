@@ -76,6 +76,10 @@ class TestConf(unittest.TestCase):
         self.assert_("PluginB" in container_b)
         self.assert_("PluginC" not in container_b)
 
+        self.assertEqual(container_a["PluginA"].normalized_name, "PluginA")
+        self.assertEqual(container_b["PluginA"].normalized_name, "PluginA")
+        self.assertEqual(container_c["PluginA"].normalized_name, "PLUGINA")
+
 
     def test_class_attributes(self):
         ContainerA.register_plugin(PluginA)
