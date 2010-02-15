@@ -11,6 +11,7 @@ from kobo.shortcuts import hex_string
 
 __all__ = (
     "FILE_DIGEST_ALGO_MAP",
+    "compare_nvr",
     "get_rpm_header",
     "get_header_field",
     "get_header_fields",
