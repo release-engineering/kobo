@@ -6,7 +6,7 @@ from kobo.client import ClientCommand
 
 
 class Watch_Tasks(ClientCommand):
-    """list all available push targets"""
+    """track progress of particular tasks"""
     enabled = True
 
 
