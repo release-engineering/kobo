@@ -7,7 +7,10 @@
   <link rel="stylesheet" href="{{ MEDIA_URL }}css/screen.css" type="text/css" media="screen" />
 {% block css %}
 {% endblock %}
+{% block head %}
+{% endblock %}
 </head>
+
 
 <body>
 <div id="header">{% block header_site_name %}{% endblock %}{% if title %} - {{ title }}{% endif %}
