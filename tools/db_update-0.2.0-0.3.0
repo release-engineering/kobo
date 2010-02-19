@@ -55,7 +55,8 @@ def main():
     c.execute('ANALYZE')
 
     # change TASK_DIR ownership to apache
-    run("chown -R apache:apache %s" % pipes.quote(settings.TASK_DIR))
+    print "recursively changing ownersip of '%s'" % settings.TASK_DIR
+    run("chown -R apache:apache %s" % pipes.quote(settings.TASK_DIR), show_cmd=True)
 
 
 if __name__ == "__main__":
