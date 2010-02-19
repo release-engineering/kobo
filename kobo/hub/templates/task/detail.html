@@ -95,13 +95,13 @@
 </pre>
 
 
-{% if task.traceback %}
-{% if user.is_superuser %}
-<h3>Traceback</h3>
-<pre class="log">
-{{ task.traceback }}
-</pre>
-{% endif %}
+{% if logs %}
+<h3>Logs</h3>
+<ul>
+{% for log in logs %}
+  <li><a href="{% url task/log task.id log %}">{{ log }}</a></li>
+{% endfor %}
+</ul>
 {% endif %}
 
 

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block head %}
+<script type="text/javascript" src="{{ MEDIA_URL }}/js/log_watcher.js"></script>
+<script type="text/javascript" language="javascript">
+document.log_watcher = new LogWatcher('{{ json_url }}', {{ offset }}, {{ task_finished }});
+document.log_watcher.watch();
+</script>
+{% endblock %}
+
+{% block content %}
+<h2>Task #{{ task.id }} - {{ log_name }}</h2>
+<a href="?format=txt">download</a>
+<pre class="log" id="log">
+{{ content }}
+</pre>
+
+{% endblock %}
