@@ -6,6 +6,8 @@ body {
 
 #header {
     background-color: #294172;
+    background: -moz-linear-gradient(top, #456dbf, #294172, #1c2c4c);
+    background: -webkit-gradient(linear, left top, left bottom, from(#456dbf), to(#1c2c4c), color-stop(0.5, #294172));
     color: #ffffff;
     border: 1px solid #444444;
     border-bottom: none;
@@ -86,6 +88,11 @@ body {
     text-align: center;
     padding: 0.2em;
     margin-top: 2em;
+}
+
+pre.log {
+    border: 1px solid #d0d0d0;
+    overflow: scroll;
 }
 
 table {
