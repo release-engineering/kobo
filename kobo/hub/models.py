@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models, connection, transaction
-from django.utils.simplejson import simplejson
+from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
 from kobo.client.constants import *
