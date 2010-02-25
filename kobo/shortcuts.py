@@ -233,10 +233,10 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
 
     if logfile:
         if show_cmd:
-            save(logfile, command)
-            save(logfile, output, append=True)
+            save_to_file(logfile, command)
+            save_to_file(logfile, output, append=True)
         else:
-            save(logfile, output)
+            save_to_file(logfile, output)
 
     if workdir is not None:
         os.chdir(cwd)
