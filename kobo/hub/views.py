@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
+from django.utils import simplejson
 
 from kobo.django.views.generic import object_list
 from kobo.hub.models import Task, Worker, Channel, Arch
