@@ -24,13 +24,13 @@ function GET_handler(log_watcher) {
 }
 
 function doWatch() {
-	if (!this.task_finished) {
+	if (!document.log_watcher.task_finished) {
 		client = getAjax();
 		client.onreadystatechange = GET_handler;
 		client.open('GET', document.log_watcher.json_url + '?offset=' + document.log_watcher.offset);
 		client.send();
 	}
-	if (!this.task_finished) {
+	if (!document.log_watcher.task_finished) {
 		setTimeout(doWatch, 5000);
 	}
 }
