@@ -80,7 +80,7 @@
         "pk": "1",
         "model": "hub.worker",
         "fields": {
-            "name": "localhost",
+            "name": "localhost.localdomain",
             "enabled": true,
             "max_load": 2,
             "max_tasks": 0,
