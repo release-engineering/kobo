@@ -12,6 +12,7 @@ __all__ = (
     "add_stderr_logger",
     "add_file_logger",
     "add_rotating_file_logger",
+    "LoggingBase",
 )
 
 
@@ -122,3 +123,37 @@ def add_rotating_file_logger(logger, logfile, log_level=None, format=None, mode=
     handler.setFormatter(logging.Formatter(format, datefmt="%Y-%m-%d %H:%M:%S"))
     handler.setLevel(log_level)
     logger.addHandler(handler)
+
+
+class LoggingBase(object):
+    """Inherit from this class to obtain log_* logging methods."""
+
+    __slots__ = (
+        "_logger",
+    )
+
+    def __init__(self, logger=None):
+        self._logger = logger
+
+    def __log(self, level, msg):
+        if self._logger is None:
+            return
+        self._logger.__log(level, msg)
+
+    def log_debug(self, msg):
+        self.__log(logging.DEBUG, msg)
+
+    def log_verbose(self, msg):
+        self.__log(logging.VERBOSE, msg)
+
+    def log_info(self, msg):
+        self.__log(logging.INFO, msg)
+
+    def log_warning(self, msg):
+        self.__log(logging.WARNING, msg)
+
+    def log_error(self, msg):
+        self.__log(logging.ERROR, msg)
+
+    def log_critical(self, msg):
+        self.__log(logging.CRITICAL, msg)
