@@ -58,6 +58,7 @@ from xmlrpclib import Fault, ProtocolError
 from cStringIO import StringIO
 
 import kobo.conf
+import kobo.worker.logger
 from kobo.client import HubProxy
 from kobo.exceptions import ShutdownException
 
@@ -411,20 +412,17 @@ class TaskManager(object):
 
         task = TaskClass(hub, task_info["id"], task_info["args"])
 
-
-
         # redirect stdout and stderr
-        sys.stdout = LoggingStringIO()
+        thread = kobo.worker.logger.LoggingThread(hub, task_info["id"])
+        sys.stdout = kobo.worker.logger.LoggingIO(open(os.devnull, "w"), thread)
         sys.stderr = sys.stdout
-        thread = LoggingThread(hub, task_info["id"], sys.stdout._queue)
         thread.start()
 
         failed = False
         try:
             task.run()
         except (ShutdownException, KeyboardInterrupt):
-            thread.terminate = True
-            thread.join()
+            thread.stop()
             if TaskClass.foreground and TaskClass.exclusive:
                 # close task (shutdown-worker and similar control tasks) and raise
                 self.hub.worker.close_task(task.task_id, task.result)
@@ -442,8 +440,7 @@ class TaskManager(object):
             self.hub.upload_task_log(StringIO(Traceback().get_traceback()), task.task_id, "traceback.log", mode=0600)
             failed = True
 
-        thread.terminate = True
-        thread.join()
+        thread.stop()
         if failed:
             self.hub.worker.fail_task(task.task_id, task.result)
         else:
@@ -529,94 +526,3 @@ class TaskManager(object):
         """Lock the task manager to finish all assigned tasks and exit."""
         self.locked = True
         self.logger.info("Locking...")
-
-
-class LoggingThread(threading.Thread):
-    """Send stdout data to hub in a background thread."""
-    __slots__ = (
-        "hub",
-        "task_id",
-        "queue",
-        "terminate",
-        "last_sent",
-        "data_to_send",
-    )
-
-
-    def __init__(self, hub, task_id, queue, *args, **kwargs):
-        threading.Thread.__init__(self, *args, **kwargs)
-        self.hub = hub
-        self.task_id = task_id
-        self.queue = queue
-        self.terminate = False
-        self.last_sent = datetime.datetime.now()
-        self.data_to_send = ""
-
-
-    def _has_data_to_send(self, force):
-        if force:
-            return True
-        if self.data_to_send:
-            return True
-        if self.queue.qsize() > 500:
-            return True
-        if not self.queue.empty() and (datetime.datetime.now() > self.last_sent + datetime.timedelta(seconds=1)):
-            return True
-        return False
-
-
-    def send(self, force=False):
-        if self._has_data_to_send(force):
-            while True:
-                try:
-                    self.data_to_send += self.queue.get(block=False)
-                except Queue.Empty:
-                    break
-
-            if not self.data_to_send:
-                return
-
-            try:
-                self.hub.upload_task_log(StringIO(self.data_to_send), self.task_id, "stdout.log", append=True)
-            except Fault:
-                # send failed, keep data for the next send() call
-                pass
-            else:
-                self.data_to_send = ""
-
-
-    def finish(self):
-        for i in xrange(3):
-            if self.send(force=True):
-                return True
-            time.sleep(1)
-        return False
-
-
-    def run(self):
-        while not self.terminate:
-            time.sleep(1)
-            self.send()
-        self.finish()
-
-
-class LoggingStringIO(object):
-    """StringIO wrapper also appends all written data to a Queue."""
-    __slots__ = (
-        "_stringio",
-        "_queue",
-    )
-
-
-    def __init__(self, *args, **kwargs):
-        self._stringio = StringIO(*args, **kwargs)
-        self._queue = Queue.Queue()
-
-
-    def write(self, buff):
-        self._queue.put(buff)
-        return self._stringio.write(buff)
-
-
-    def __getattr__(self, name):
-        return getattr(self._stringio, name)
