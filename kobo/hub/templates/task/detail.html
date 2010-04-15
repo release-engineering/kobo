@@ -99,7 +99,7 @@
 <h3>Logs</h3>
 <ul>
 {% for log in logs %}
-  <li><a href="{% url task/log task.id log %}">{{ log }}</a></li>
+  <li><a href="{% url task/log task.id log %}">{{ log }}</a> [<a href="{% url task/log task.id log %}?format=txt">download</a>]</li>
 {% endfor %}
 </ul>
 {% endif %}
