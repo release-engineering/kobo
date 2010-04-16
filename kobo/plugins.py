@@ -83,7 +83,7 @@ class PluginContainer(object):
         parent_plugins = cls._get_parent_plugins(cls.normalize_name).items()
         class_plugins = getattr(cls, "_class_plugins", {}).items()
         for name, plugin_class in parent_plugins + class_plugins:
-            result[name] = type(plugin_class.__name__, (plugin_class, ), {})
+            result[name] = type(plugin_class.__name__, (plugin_class, ), {"__doc__": plugin_class.__doc__})
         return result
 
 
