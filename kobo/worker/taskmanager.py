@@ -48,23 +48,20 @@ Struct: task_info
 import errno
 import os
 import sys
-import logging
 import signal
 import time
 import datetime
-import Queue
-import threading
 from xmlrpclib import Fault, ProtocolError
 from cStringIO import StringIO
 
 import kobo.conf
 import kobo.worker.logger
+import kobo.log
 from kobo.client import HubProxy
 from kobo.exceptions import ShutdownException
 
 from kobo.process import kill_process_group, get_process_status
 from kobo.tback import Traceback
-from kobo.log import add_rotating_file_logger
 from kobo.plugins import PluginContainer
 from kobo.conf import settings
 
@@ -87,13 +84,12 @@ class TaskContainer(PluginContainer):
     pass
 
 
-class TaskManager(object):
+class TaskManager(kobo.log.LoggingBase):
     """Task manager takes and executes new tasks."""
 
     __slots__ = (
         "hub",         	            # xml-rpc hub client
         "conf",
-        "logger",
         "task_container",
         "worker_info",              # worker information obtained from hub
         "pid_dict",                 # { task_id: pid }
@@ -104,6 +100,7 @@ class TaskManager(object):
 
 
     def __init__(self, logger=None, conf=None, **kwargs):
+        kobo.log.LoggingBase.__init__(self, logger)
         self.conf = kobo.conf.PyConfigParser()
 
         # load default config
@@ -122,16 +119,6 @@ class TaskManager(object):
         # update data from kwargs
         self.conf.load_from_dict(kwargs)
 
-        # setup logger
-        if logger is not None:
-            self.logger = logger
-        else:
-            self.logger = logging.getLogger("TaskManager")
-            self.logger.setLevel(logging.DEBUG)
-            log_level = logging._levelNames.get(self.conf["LOG_LEVEL"].upper())
-            log_file = self.conf["LOG_FILE"]
-            add_rotating_file_logger(self.logger, log_file, log_level=log_level)
-
         self.pid_dict = {}
         self.task_dict = {}
 
@@ -140,7 +127,7 @@ class TaskManager(object):
         self.task_container = TaskContainer()
 
         # self.hub is created here
-        self.hub = HubProxy(client_type="worker", logger=self.logger, conf=self.conf, **kwargs)
+        self.hub = HubProxy(client_type="worker", logger=self._logger, conf=self.conf, **kwargs)
         self.worker_info = self.hub.worker.get_worker_info()
         self.update_worker_info()
 
@@ -158,11 +145,11 @@ class TaskManager(object):
     def update_worker_info(self):
         """Update worker_info dictionary."""
 
-        self.logger.debug("Updating worker info.")
+        self.log_debug("Updating worker info.")
         try:
             self.worker_info = self.hub.worker.update_worker(self.worker_info["enabled"], self.worker_info["ready"], len(self.pid_dict))
         except ProtocolError, ex:
-            self.logger.error("Cannot update worker info: %s" % ex)
+            self.log_error("Cannot update worker info: %s" % ex)
             return
 
 
@@ -181,9 +168,9 @@ class TaskManager(object):
             try:
                 os.kill(self.pid_dict[task_info["id"]], signal.SIGUSR2)
             except OSError, ex:
-                self.logger.error("Cannot wake up task %s: %s" % (self._task_str(task_info), ex))
+                self.log_error("Cannot wake up task %s: %s" % (self._task_str(task_info), ex))
             else:
-                self.logger.info("Waking up task %s." % self._task_str(task_info))
+                self.log_info("Waking up task %s." % self._task_str(task_info))
 
 
     def update_tasks(self):
@@ -199,7 +186,7 @@ class TaskManager(object):
         timeout_list = []
 
         for task_info in self.hub.worker.get_worker_tasks():
-            self.logger.debug("Checking task: %s." % self._task_str(task_info))
+            self.log_debug("Checking task: %s." % self._task_str(task_info))
 
             if task_info["state"] == TASK_STATES["OPEN"] and task_info["id"] not in self.pid_dict:
                 # an interrupted task appears to be open, but running task manager doesn't track it in it's pid list
@@ -218,30 +205,30 @@ class TaskManager(object):
             self.wakeup_task(task_info)
 
         self.task_dict = task_list
-        self.logger.debug("Current tasks: %r" % self.task_dict.keys())
+        self.log_debug("Current tasks: %r" % self.task_dict.keys())
 
         if interrupted_list:
-            self.logger.warning("Closing interrupted tasks: %r" % sorted(interrupted_list))
+            self.log_warning("Closing interrupted tasks: %r" % sorted(interrupted_list))
             try:
                 self.hub.worker.interrupt_tasks(interrupted_list)
             except (ShutdownException, KeyboardInterrupt):
                 raise
             except Exception, ex:
-                self.logger.error("%s" % ex)
+                self.log_error("%s" % ex)
 
         if timeout_list:
-            self.logger.warning("Closing timed out tasks: %r" % sorted(timeout_list))
+            self.log_warning("Closing timed out tasks: %r" % sorted(timeout_list))
             try:
                 self.hub.worker.timeout_tasks(timeout_list)
             except (ShutdownException, KeyboardInterrupt):
                 raise
             except Exception, ex:
-                self.logger.error("%s" % ex)
+                self.log_error("%s" % ex)
 
-        self.logger.debug("pids: %s" % self.pid_dict.values())
+        self.log_debug("pids: %s" % self.pid_dict.values())
         for task_id in self.pid_dict.keys():
             if self.is_finished_task(task_id):
-                self.logger.info("Task has finished: %s" % task_id)
+                self.log_info("Task has finished: %s" % task_id)
                 # the subprocess handles most everything, we just need to clear things out
                 if self.cleanup_task(task_id):
                     del self.pid_dict[task_id]
@@ -259,24 +246,24 @@ class TaskManager(object):
                 try:
                     task = self.hub.worker.get_task_no_verify(task_id)
                     if task["state"] == TASK_STATES["CANCELED"]:
-                        self.logger.info("Killing canceled task %r (pid %r)" % (task_id, pid))
+                        self.log_info("Killing canceled task %r (pid %r)" % (task_id, pid))
                         if self.cleanup_task(task_id):
                             del self.pid_dict[task_id]
                     if task["state"] == TASK_STATES["TIMEOUT"]:
-                        self.logger.info("Killing timed out task %r (pid %r)" % (task_id, pid))
+                        self.log_info("Killing timed out task %r (pid %r)" % (task_id, pid))
                         if self.cleanup_task(task_id):
                             del self.pid_dict[task_id]
                     elif "worker_id" in task and task["worker_id"] != self.worker_info["id"]:
-                        self.logger.info("Killing reassigned task %r (pid %r)" % (task_id, pid))
+                        self.log_info("Killing reassigned task %r (pid %r)" % (task_id, pid))
                         if self.cleanup_task(task_id):
                             del self.pid_dict[task_id]
                     else:
-                        self.logger.warning("Lingering task %r (pid %r)" % (task_id, pid))
+                        self.log_warning("Lingering task %r (pid %r)" % (task_id, pid))
                 except (ShutdownException, KeyboardInterrupt):
                     raise
                 except Exception:
                     # TODO: do not catch generic error
-                    self.logger.error("Invalid task %r (pid %r)" % (task_id, pid))
+                    self.log_error("Invalid task %r (pid %r)" % (task_id, pid))
                     raise
 
         self.update_worker_info()
@@ -285,11 +272,11 @@ class TaskManager(object):
     def get_next_task(self):
         """ """
         if not self.worker_info["enabled"]:
-            self.logger.info("Worker is disabled.")
+            self.log_info("Worker is disabled.")
             return
 
         if not self.worker_info["ready"]:
-            self.logger.info("Worker is not ready to take another task.")
+            self.log_info("Worker is not ready to take another task.")
             return
 
         if self.locked:
@@ -298,7 +285,7 @@ class TaskManager(object):
                 raise ShutdownException()
 
             awaited_task_list = self.hub.worker.get_awaited_tasks(task_list)
-            self.logger.debug("Current awaited tasks: %r" % [ task_info["id"] for task_info in awaited_task_list ])
+            self.log_debug("Current awaited tasks: %r" % [ task_info["id"] for task_info in awaited_task_list ])
 
             # process assigned tasks first
             for task_info in awaited_task_list:
@@ -307,7 +294,7 @@ class TaskManager(object):
             return
 
         assigned_task_list = self.hub.worker.get_tasks_to_assign()
-        self.logger.debug("Current assigned tasks: %r" % [ task_info["id"] for task_info in assigned_task_list ])
+        self.log_debug("Current assigned tasks: %r" % [ task_info["id"] for task_info in assigned_task_list ])
 
         # process assigned tasks first
         for task_info in assigned_task_list:
@@ -323,21 +310,21 @@ class TaskManager(object):
         try:
             TaskClass = self.task_container[task_info["method"]]
         except (AttributeError, ValueError):
-            self.logger.error("Cannot take unknown task %s" % (task_info["method"], task_info["id"]))
+            self.log_error("Cannot take unknown task %s" % (task_info["method"], task_info["id"]))
             time.sleep(1) # prevent log flooding
             return
 
         if not TaskClass.exclusive:
             # always process exclusive tasks, regardless architecture or channel
             if task_info["arch"]["name"] not in TaskClass.arches:
-                self.logger.error("Unsupported arch for task %s: %s" % (self._task_str(task_info), task_info["arch"]["name"]))
+                self.log_error("Unsupported arch for task %s: %s" % (self._task_str(task_info), task_info["arch"]["name"]))
                 return
 
             if task_info["channel"]["name"] not in TaskClass.channels:
-                self.logger.error("Unsupported channel for task %s: %s)" % (self._task_str(task_info), task_info["channel"]["name"]))
+                self.log_error("Unsupported channel for task %s: %s)" % (self._task_str(task_info), task_info["channel"]["name"]))
                 return
 
-        self.logger.info("Attempting to take task %s" % self._task_str(task_info))
+        self.log_info("Attempting to take task %s" % self._task_str(task_info))
 
         # TODO: improve exception handling and logging
         result = False
@@ -357,7 +344,7 @@ class TaskManager(object):
                 reason = "%s" % ex
 
         if not result:
-            self.logger.error("Cannot open task %s: %s" % (self._task_str(task_info), reason))
+            self.log_error("Cannot open task %s: %s" % (self._task_str(task_info), reason))
             return
 
         self.worker_info["current_load"] += TaskClass.weight
@@ -371,11 +358,11 @@ class TaskManager(object):
 
 
     def fork_task(self, task_info):
-        self.logger.debug("Forking task %s" % self._task_str(task_info))
+        self.log_debug("Forking task %s" % self._task_str(task_info))
 
         pid = os.fork()
         if pid:
-            self.logger.info("Task forked %s: pid=%s" % (self._task_str(task_info), pid))
+            self.log_info("Task forked %s: pid=%s" % (self._task_str(task_info), pid))
             return pid
 
         # in no circumstance should we return after the fork
@@ -458,7 +445,7 @@ class TaskManager(object):
         except OSError, ex:
             if ex.errno != errno.ECHILD:
                 # should not happen
-                self.logger.error("Process hasn't exited with errno.ECHILD: %s" % task_id)
+                self.log_error("Process hasn't exited with errno.ECHILD: %s" % task_id)
                 raise
 
             # the process is already gone
@@ -466,7 +453,7 @@ class TaskManager(object):
 
         if childpid != 0:
             prefix = "Task #%s" % task_id
-            self.logger.info(get_process_status(status, prefix))
+            self.log_info(get_process_status(status, prefix))
             return True
 
         return False
@@ -482,7 +469,7 @@ class TaskManager(object):
 
         try:
 #            success = kill_process_group(self.pid_dict[task_id])
-            success = kill_process_group(self.pid_dict[task_id], logger=self.logger)
+            success = kill_process_group(self.pid_dict[task_id], logger=self._logger)
         except IOError, ex:
             # proc file doesn"t exist -> process was already killed
             success = True
@@ -491,7 +478,7 @@ class TaskManager(object):
 #            self.logger.debug("cleanup_task: Trying to terminate task with SIGKILL: %s [#%s] (pid: %s)" % (self.task_dict[task_id]["method"], task_id, self.pid_dict[task_id]))
             try:
 #                success = kill_process_group(self.pid_dict[task_id], signal.SIGKILL, timeout=2)
-                success = kill_process_group(self.pid_dict[task_id], signal.SIGKILL, timeout=2, logger=self.logger)
+                success = kill_process_group(self.pid_dict[task_id], signal.SIGKILL, timeout=2, logger=self._logger)
             except IOError:
                 # proc file doesn"t exist -> process was already killed
                 success = True
@@ -525,4 +512,4 @@ class TaskManager(object):
     def lock(self):
         """Lock the task manager to finish all assigned tasks and exit."""
         self.locked = True
-        self.logger.info("Locking...")
+        self.log_info("Locking...")
