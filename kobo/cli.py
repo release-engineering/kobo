@@ -67,7 +67,8 @@ parser.run()
 
 
 import sys
-from optparse import OptionParser, Option
+import optparse
+from optparse import Option
 from xmlrpclib import Fault
 
 from kobo.plugins import Plugin, PluginContainer
@@ -187,7 +188,7 @@ class CommandContainer(PluginContainer):
         return name.lower().replace('_', '-').replace(' ', '-')
 
 
-class CommandOptionParser(OptionParser):
+class CommandOptionParser(optparse.OptionParser):
     """Enhanced OptionParser with plugin support."""
     def __init__(self,
             usage=None,
@@ -200,14 +201,23 @@ class CommandOptionParser(OptionParser):
             add_help_option=True,
             prog=None,
             command_container=None,
-            default_command=None):
+            default_command="help",
+            add_username_password_options=False):
 
         usage = usage or "%prog <command> [args] [--help]"
         self.container = command_container
-        self.default_command = default_command or "help"
+        self.default_command = default_command
         self.command = None
-        OptionParser.__init__(self, usage, option_list, option_class, version, conflict_handler, description, formatter, add_help_option, prog)
+        formatter = formatter or optparse.IndentedHelpFormatter(max_help_position=33)
 
+        optparse.OptionParser.__init__(self, usage, option_list, option_class, version, conflict_handler, description, formatter, add_help_option, prog)
+
+        if add_username_password_options:
+            option_list = [
+                optparse.Option("--username", help="specify user"),
+                optparse.Option("--password", help="specify password"),
+            ]
+            self._populate_option_list(option_list, add_help=False)
 
     def print_help(self, file=None):
         if file is None:
@@ -248,7 +258,7 @@ class CommandOptionParser(OptionParser):
         if self.command != cmd.normalized_name:
             self.command = cmd.normalized_name
             cmd.options()
-        cmd_opts, cmd_args = OptionParser.parse_args(self, args, values)
+        cmd_opts, cmd_args = optparse.OptionParser.parse_args(self, args, values)
         return (cmd, cmd_opts, cmd_args)
 
 
