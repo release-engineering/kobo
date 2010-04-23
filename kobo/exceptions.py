@@ -9,3 +9,8 @@ class ImproperlyConfigured(Exception):
 class ShutdownException(Exception):
     """Shutdown currently running program."""
     pass
+
+
+class AuthenticationError(Exception):
+    """Authentication failed for some reason."""
+    pass
