@@ -92,7 +92,7 @@ body {
 
 pre.log {
     border: 1px solid #d0d0d0;
-    overflow: scroll;
+    overflow: auto;
 }
 
 table {
