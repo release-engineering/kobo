@@ -138,7 +138,7 @@ class LoggingBase(object):
     def __log(self, level, msg):
         if self._logger is None:
             return
-        self._logger.__log(level, msg)
+        self._logger.log(level, msg)
 
     def log_debug(self, msg):
         self.__log(logging.DEBUG, msg)
