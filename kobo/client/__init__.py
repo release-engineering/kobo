@@ -4,6 +4,70 @@
 # TODO: login using SSL certificate (like in koji)
 
 
+"""
+ClientCommandContainer HOWTO
+============================
+# ClientCommandContainer extends kobo.cli.CommandContainer
+# by adding 'hub' attribute and 'set_hub' method.
+
+
+1) Import modules
+-----------------
+import kobo.client
+import kobo.client.commands
+# Assuming all commands are in <project_name>/commands/cmd_*.py modules.
+import <project_name>.commands
+
+
+2) Inherit the container
+------------------------
+# Inherit container to make sure nobody will change plugins I registered.
+class <ProjectName>CommandContainer(kobo.client.ClientCommandContainer):
+    pass
+
+
+2) Register plugins
+-------------------
+<ProjectName>CommandContainer.register_module(kobo.client.commands, prefix="cmd_")
+<ProjectName>CommandContainer.register_module(<project_name>.commands, prefix="cmd_")
+
+
+3) Define and call main() function
+----------------------------------
+def main(args=None):
+    config_file = os.environ.get("<PROJECT_NAME>_CONFIG_FILE", "/etc/<project_name>.conf")
+    conf = kobo.conf.PyConfigParser()
+    conf.load_from_file(config_file)
+    command_container = <ProjectName>CommandContainer(conf)
+    parser = kobo.cli.CommandOptionParser(command_container=command_container, add_username_password_options=True)
+    parser.run(args)
+    sys.exit(0)
+
+
+4) Create commands
+------------------
+# Commands should be placed in a separate module, usually <project_name>.commands.
+# One command per sub-module makes things readable.
+
+import kobo.client
+
+class Add_User(kobo.client.ClientCommand):
+    '''add a user account'''
+    enabled = True
+    admin = True
+
+    def options(self):
+        self.parser.usage = "%%prog %s" % self.normalized_name
+
+    def run(self, *args, **kwargs):
+        username = kwargs.pop("username", None)
+        password = kwargs.pop("password", None)
+
+        self.set_hub(username, password)
+        # self.hub.client.add_user(...)
+"""
+
+
 import os
 import base64
 import hashlib
@@ -11,61 +75,46 @@ import urlparse
 import xmlrpclib
 
 import kobo.conf
-from kobo.cli import *
+import kobo.cli
+import kobo.http
+import kobo.xmlrpc
 from kobo.exceptions import ImproperlyConfigured
-from kobo.xmlrpc import CookieTransport, SafeCookieTransport, retry_request_decorator, encode_xmlrpc_chunks_iterator
-from kobo.http import POSTTransport
 
 
 __all__ = (
     "CommandContainer",
     "CommandOptionParser",
     "ClientCommand",
+    "ClientCommandContainer",
     "HubProxy",
     "Option",
 )
 
 
-class ClientCommand(Command):
+class ClientCommandContainer(kobo.cli.CommandContainer):
     __slots__ = (
         "hub",
-        "hub_proxy_class",
-        "conf_environ_key",
+        "conf",
     )
 
-    enabled = False
-    hub_proxy_class = None
-    conf_environ_key = None
-
+    def __init__(self, conf, **kwargs):
+        self.conf = kobo.conf.PyConfigParser()
+        self.conf.load_from_conf(conf)
+        self.conf.load_from_dict(kwargs)
 
     def set_hub(self, username=None, password=None):
-        HubProxyClass = self.hub_proxy_class or HubProxy
-
-        conf = kobo.conf.PyConfigParser()
-        if self.conf_environ_key is not None:
-            conf.load_from_file(os.environ[self.conf_environ_key])
-
-        if hasattr(kobo.conf, "settings"):
-            conf.load_from_conf(kobo.conf.settings)
-
         if username:
             if password is None:
-                password = self.password_prompt(default_value=password)
-            conf["AUTH_METHOD"] = "password"
-            conf["USERNAME"] = username
-            conf["PASSWORD"] = password
+                password = kobo.cli.password_prompt(default_value=password)
+            self.conf["AUTH_METHOD"] = "password"
+            self.conf["USERNAME"] = username
+            self.conf["PASSWORD"] = password
 
-        self.hub = HubProxyClass(conf=conf)
+        self.hub = HubProxy(conf=self.conf)
 
 
-    def write_task_id_file(self, task_id, filename=None, append=False):
-        if filename is not None:
-            if append:
-                f = open(filename, "a+")
-            else:
-                f = open(filename, "w")
-            f.write("%s\n" % task_id)
-            f.close()
+class ClientCommand(kobo.cli.Command):
+    pass
 
 
 class HubProxy(object):
@@ -84,8 +133,7 @@ class HubProxy(object):
         "_logged_in",
     )
 
-
-    def __init__(self, client_type=None, logger=None, transport=None, auto_logout=True, conf=None, **kwargs):
+    def __init__(self, conf, client_type=None, logger=None, transport=None, auto_logout=True, **kwargs):
         self._conf = kobo.conf.PyConfigParser()
         self._hub = None
 
@@ -93,41 +141,38 @@ class HubProxy(object):
         default_config = os.path.abspath(os.path.join(os.path.dirname(__file__), "default.conf"))
         self._conf.load_from_file(default_config)
 
-        # update data from config specified in os.environ
-        if hasattr(self, "_conf_environ_key") and os.environ.get(self._conf_environ_key, None):
-            self._conf.load_from_file(os.environ[self._conf_environ_key])
-
-        # update data from another config
+        # update config with another one
         if conf is not None:
             self._conf.load_from_conf(conf)
 
-        # update data from kwargs
+        # update config with kwargs
         self._conf.load_from_dict(kwargs)
 
         # initialize properties
-        self._client_type   = client_type or "client"
-        self._hub_url       = self._conf["HUB_URL"]
-        self._auth_method   = self._conf["AUTH_METHOD"]
-        self._auto_logout   = auto_logout
-        self._logger        = logger
-        self._logged_in     = False
+        self._client_type = client_type or "client"
+        self._hub_url = self._conf["HUB_URL"]
+        self._auth_method = self._conf["AUTH_METHOD"]
+        self._auto_logout = auto_logout
+        self._logger = logger
+        self._logged_in = False
 
         if transport is not None:
             self._transport = transport
-        elif self._hub_url.startswith("https://"):
-            self._transport = retry_request_decorator(SafeCookieTransport)()
         else:
-            self._transport = retry_request_decorator(CookieTransport)()
+            if self._hub_url.startswith("https://"):
+                TransportClass = kobo.xmlrpc.retry_request_decorator(kobo.xmlrpc.SafeCookieTransport)
+            else:
+                TransportClass = kobo.xmlrpc.retry_request_decorator(kobo.xmlrpc.CookieTransport)
+            self._transport = TransportClass()
 
         # self._hub is created here
         try:
             self._login(verbose=self._conf.get("DEBUG_XMLRPC"))
         except KeyboardInterrupt:
             raise
-        except Exception, e:
+        except Exception, ex:
             self._logger and self._logger.warn("Authentication failed")
             raise
-
 
     def __del__(self):
         if hasattr(self._transport, "retry_count"):
@@ -138,13 +183,11 @@ class HubProxy(object):
             except:
                 pass
 
-
     def __getattr__(self, name):
         try:
             return getattr(self._hub, name)
         except:
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
-
 
     def _login(self, force=False, verbose=False):
         """Login to the hub.
@@ -182,25 +225,23 @@ class HubProxy(object):
             else:
                 self._logger and self._logger.info("New session created.")
 
-
     def _logout(self):
         """Logout from hub"""
         if hasattr(self, "_hub"):
             self._hub.auth.logout()
 
-
     def _login_password(self):
         """Login using username and password."""
+#        if "USERNAME" not in self._conf:
+#            raise RuntimeError("Can't authenticate, user
         username = self._conf["USERNAME"]
         password = self._conf["PASSWORD"]
         self._hub.auth.login_password(username, password)
-
 
     def _login_worker_key(self):
         """Login using worker key."""
         worker_key = self._conf["WORKER_KEY"]
         self._hub.auth.login_worker_key(worker_key)
-
 
     def _login_krbv(self):
         """Login using kerberos credentials (uses python-krbV)."""
@@ -254,11 +295,10 @@ class HubProxy(object):
         ac.rcache = ctx.default_rcache()
 
         # create and encode the authentication request
-        (ac, req) = ctx.mk_req(server=sprinc, client=cprinc, auth_context=ac, ccache=ccache, options=krbV.AP_OPTS_MUTUAL_REQUIRED)
+        ac, req = ctx.mk_req(server=sprinc, client=cprinc, auth_context=ac, ccache=ccache, options=krbV.AP_OPTS_MUTUAL_REQUIRED)
         req_enc = base64.encodestring(req)
 
         self._hub.auth.login_krbv(req_enc)
-
 
     def upload_file(self, file_name, target_dir):
         scheme, netloc, path, params, query, fragment = urlparse.urlparse("%s/upload/" % self._hub_url)
@@ -270,7 +310,7 @@ class HubProxy(object):
         sum = hashlib.sha256()
         fo = open(file_name, "rb")
         while True:
-            chunk = fo.read(1024**2)
+            chunk = fo.read(1024 ** 2)
             if not chunk:
                 break
             sum.update(chunk)
@@ -281,14 +321,13 @@ class HubProxy(object):
         upload_id, upload_key = self.upload.register_upload(os.path.basename(file_name), checksum, fsize, target_dir)
 
         secure = (scheme == "https")
-        upload = POSTTransport()
+        upload = kobo.http.POSTTransport()
         upload.add_variable("upload_id", upload_id)
         upload.add_variable("upload_key", upload_key)
         upload.add_file("file", file_name)
 
         err_code, err_msg = upload.send_to_host(host, path, port, secure)
         return upload_id, err_code, err_msg
-
 
     def upload_task_log(self, file_obj, task_id, remote_file_name, append=True, mode=0644):
         """
@@ -306,7 +345,7 @@ class HubProxy(object):
         @type  mode: int
         """
 
-        for (chunk_start, chunk_len, chunk_checksum, encoded_chunk) in encode_xmlrpc_chunks_iterator(file_obj):
+        for (chunk_start, chunk_len, chunk_checksum, encoded_chunk) in kobo.xmlrpc.encode_xmlrpc_chunks_iterator(file_obj):
             if append:
                 chunk_start = -1
                 if chunk_len == -1:

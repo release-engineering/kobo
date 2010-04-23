@@ -63,7 +63,6 @@ from kobo.exceptions import ShutdownException
 from kobo.process import kill_process_group, get_process_status
 from kobo.tback import Traceback
 from kobo.plugins import PluginContainer
-from kobo.conf import settings
 
 from task import FailTaskException
 from kobo.client.constants import TASK_STATES
@@ -99,7 +98,7 @@ class TaskManager(kobo.log.LoggingBase):
     )
 
 
-    def __init__(self, logger=None, conf=None, **kwargs):
+    def __init__(self, conf, logger=None, **kwargs):
         kobo.log.LoggingBase.__init__(self, logger)
         self.conf = kobo.conf.PyConfigParser()
 
@@ -110,11 +109,6 @@ class TaskManager(kobo.log.LoggingBase):
         # update data from another config
         if conf is not None:
             self.conf.load_from_conf(conf)
-
-        # update data from config specified in os.environ
-        conf_environ_key = "TASK_MANAGER_CONFIG_FILE"
-        if conf_environ_key in os.environ:
-            self.conf.load_from_file(os.environ[conf_environ_key])
 
         # update data from kwargs
         self.conf.load_from_dict(kwargs)
@@ -127,7 +121,7 @@ class TaskManager(kobo.log.LoggingBase):
         self.task_container = TaskContainer()
 
         # self.hub is created here
-        self.hub = HubProxy(client_type="worker", logger=self._logger, conf=self.conf, **kwargs)
+        self.hub = HubProxy(conf, client_type="worker", logger=self._logger, **kwargs)
         self.worker_info = self.hub.worker.get_worker_info()
         self.update_worker_info()
 
@@ -395,7 +389,7 @@ class TaskManager(kobo.log.LoggingBase):
             hub = self.hub
         else:
             # create a new session for the task
-            hub = HubProxy(client_type="worker", conf=settings)
+            hub = HubProxy(self.conf, client_type="worker")
 
         task = TaskClass(hub, task_info["id"], task_info["args"])
 

@@ -2,9 +2,8 @@
 
 
 import sys
-from optparse import Option, IndentedHelpFormatter
 
-from kobo.cli import CommandOptionParser, CommandContainer
+import kobo.cli
 
 
 __all__ = (
@@ -18,15 +17,7 @@ __all__ = (
 
 
 def main():
-    command_container = CommandContainer()
-
-    option_list = [
-        Option("--username", help="specify user"),
-        Option("--password", help="specify password"),
-    ]
-
-    formatter = IndentedHelpFormatter(max_help_position=60, width=120)
-    parser = CommandOptionParser(command_container=command_container, default_command="help", formatter=formatter)
-    parser._populate_option_list(option_list, add_help=False)
+    command_container = kobo.cli.CommandContainer()
+    parser = kobo.cli.CommandOptionParser(command_container=command_container, add_username_password_options=True)
     parser.run()
     sys.exit(0)
