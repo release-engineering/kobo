@@ -128,10 +128,6 @@ def add_rotating_file_logger(logger, logfile, log_level=None, format=None, mode=
 class LoggingBase(object):
     """Inherit from this class to obtain log_* logging methods."""
 
-    __slots__ = (
-        "_logger",
-    )
-
     def __init__(self, logger=None):
         self._logger = logger
 
