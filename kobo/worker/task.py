@@ -34,6 +34,7 @@ class TaskBase(Plugin):
         "weight",
 
         "_hub",
+        "_conf",
         "_task_id",
         "_task_info",
         "_task_manager",
@@ -42,9 +43,9 @@ class TaskBase(Plugin):
         "result",
     )
 
-
-    def __init__(self, hub, task_id, args):
+    def __init__(self, hub, conf, task_id, args):
         self._hub = hub            # created by taskmanager
+        self._conf = conf
         self._task_id = task_id
         self._task_info = self.hub.worker.get_task(self.task_id)
         self._task_manager = None  # created by taskmanager (only for foreground tasks)
@@ -52,21 +53,21 @@ class TaskBase(Plugin):
         self._subtask_list = []
         self.result = ""
 
-
     @property
     def hub(self):
         return self._hub
 
+    @property
+    def conf(self):
+        return self._conf
 
     @property
     def task_id(self):
         return self._task_id
 
-
     @property
     def task_info(self):
         return self._task_info
-
 
     def _get_task_manager(self):
         if not getattr(self.__class__, "foreground", False):
@@ -80,35 +81,29 @@ class TaskBase(Plugin):
 
     task_manager = property(_get_task_manager, _set_task_manager)
 
-
     @property
     def args(self):
         # deepcopy to prevent modification
         return copy.deepcopy(self._args)
-
 
     @property
     def subtask_list(self):
         # deepcopy to prevent modification
         return copy.deepcopy(self._subtask_list)
 
-
     def run(self):
         """Run the task."""
         raise NotImplementedError()
 
-
     def fail(self):
         """Fail the task."""
         raise FailTaskException()
-
 
     def spawn_subtask(self, method, args, label=""):
         """Spawn a new subtask."""
         subtask_id = self.hub.worker.create_subtask(label, method, args, self.task_id)
         self._subtask_list.append(subtask_id)
         return subtask_id
-
 
     def wait(self, subtasks=None):
         """Wait until subtasks finish.

@@ -391,7 +391,7 @@ class TaskManager(kobo.log.LoggingBase):
             # create a new session for the task
             hub = HubProxy(self.conf, client_type="worker")
 
-        task = TaskClass(hub, task_info["id"], task_info["args"])
+        task = TaskClass(hub, self.conf, task_info["id"], task_info["args"])
 
         # redirect stdout and stderr
         thread = kobo.worker.logger.LoggingThread(hub, task_info["id"])
