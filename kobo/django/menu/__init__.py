@@ -100,7 +100,9 @@ class MenuItem(object):
 
     __slots__ = (
         "title",
-        "url",
+        "_url",
+        "_url_is_resolved",
+        "absolute_url",
         "acl_groups",
         "acl_perms",
         "main_menu",
@@ -117,22 +119,21 @@ class MenuItem(object):
 
     def __init__(self, title, url, acl_groups=None, acl_perms=None, absolute_url=False, menu=None):
         self.title = title
-        if absolute_url:
-            self.url = url
-        else:
-            self.url = reverse(url)
+        self._url = url
+        self._url_is_resolved = absolute_url
+        self.absolute_url = absolute_url
         self.acl_groups = acl_groups and set(acl_groups) or set()
         self.acl_perms = acl_perms and set(acl_perms) or set()
         self.main_menu = None
         self.parent_menu = None
-        
+
         self.submenu_list = []
         for i in menu or []:
             if type(i) in (tuple, list):
                 self.submenu_list.extend(i)
             else:
                 self.submenu_list.append(i)
-        
+
         self.active = False
         self.depth = 0
 
@@ -151,6 +152,12 @@ class MenuItem(object):
             result = u"<ul>%s</ul>" % u"".join([unicode(i) for i in self.items])
         return mark_safe(u"<li>%s%s</li>" % (self.as_a(), result))
 
+    @property
+    def url(self):
+        if not self._url_is_resolved:
+            self._url = reverse(self._url)
+        self._url_is_resolved = True
+        return self._url
 
     def as_a(self):
         if not self.visible:
@@ -253,7 +260,7 @@ class MainMenu(MenuItem):
         self.cached_menuitems = []
         self.css_active_class = css_active_class or ""
         self.active = None # reference to active menu (overrides MenuItem behavior)
-        
+
         # set main_menu references, compute menu depth
         self.setup_menu_tree(self)
 
