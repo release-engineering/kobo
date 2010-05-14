@@ -295,7 +295,13 @@ class HubProxy(object):
         ac.rcache = ctx.default_rcache()
 
         # create and encode the authentication request
-        ac, req = ctx.mk_req(server=sprinc, client=cprinc, auth_context=ac, ccache=ccache, options=krbV.AP_OPTS_MUTUAL_REQUIRED)
+        try:
+            ac, req = ctx.mk_req(server=sprinc, client=cprinc, auth_context=ac, ccache=ccache, options=krbV.AP_OPTS_MUTUAL_REQUIRED)
+        except krbV.Krb5Error, ex:
+            if ex.err_code == -1765328377:
+                ex.message += ". Make sure you correctly set KRB_REALM (current value: %s)." % realm
+                ex.args = (ex.err_code, ex.message)
+            raise ex
         req_enc = base64.encodestring(req)
 
         self._hub.auth.login_krbv(req_enc)
