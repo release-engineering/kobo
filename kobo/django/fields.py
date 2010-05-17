@@ -1,12 +1,13 @@
 from copy import copy
 
+import django.utils.simplejson
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.core import exceptions
 from django.utils.text import capfirst
 
+import kobo.django.forms
 from kobo.types import StateEnum
-from kobo.django.forms import StateChoiceFormField
 
 '''
 StateEnumField
@@ -67,7 +68,7 @@ class StateEnumField(models.IntegerField):
 
     def _get_choices(self):
         return tuple(self.state_machine.get_next_states_mapping(current=self.state_machine.get_state_id()))
-    choices = property(_get_choices, StateChoiceFormField._set_choices)
+    choices = property(_get_choices, kobo.django.forms.StateChoiceFormField._set_choices)
 
 
     def get_db_prep_value(self, value):
@@ -94,7 +95,7 @@ class StateEnumField(models.IntegerField):
         return state
 
 
-    def formfield(self, form_class=StateChoiceFormField, **kwargs):
+    def formfield(self, form_class=kobo.django.forms.StateChoiceFormField, **kwargs):
         # after fix of http://code.djangoproject.com/ticket/9245 could be
         # simplified
         defaults = {'required': not self.blank, 'label': capfirst(self.verbose_name), 'help_text': self.help_text}
@@ -118,3 +119,35 @@ class StateEnumField(models.IntegerField):
                 del kwargs[k]
         defaults.update(kwargs)
         return form_class(**defaults)
+
+
+class JSONField(models.TextField):
+    """JSON field for storing a serialized dictionary or list."""
+    __metaclass__ = models.SubfieldBase
+
+    def to_python(self, value):
+        if value is None:
+            return None
+
+        if not isinstance(value, basestring):
+            return value
+
+        try:
+            return django.utils.simplejson.loads(value)
+        except ValueError:
+            raise exceptions.ValidationError(_("Cannot deserialize JSON data."))
+
+    def pre_save(self, model_instance, add):
+        value = getattr(model_instance, self.attname, None)
+        if value is None or value == "null":
+            return None
+        return django.utils.simplejson.dumps(value)
+
+    def formfield(self, form_class=kobo.django.forms.JSONFormField, **kwargs):
+        kwargs["form_class"] = form_class
+        return super(JSONField, self).formfield(**kwargs)
+
+
+# HACK:
+import django.contrib.admin.options
+django.contrib.admin.options.FORMFIELD_FOR_DBFIELD_DEFAULTS[JSONField] = {"widget": kobo.django.forms.JSONWidget}
