@@ -44,25 +44,31 @@ __all__ = []
 
 XMLRPC_TEMPLATE = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-  <head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-    <meta http-equiv="Content-Language" content="en-us" />
-    <meta name="robots" content="NONE,NOARCHIVE" />
-    <title>XML-RPC Service</title>
-  </head>
-  <body style="font-size: small;">
-    <h1>This is an XML-RPC Service</h1>
-    You need to invoke it using an XML-RPC Client!<br />
-    The following methods are available:<br />
-    {% for method in method_list %}
-    <h2>{{ method.name|escape }}</h2>
-{% ifnotequal method.signature "signatures not supported" %}
-    <strong>Signature: </strong>{{ method.signature|escape }}<br />
-{% endifnotequal %}
-    <strong>Help: </strong>{% for line in method.help %}{{ line|escape }}<br />{% endfor %}
-    <br />
-    {% endfor %}
-  </body>
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Language" content="en-us" />
+  <meta name="robots" content="NONE,NOARCHIVE" />
+  <title>XML-RPC Service</title>
+</head>
+
+<body style="font-size: small;">
+  <h2>This is an XML-RPC Service</h2>
+  You need to invoke it using an XML-RPC Client!<br />
+
+  <h2>Available methods</h2>
+  <ul>
+  {% for method in method_list %}
+    <li><a href="#{{ method.name|lower }}">{{ method.name|escape }}</a></li>
+  {% endfor %}
+  </ul>
+
+  <h2>Details</h2>
+  {% for method in method_list %}
+    <h3><a name="{{ method.name|lower }}">{{ method.name|escape }}</a></h3>
+    {% ifnotequal method.signature "signatures not supported" %}<strong>Signature: </strong>{{ method.signature|escape }}<br />{% endifnotequal %}
+    <pre>{% for line in method.help %}{{ line|escape }}<br />{% endfor %}</pre>
+  {% endfor %}
+</body>
 </html>
 """
 
