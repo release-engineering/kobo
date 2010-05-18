@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 import datetime
 
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.db import models, connection, transaction
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
+import kobo.django.fields
 from kobo.client.constants import *
 from kobo.shortcuts import random_string, read_from_file, save_to_file
 
@@ -322,7 +324,7 @@ class Task(models.Model):
     exclusive           = models.BooleanField(default=False, help_text=_("Exclusive tasks have highest priority. They are used e.g. when shutting down a worker."))
 
     method              = models.CharField(max_length=255, help_text=_("Method name represents appropriate task handler."))
-    args                = models.TextField(blank=True, help_text=_("Method arguments. JSON serialized dictionary."))
+    args                = kobo.django.fields.JSONField(blank=True, default={}, help_text=_("Method arguments. JSON serialized dictionary."))
     result              = models.TextField(blank=True, help_text=_("Task result. Do not store a lot of data here (use HubProxy.upload_task_log instead)."))
     comment             = models.TextField(null=True, blank=True)
 
@@ -463,19 +465,21 @@ class Task(models.Model):
 
     def set_args(self, **kwargs):
         """Serialize args dictionary."""
-        self.args = dump_dict(**kwargs)
+        print >> sys.stderr, "DeprecationWarning: kobo.hub.models.Task.set_args() is deprecated. Use kobo.hub.models.Task.args instead."
+        self.args = kwargs
 
 
     def get_args(self):
         """Deserialize args dictionary."""
-        return load_dict(self.args)
+        print >> sys.stderr, "DeprecationWarning: kobo.hub.models.Task.get_args() is deprecated. Use kobo.hub.models.Task.args instead."
+        return self.args.copy()
 
 
     def get_args_display(self):
         """Deserialize args dictionary to human readable form"""
         from django.utils.datastructures import SortedDict
         result = SortedDict()
-        for key, value in sorted(self.get_args().items()):
+        for key, value in sorted(self.args.items()):
             result[key] = simplejson.dumps(value)
         return result
 
@@ -492,7 +496,7 @@ class Task(models.Model):
             "label": self.label,
 
             "method": self.method,
-            "args": self.get_args(),
+            "args": self.args,
             "result": self.result,
 
             "exclusive": self.exclusive,
@@ -760,7 +764,7 @@ WHERE
             "owner_name": self.owner.username,
             "label": self.label,
             "method": self.method,
-            "args": self.get_args(),
+            "args": self.args,
             "comment": self.comment,
             "parent_id": None,
             "worker_name": None,
