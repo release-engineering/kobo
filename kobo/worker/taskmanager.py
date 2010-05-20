@@ -418,6 +418,9 @@ class TaskManager(kobo.log.LoggingBase):
         except FailTaskException, ex:
             failed = True
         except:
+            message = "ERROR: %s\n" % kobo.tback.get_exception()
+            message += "See traceback.log for details (admin only).\n"
+            self.hub.upload_task_log(StringIO(message), task.task_id, "error.log")
             self.hub.upload_task_log(StringIO(Traceback().get_traceback()), task.task_id, "traceback.log", mode=0600)
             failed = True
 
