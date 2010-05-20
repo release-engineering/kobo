@@ -46,7 +46,18 @@ __all__ = (
 
 def get_traceback():
     """Return a traceback string."""
-    return "".join(traceback.format_exception(*sys.exc_info())).replace(r"\n", "\n")
+    exc_info = sys.exc_info()
+    if exc_info[0] is None:
+        return ""
+    return "".join(traceback.format_exception(*exc_info)).replace(r"\n", "\n")
+
+
+def get_exception():
+    """Return an exception string."""
+    result = sys.exc_info()[1]
+    if result is None:
+        return ""
+    return str(result)
 
 
 class Traceback(object):
