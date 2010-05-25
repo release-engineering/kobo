@@ -160,7 +160,9 @@ def retry_request_decorator(transport_class):
                 except (socket.error, socket.herror, socket.gaierror, socket.timeout), ex:
                     if i >= self.retry_count:
                         raise
-                    print >> sys.stderr, "Connection failed, retrying. Error was: %s" % ex
+                    retries_left = self.retry_count - i
+                    retries = "%d %s left" % (retries_left, retries_left == 1 and "retry" or "retries") # 1 retry left / X retries left
+                    print >> sys.stderr, "XML-RPC connection to %s failed: %s, %s" % (args[0], " ".join(ex.args[1:]), retries)
                     time.sleep(self.retry_timeout)
 
     RetryTransportClass.__name__ = transport_class.__name__
