@@ -141,10 +141,11 @@ class SafeCookieTransport(CookieTransport):
 def retry_request_decorator(transport_class):
     """Use this class decorator on a Transport to retry requests which failed on socket errors."""
     class RetryTransportClass(transport_class):
-        def __init__(self, retry_count=5, retry_timeout=30, *args, **kwargs):
-            transport_class.__init__(self, *args, **kwargs)
-            self.retry_count = retry_count
-            self.retry_timeout = retry_timeout
+        def __init__(self, *args, **kwargs):
+            self.retry_count = kwargs.pop("retry_count", 5)
+            self.retry_timeout = kwargs.pop("retry_timeout", 30)
+            if hasattr(transport_class, "__init__"):
+                transport_class.__init__(self, *args, **kwargs)
 
         def request(self, *args, **kwargs):
             if self.retry_count == 0:
