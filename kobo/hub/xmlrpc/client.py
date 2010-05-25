@@ -32,8 +32,8 @@ def task_info(request, task_id, flat=False):
     return task.export(flat=flat)
 
 
-def get_tasks(request):
-    return [ i.export() for i in models.Task.objects.filter(state='c')[:50] ]
+def get_tasks(request, task_id_list):
+    return [ i.export(flat=True) for i in models.Task.objects.filter(id__in=task_id_list) ]
 
 
 @login_required
