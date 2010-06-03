@@ -17,15 +17,20 @@ __all__ = (
 class FileWrapper(object):
     __slots__ = (
         "_checksums",
-        "file_name",
+        "file_path",
+        "__dict__",
     )
 
-    def __init__(self, file_name, **kwargs):
+    def __init__(self, file_path, **kwargs):
         self._checksums = {}
-        self.file_name = file_name
+        self.file_path = os.path.abspath(file_path)
 
     def __str__(self):
-        return self.file_name
+        return self.file_path
+
+    @property
+    def file_name(self):
+        return os.path.basename(self.file_path)
 
     def compute_checksums(self, checksum_types):
         """Compute and cache checksums of given types."""
@@ -41,7 +46,7 @@ class FileWrapper(object):
                 missing.append(checksum_type)
 
         if missing:
-            result.update(compute_file_checksums(self.file_name, missing))
+            result.update(compute_file_checksums(self.file_path, missing))
             self._checksums.update(result)
 
         return result
@@ -58,10 +63,8 @@ class RpmWrapper(FileWrapper):
         ts = kwargs.pop("ts", None)
         self.header = kobo.rpmlib.get_rpm_header(file_path, ts=ts)
 
-
     def __getattr__(self, name):
         return kobo.rpmlib.get_header_field(self.header, name)
-
 
     @property
     def files(self):
@@ -74,26 +77,21 @@ class RpmWrapper(FileWrapper):
             result = result.upper()
         return result
 
-
     @property
     def digest_algo(self):
         return kobo.rpmlib.get_digest_algo_from_header(self.header)
-
 
     @property
     def vr(self):
         return "%s-%s" % (self.version, self.release)
 
-
     @property
     def nvr(self):
         return "%s-%s-%s" % (self.name, self.version, self.release)
 
-
     @property
     def nvra(self):
         return "%s-%s-%s.%s" % (self.name, self.version, self.release, self.arch)
-
 
 
 class FileCache(object):
@@ -103,12 +101,10 @@ class FileCache(object):
         "file_wrapper_class",
     )
 
-
     def __init__(self, file_wrapper_class=None):
         self.inode_cache = {}
         self.file_cache = {}
         self.file_wrapper_class = file_wrapper_class or FileWrapper
-
 
     def __get__(self, name):
         return self.file_cache[os.path.abspath(name)]
@@ -122,18 +118,18 @@ class FileCache(object):
     def iteritems(self):
         return self.file_cache.iteritems()
 
+    def add(self, file_path, file_wrapper_class=None, **kwargs):
+        file_path = os.path.abspath(file_path)
+        if file_path in self.file_cache:
+            return self.file_cache[file_path]
 
-    def add(self, file_name, **kwargs):
-        file_name = os.path.abspath(file_name)
-        if file_name in self.file_cache:
-            return self.file_cache[file_name]
-
-        st = os.stat(file_name)
+        st = os.stat(file_path)
         cache_key = (st.st_dev, st.st_ino)
         if cache_key in self.inode_cache:
             return self.inode_cache[cache_key]
 
-        value = self.file_wrapper_class(file_name, **kwargs)
+        file_wrapper_class = file_wrapper_class or self.file_wrapper_class
+        value = file_wrapper_class(file_path, **kwargs)
         self.inode_cache[cache_key] = value
-        self.file_cache[file_name] = value
+        self.file_cache[file_path] = value
         return value
