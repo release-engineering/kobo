@@ -109,5 +109,29 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(compute_file_checksums(self.tmp_file, ["md5", "sha256"]), dict(md5="098f6bcd4621d373cade4e832627b4f6", sha256="9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"))
 
 
+class TestPaths(unittest.TestCase):
+    def test_split_path(self):
+        self.assertEqual(split_path(""), ["."])
+        self.assertEqual(split_path("../"), [".."])
+        self.assertEqual(split_path("/"), ["/"])
+        self.assertEqual(split_path("//"), ["/"])
+        self.assertEqual(split_path("///"), ["/"])
+        self.assertEqual(split_path("/foo"), ["/", "foo"])
+        self.assertEqual(split_path("/foo/"), ["/", "foo"])
+        self.assertEqual(split_path("/foo//"), ["/", "foo"])
+        self.assertEqual(split_path("/foo/bar"), ["/", "foo", "bar"])
+        self.assertEqual(split_path("/foo//bar"), ["/", "foo", "bar"])
+
+    def test_relative_path(self):
+        self.assertEqual(relative_path("/foo", "/"), "foo")
+        self.assertEqual(relative_path("/foo/", "/"), "foo/")
+        self.assertEqual(relative_path("/foo", "/bar/"), "../foo")
+        self.assertEqual(relative_path("/foo/", "/bar/"), "../foo/")
+        self.assertEqual(relative_path("/var/www/template/index.html", "/var/www/html/index.html"), "../template/index.html")
+        self.assertEqual(relative_path("/var/www/template/index.txt", "/var/www/html/index.html"), "../template/index.txt")
+        self.assertEqual(relative_path("/var/www/template/index.txt", "/var/www/html/index.html"), "../template/index.txt")
+        self.assertRaises(RuntimeError, relative_path, "/var/www/template/", "/var/www/html/index.html")
+
+
 if __name__ == '__main__':
     unittest.main()

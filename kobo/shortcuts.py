@@ -32,6 +32,8 @@ __all__ = (
     "compute_file_checksums",
     "parse_checksum_line",
     "read_checksum_file",
+    "split_path",
+    "relative_path",
 )
 
 
@@ -133,10 +135,9 @@ def hex_string(string):
     return "".join(( "%02x" % ord(i) for i in string ))
 
 
-def touch(filename):
+def touch(filename, mode=0644):
     """Touch a file."""
-    open(filename, "a").close()
-
+    save_to_file(filename, "", append=True, mode=mode)
 
 
 def read_from_file(filename, lines=None, re_filter=None):
@@ -314,7 +315,7 @@ def read_checksum_file(file_name):
 
     @param file_name: checksum file
     @type file_name: str
-    @return [(checksum, path)]
+    @return: [(checksum, path)]
     @rtype: [(str, str)]
     """
 
@@ -328,3 +329,57 @@ def read_checksum_file(file_name):
 
     fo.close()
     return result
+
+def split_path(path):
+    """Split path to a list.
+
+    @param path: a path
+    @type path: str
+    @return: list with path elements
+    @rtype: list
+    """
+
+    head, tail = os.path.split(os.path.normpath(path))
+    if not head:
+        return [tail]
+    if not tail:
+        if head == os.sep:
+            return [head]
+        return split_path(head[:-len(os.sep)])
+    return split_path(head) + [tail]
+
+def relative_path(src_path, dst_path=None):
+    """Determine relative path between two paths.
+    This function is primarily meant for tweaking paths for symlinks.
+    Paths ending with '/' are considered as directories.
+
+    @param src_path:
+    @type src_path:
+    @param: dst_path:
+    @type dst_path:
+    @returns: relative path from src to dst
+    @rtype: str
+    """
+
+    if dst_path is None:
+        dst_path = os.path.curpath(os.curdir) + "/"
+    src_path, src_file = os.path.split(src_path)
+    dst_path, dst_file = os.path.split(dst_path)
+
+    src_path = split_path(src_path)
+    dst_path = split_path(dst_path)
+
+    if not src_file and dst_file:
+        raise RuntimeError("")
+
+    while src_path and dst_path and src_path[0] == dst_path[0]:
+        src_path.pop(0)
+        dst_path.pop(0)
+
+    while dst_path:
+        src_path.insert(0, "..")
+        dst_path.pop(0)
+
+    src_path.append(src_file)
+    dst_path.append(dst_file)
+    return os.path.join(*src_path)
