@@ -117,7 +117,7 @@ class Worker(models.Model):
         return u"%s" % self.name
 
 
-    def save(self):
+    def save(self, *args, **kwargs):
         # precompute task count, current load and ready
         tasks = Task.objects.running().filter(worker=self)
         self.task_count = tasks.count()
@@ -129,7 +129,7 @@ class Worker(models.Model):
             key = random_string(64)
             if Worker.objects.filter(worker_key=key).count() == 0:
                 self.worker_key = key
-        super(self.__class__, self).save()
+        super(self.__class__, self).save(*args, **kwargs)
 
 
     def export(self):
@@ -374,13 +374,13 @@ class Task(models.Model):
         return u"#%s [method: %s, state: %s, worker: %s]" % (self.id, self.method, self.get_state_display(), self.worker)
 
 
-    def save(self):
+    def save(self, *args, **kwargs):
         # save to db to precalculate subtask counts and obtain an ID (on insert) for stdout and traceback
         self.subtask_count = self.subtasks().count()
         super(self.__class__, self).save()
         self.logs.save()
         if self.parent:
-            self.parent.save()
+            self.parent.save(*args, **kwargs)
 
 
     @classmethod
@@ -416,11 +416,7 @@ class Task(models.Model):
         task.owner = User.objects.get(username=owner_name)
         task.label = label
         task.method = method
-
-        if args is None:
-            args = {}
-        task.set_args(**args)
-
+        task.args = args or {}
         task.comment = comment
 
         if parent_id is not None:
