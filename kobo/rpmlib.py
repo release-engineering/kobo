@@ -76,9 +76,19 @@ def get_header_field(hdr, name):
     @rtype: str or list
     """
 
+    if name == "arch":
+        # HACK: return "src" or "nosrc" arch instead of build arch
+        if get_header_field(hdr, "sourcepackage"):
+            if get_header_field(hdr, "nosource"):
+                return "nosrc"
+            return "src"
+
     hdr_key = getattr(rpm, "RPMTAG_%s" % name.upper(), None)
 
     if hdr_key is None:
+        # HACK: nosource is not in exported rpm tags
+        if name == "nosource":
+            return hdr[1051]
         raise AttributeError("No such rpm header field: %s" % name)
 
     return hdr[hdr_key]
