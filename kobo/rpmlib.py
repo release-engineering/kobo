@@ -258,8 +258,8 @@ def compare_nvr(nvr_dict1, nvr_dict2, ignore_epoch=False):
     @type nvr_dict2: dict
     @param ignore_epoch: ignore epoch during the comparison
     @type ignore_epoch: bool
-    @return: True on match, False otherwise
-    @rtype: bool
+    @return: nvr1 newer than nvr2: 1, same nvrs: 0, nvr1 older: -1, different names: ValueError
+    @rtype: int
     """
 
     nvr1 = nvr_dict1.copy()
