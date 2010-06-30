@@ -79,6 +79,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
+from django.utils.encoding import smart_unicode
 
 
 __all__ = (
@@ -118,7 +119,7 @@ class MenuItem(object):
 
 
     def __init__(self, title, url, acl_groups=None, acl_perms=None, absolute_url=False, menu=None):
-        self.title = title
+        self.title = smart_unicode(title)
         self._url = url
         self._url_is_resolved = absolute_url
         self.absolute_url = absolute_url
