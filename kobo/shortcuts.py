@@ -21,6 +21,7 @@ __all__ = (
     "anyof",
     "noneof",
     "oneof",
+    "is_empty",
     "random_string",
     "hex_string",
     "touch",

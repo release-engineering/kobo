@@ -59,6 +59,15 @@ class TestEnum(unittest.TestCase):
         self.assertEqual(oneof(1, True, "a"), False)
         self.assertEqual(oneof(0, False, ""), False)
 
+    def test_is_empty(self):
+        self.assertEqual(is_empty(None), True)
+        self.assertEqual(is_empty([]), True)
+        self.assertEqual(is_empty([1]), False)
+        self.assertEqual(is_empty(()), True)
+        self.assertEqual(is_empty((1,)), False)
+        self.assertEqual(is_empty({}), True)
+        self.assertEqual(is_empty(1), False)
+
 
 class TestUtils(unittest.TestCase):
     def setUp(self):
