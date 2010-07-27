@@ -147,6 +147,7 @@ class XMLRPCHandlerFactory(object):
                 })
 
             c = RequestContext(request, {
+                "title": "XML-RPC interface (%s)" % self.name,
                 "method_list": method_list,
             })
 

@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.utils import simplejson
+from django.db.models import Q
 
 from kobo.django.views.generic import object_list
 from kobo.hub.models import Task, Worker, Channel, Arch
@@ -24,9 +25,9 @@ def user_list(request):
         "paginate_by": 50,
         "template_name": "user/list.html",
         "template_object_name": "usr",
-#        "extra_context": {
-#            "search_form": search_form,
-#        }
+        "extra_context": {
+            "title": "Users",
+        }
     }
 
     return object_list(request, **args)
@@ -34,17 +35,18 @@ def user_list(request):
 
 def user_detail(request, id):
     user = get_object_or_404(User, id=id)
-    dict = {
+    args = {
         "queryset": User.objects,
         "object_id": id,
         "template_object_name": "usr",
         "template_name": "user/detail.html",
         "extra_context": {
+            "title": "User detail",
             "tasks": Task.objects.filter(owner=user).count(),
         }
     }
 
-    return object_detail(request, **dict)
+    return object_detail(request, **args)
 
 
 def worker_list(request):
@@ -54,23 +56,26 @@ def worker_list(request):
         "paginate_by": 50,
         "template_name": "worker/list.html",
         "template_object_name": "worker",
-#        "extra_context": {
-#            "search_form": search_form,
-#        }
+        "extra_context": {
+            "title": "Workers",
+        }
     }
 
     return object_list(request, **args)
 
 
 def worker_detail(request, id):
-    dict = {
+    args = {
         "queryset": Worker.objects.select_related(),
         "object_id": id,
         "template_object_name": "worker",
         "template_name": "worker/detail.html",
+        "extra_context": {
+            "title": "Worker detail",
+        }
     }
 
-    return object_detail(request, **dict)
+    return object_detail(request, **args)
 
 
 def channel_list(request):
@@ -80,9 +85,9 @@ def channel_list(request):
         "paginate_by": 50,
         "template_name": "channel/list.html",
         "template_object_name": "channel",
-#        "extra_context": {
-#            "search_form": search_form,
-#        }
+        "extra_context": {
+            "title": "Channels",
+        }
     }
 
     return object_list(request, **args)
@@ -90,17 +95,18 @@ def channel_list(request):
 
 def channel_detail(request, id):
     channel = get_object_or_404(Channel, id=id)
-    dict = {
+    args = {
         "queryset": Channel.objects,
         "object_id": id,
         "template_object_name": "channel",
         "template_name": "channel/detail.html",
         "extra_context": {
+            "title": "Channel detail",
             "worker_list": Worker.objects.filter(channels__name=channel.name),
         }
     }
 
-    return object_detail(request, **dict)
+    return object_detail(request, **args)
 
 
 def arch_list(request):
@@ -110,9 +116,9 @@ def arch_list(request):
         "paginate_by": 50,
         "template_name": "arch/list.html",
         "template_object_name": "arch",
-#        "extra_context": {
-#            "search_form": search_form,
-#        }
+        "extra_context": {
+            "title": "Arches",
+        }
     }
 
     return object_list(request, **args)
@@ -120,29 +126,36 @@ def arch_list(request):
 
 def arch_detail(request, id):
     arch = get_object_or_404(Arch, id=id)
-    dict = {
+    args = {
         "queryset": Arch.objects,
         "object_id": id,
         "template_object_name": "arch",
         "template_name": "arch/detail.html",
         "extra_context": {
+            "title": "Arch detail",
             "worker_list": Worker.objects.filter(arches__name=arch.name),
         }
     }
 
-    return object_detail(request, **dict)
+    return object_detail(request, **args)
 
 
-def task_list(request, state):
+def task_list(request, state, title="Tasks"):
     search_form = TaskSearchForm(request.GET)
 
+    if state is None:
+        state_q = Q()
+    else:
+        state_q = Q(state__in=state)
+
     args = {
-        "queryset": Task.objects.filter(state__in=state, parent__isnull=True).filter(search_form.get_query(request)).order_by("-dt_finished", "id").defer("result", "args").select_related("owner", "worker"),
+        "queryset": Task.objects.filter(state_q, parent__isnull=True).filter(search_form.get_query(request)).order_by("-dt_finished", "id").defer("result", "args").select_related("owner", "worker"),
         "allow_empty": True,
         "paginate_by": 50,
         "template_name": "task/list.html",
         "template_object_name": "task",
         "extra_context": {
+            "title": title,
             "search_form": search_form,
         }
     }
@@ -162,20 +175,19 @@ def task_detail(request, id):
             logs.append(i)
     logs.sort(lambda x, y: cmp(os.path.split(x), os.path.split(y)))
 
-    c = {
-	"task_list": task.subtasks(),
-	"logs": logs,
-    }
-
-    dict = {
+    args = {
         "queryset": Task.objects.select_related(),
         "object_id": id,
         "template_object_name": "task",
         "template_name": "task/detail.html",
-        "extra_context": c,
+        "extra_context": {
+            "title": "Task detail",
+            "task_list": task.subtasks(),
+            "logs": logs,
+        },
     }
 
-    return object_detail(request, **dict)
+    return object_detail(request, **args)
 
 
 def task_log(request, id, log_name):
@@ -196,6 +208,7 @@ def task_log(request, id, log_name):
         return response
 
     context = {
+        "title": "Task log",
         "offset": offset + len(content) + 1,
         "task_finished": task.is_finished() and 1 or 0,
         "content": content,
