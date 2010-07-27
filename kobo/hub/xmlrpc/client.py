@@ -33,6 +33,14 @@ def task_info(request, task_id, flat=False):
 
 
 def get_tasks(request, task_id_list):
+    """get_tasks(task_id_list): list
+
+    @param task_id_list: list of task ids
+    @type task_id_list: [int]
+    @return: list of task_info dicts
+    @rtype: list
+    """
+
     return [ i.export(flat=True) for i in models.Task.objects.filter(id__in=task_id_list) ]
 
 
