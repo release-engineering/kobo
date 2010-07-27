@@ -41,6 +41,8 @@ body {
     -khtml-border-bottom-left-radius: 0.5em;
     -khtml-border-bottom-right-radius: 0.5em;
     padding: 0.1em 0.3em 0.1em 0.3em;
+    background: -moz-linear-gradient(top, #fefefe, #ececed, #c8c8ca);
+    background: -webkit-gradient(linear, left top, left bottom, from(#fefefe), to(#d8d8da), color-stop(0.6, #ececed));
 }
 
 #menu a {
@@ -93,6 +95,7 @@ body {
 pre.log {
     border: 1px solid #d0d0d0;
     overflow: auto;
+    min-height: 10em;
 }
 
 table {
@@ -103,7 +106,7 @@ table {
 }
 
 td, th {
-    padding: 0.4em 0.7em 0.4em 0.7em;
+    padding: 0.3em 0.7em 0.3em 0.7em;
     border: 1px solid #d0d0d0;
 }
 
@@ -139,7 +142,7 @@ table.details td, table.details th {
 
 table.details td {
     border-bottom: 1px solid #d0d0d0;
-    width: 50em;
+    min-width: 20em;
 }
 
 table.details th {
