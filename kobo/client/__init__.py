@@ -78,7 +78,7 @@ import kobo.conf
 import kobo.cli
 import kobo.http
 import kobo.xmlrpc
-from kobo.exceptions import ImproperlyConfigured
+from kobo.exceptions import AuthenticationError, ImproperlyConfigured
 
 
 __all__ = (
@@ -220,8 +220,7 @@ class HubProxy(object):
             except KeyboardInterrupt:
                 raise
             except Exception, ex:
-                self._logger and self._logger.error("Failed to create new session: %s" % ex)
-                raise
+                self._logger and self._logger.debug("Failed to create new session: %s" % ex)
             else:
                 self._logger and self._logger.info("New session created.")
 
@@ -232,15 +231,17 @@ class HubProxy(object):
 
     def _login_password(self):
         """Login using username and password."""
-#        if "USERNAME" not in self._conf:
-#            raise RuntimeError("Can't authenticate, user
-        username = self._conf["USERNAME"]
-        password = self._conf["PASSWORD"]
+        username = self._conf.get("USERNAME")
+        password = self._conf.get("PASSWORD")
+        if not username:
+            raise AuthenticationError("USERNAME is not set")
         self._hub.auth.login_password(username, password)
 
     def _login_worker_key(self):
         """Login using worker key."""
-        worker_key = self._conf["WORKER_KEY"]
+        worker_key = self._conf.get("WORKER_KEY")
+        if not worker_key:
+            raise AuthenticationError("WORKER_KEY is not set")
         self._hub.auth.login_worker_key(worker_key)
 
     def _login_krbv(self):
