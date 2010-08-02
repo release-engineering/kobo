@@ -47,7 +47,15 @@ class CookieResponse(object):
 
 
 class CookieTransport(xmlrpclib.Transport):
-    """Cookie enabled XML-RPC transport."""
+    """
+    Cookie enabled XML-RPC transport.
+
+    USAGE:
+    >>> import xmlrpclib
+        import kobo.xmlrpc
+        client = xmlrpclib.ServerProxy("http://<server>/xmlrpc", transport=kobo.xmlrpc.CookieTransport())
+        # for https:// connections use kobo.xmlrpc.SafeCookieTransport() instead.
+    """
 
     _use_datetime = False # fix for python 2.5
     scheme = "http"
@@ -198,7 +206,11 @@ class CookieTransport(xmlrpclib.Transport):
 
 
 class SafeCookieTransport(CookieTransport):
-    """Cookie enabled XML-RPC transport over HTTPS."""
+    """
+    Cookie enabled XML-RPC transport over HTTPS.
+
+    USAGE: see CookieTransport
+    """
     scheme = "https"
 
     def make_connection(self, host):
