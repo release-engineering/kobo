@@ -402,12 +402,17 @@ class TaskManager(kobo.log.LoggingBase):
         failed = False
         try:
             task.run()
-        except (ShutdownException, KeyboardInterrupt):
+        except ShutdownException:
             thread.stop()
             if TaskClass.foreground and TaskClass.exclusive:
                 # close task (shutdown-worker and similar control tasks) and raise
                 self.hub.worker.close_task(task.task_id, task.result)
                 raise
+            # interrupt otherwise
+            self.hub.worker.interrupt_tasks([task.task_id])
+            return
+        except KeyboardInterrupt:
+            thread.stop()
             # interrupt otherwise
             self.hub.worker.interrupt_tasks([task.task_id])
             return
