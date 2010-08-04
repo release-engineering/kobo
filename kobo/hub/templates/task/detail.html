@@ -65,9 +65,11 @@
     <th>{% trans "Resubmitted by" %}</th>
     <td>{{ task.resubmitted_by }}</td>
   </tr>
+{% endif %}
+{% if task.resubmitted_from %}
   <tr>
     <th>{% trans "Resubmitted from" %}</th>
-    <td>#{{ task.resubmitted_from.id }} <a href="{{ URL_PREFIX }}/task/{{ task.resubmitted_from.id }}/">task</a></td>
+    <td>#{{ task.resubmitted_from.id }} <a href="{% url task/detail task.resubmitted_from.id %}">task</a></td>
   </tr>
 {% endif %}
   <tr>
