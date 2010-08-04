@@ -303,8 +303,8 @@ class TaskManager(kobo.log.LoggingBase):
 
         try:
             TaskClass = self.task_container[task_info["method"]]
-        except (AttributeError, ValueError):
-            self.log_error("Cannot take unknown task %s" % (task_info["method"], task_info["id"]))
+        except (KeyError, ValueError):
+            self.log_error("Cannot take unknown task %s (#%s)" % (task_info["method"], task_info["id"]))
             time.sleep(1) # prevent log flooding
             return
 
