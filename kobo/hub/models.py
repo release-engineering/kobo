@@ -774,6 +774,36 @@ WHERE
         }
         return Task.create_task(**kwargs)
 
+    def clone_task(self, user, **kwargs):
+        """Clone a task, override field values by kwargs."""
+        if not user.is_superuser:
+            raise Exception("You are not superuser.")
+
+        if self.parent:
+            raise Exception("Task is not top-level: %s" % self.id)
+
+        kwargs.pop("resubmitted_by", None)
+        kwargs.pop("resubmitted_from", None)
+
+        new_kwargs = {
+            "owner_name": self.owner.username,
+            "label": self.label,
+            "method": self.method,
+            "args": self.args,
+            "comment": self.comment,
+            "parent_id": None,
+            "worker_name": None,
+            "arch_name": self.arch.name,
+            "channel_name": self.channel.name,
+            "priority": self.priority,
+            "weight": self.weight,
+            "exclusive": self.exclusive,
+            "resubmitted_by": user,
+            "resubmitted_from": self,
+        }
+
+        new_kwargs.update(kwargs)
+        return Task.create_task(**new_kwargs)
 
     def wait(self, child_task_list=None):
         """Set this task as waiting and all subtasks in child_task_list as awaited.

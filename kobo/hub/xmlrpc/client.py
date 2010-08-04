@@ -12,6 +12,7 @@ __all__ = (
     "cancel_task",
     "resubmit_task",
     "list_workers",
+    "create_task",
 )
 
 
@@ -60,3 +61,27 @@ def resubmit_task(request, task_id):
 def list_workers(request, enabled=True):
     """(): [string]"""
     return sorted([ worker.name for worker in models.Worker.objects.filter(enabled=enabled) ])
+
+
+@admin_required
+def create_task(request, kwargs):
+    """
+    Create a new task which is either brand new or based on existing one.
+    This call can be invoked only by superuser.
+
+    @param kwargs: task attributes: owner_name, label, method, args, comment, parent_id, worker_name, arch_name, channel_name, timeout, priority, weight, exclusive
+                   when task_id is set, the task is used as a template for the new one
+    @type kwargs: dict
+    @return: task id
+    @rtype: int
+    """
+
+    old_task_id = kwargs.pop("task_id", None)
+    if old_task_id is not None:
+        old_task = models.Task.objects.get(id=old_task_id)
+        return old_task.clone_task(request.user, **kwargs)
+
+    kwargs.setdefault("label", "")
+    kwargs["resubmitted_by"] = request.user
+    kwargs["resubmitted_from"] = None
+    return models.Task.create_task(**kwargs)
