@@ -9,7 +9,7 @@ db.
 import os
 import sys
 import pipes
-from django.db import connection
+from django.db import connection, transaction
 from django.core import management
 from django.conf import settings
 from kobo.hub.models import Task
@@ -19,11 +19,9 @@ from kobo.shortcuts import save_to_file, run
 def main():
     c = connection.cursor()
 
-    # add Worker.max_tasks
-    c.execute('ALTER TABLE hub_worker ADD COLUMN "max_tasks" integer CHECK ("max_tasks" >= 0) NOT NULL DEFAULT 0;')
 
     # copy data from db to disk
-    print 'copying data'
+    print 'Dumping task tracebacks and logs to disk...'
     c.execute('SELECT id, traceback, result FROM hub_task')
     l = c.fetchone()
     while l:
@@ -39,20 +37,39 @@ def main():
 
         l = c.fetchone()
 
-    # alter table
-    #c.execute('ALTER TABLE hub_task DROP COLUMN traceback')
+    if settings.DATABASES["default"]["ENGINE"] in ('django.db.backends.postgresql_psycopg2', 'django.db.backends.postgresql'):
+        print "POSTGRESQL database"
 
-    c.execute('DROP TABLE IF EXISTS hub_task_save')
-    c.execute('ALTER TABLE hub_task RENAME TO hub_task_save')
-    print 'syncing db models'
-    management.call_command('syncdb')
-    c = connection.cursor()
-    c.execute('INSERT INTO hub_task (id,archive,owner_id,worker_id,parent_id,state,label,exclusive,method,args,result,comment,arch_id,channel_id,timeout,waiting,awaited,dt_created,dt_started,dt_finished,priority,weight,resubmitted_by_id,resubmitted_from_id,subtask_count) SELECT id,archive,owner_id,worker_id,parent_id,state,label,exclusive,method,args,'',comment,arch_id,channel_id,timeout,waiting,awaited,dt_created,dt_started,dt_finished,priority,weight,resubmitted_by_id,resubmitted_from_id,subtask_count FROM hub_task_save')
+        c.execute("ALTER TABLE hub_worker ADD COLUMN max_tasks integer CHECK (max_tasks >= 0) NOT NULL DEFAULT 0")
+        c.execute("ALTER TABLE auth_user ALTER username TYPE VARCHAR(255)")
+        c.execute("ALTER TABLE hub_task DROP COLUMN traceback")
+        c.execute("UPDATE hub_task set result=''")
 
-    print 'cleanup'
-    c.execute('DROP TABLE hub_task_save')
-    c.execute('VACUUM')
-    c.execute('ANALYZE')
+    else:
+        print "SQLITE3 database"
+
+        c.execute("ALTER TABLE hub_worker ADD COLUMN max_tasks integer CHECK (max_tasks >= 0) NOT NULL DEFAULT 0")
+
+        # alter auth_user table
+        c.execute("DROP TABLE IF EXISTS auth_user_save")
+        c.execute("ALTER TABLE auth_user RENAME TO auth_user_save")
+
+        # alter hub_task table
+        c.execute("DROP TABLE IF EXISTS hub_task_save")
+        c.execute("ALTER TABLE hub_task RENAME TO hub_task_save")
+        print 'syncing db models'
+        management.call_command('syncdb')
+        c = connection.cursor()
+
+        # copy data
+        c.execute("INSERT INTO auth_user (id,username,first_name,last_name,email,password,is_staff,is_active,is_superuser,last_login,date_joined) SELECT id,username,first_name,last_name,email,password,is_staff,is_active,is_superuser,last_login,date_joined FROM auth_user_save")
+        c.execute("INSERT INTO hub_task (id,archive,owner_id,worker_id,parent_id,state,label,exclusive,method,args,result,comment,arch_id,channel_id,timeout,waiting,awaited,dt_created,dt_started,dt_finished,priority,weight,resubmitted_by_id,resubmitted_from_id,subtask_count) SELECT id,archive,owner_id,worker_id,parent_id,state,label,exclusive,method,args,'',comment,arch_id,channel_id,timeout,waiting,awaited,dt_created,dt_started,dt_finished,priority,weight,resubmitted_by_id,resubmitted_from_id,subtask_count FROM hub_task_save")
+
+        print 'cleanup'
+        c.execute("DROP TABLE auth_user_save")
+        c.execute("DROP TABLE hub_task_save")
+        c.execute("VACUUM")
+        c.execute("ANALYZE")
 
     # change TASK_DIR ownership to apache
     print "recursively changing ownersip of '%s'" % settings.TASK_DIR
@@ -61,6 +78,16 @@ def main():
 
 if __name__ == "__main__":
     if len(sys.argv) == 2 and sys.argv[1] == '--force':
-        main()
+        try:
+            print "BEGIN TRANSACTION"
+            transaction.enter_transaction_management()
+            main()
+        except Exception, ex:
+            print "ROLLBACK TRANSACTION"
+            transaction.rollback()
+            raise
+        else:
+            print "COMMIT TRANSACTION"
+            transaction.commit()
     else:
         print 'If you really want to convert db, please save old one and then run this command with parameter --force.'
