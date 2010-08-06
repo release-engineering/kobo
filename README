@@ -1,0 +1,87 @@
+KOBO 0.3.0 RELEASE NOTES
+========================
+
+
+NEW FEATURES
+------------
+- State machine implementation - StateEnum, db field, form fields
+- Brand new HTML template, media, views, urls and menu
+- Menu supports django.root
+- Task logs, javascript log watcher, threaded worker stdout logger
+- XML-RPC help pages display list of contents
+- Kerberos support in CookieTransport
+- JSONField to store dicts and lists in database
+- Add relative_path() and split_path() functions to shortcuts
+
+
+kobo.pkgset.FileWrapper
+-----------------------
+file_name attribute renamed to file_path.
+file_name is now a property which returns actual file name.
+
+Action:
+Change file_name to file_path in your code.
+
+
+Username hack
+-------------
+Username hack is enabled by default now (when kobo.django.auth is used).
+It changes username to 255 characters and also overrides validation RE.
+
+Action:
+On postgresql run: ALTER TABLE auth_user ALTER username TYPE VARCHAR(255);
+Sqlite users have to use db_update-0.2.0-0.3.0 script.
+
+
+Worker FQDN checking
+--------------------
+Each worker's name must match it's FQDN now.
+This prevents cut&paste configuration errors when tasks end in INTERRUPTED state.
+
+Action:
+Change worker names to FQDN.
+Change related usernames as well.
+
+
+Changes in kobo.plugins
+-----------------------
+Removed 'lower_case' attribute.
+Plugins are now subclassed when a container is created.
+Each plugin now contains 'container' attribute.
+
+Action:
+Remove 'lower_case' attribute from plugins, do whatever is necessary in 'normalize_name() class method instead.
+
+
+- Improve PluginContainer inheritance. Also add 'container' attribute to each plugin class obtained from a container instance. (Daniel Mach)
+- Plugins are now subclassed when a container is created. (Daniel Mach)
+
+
+kobo.hub.models.Task refactoring
+--------------------------------
+Field 'traceback' moved to a file (traceback.log).
+Field 'result' content dumped to a file (stdout.log), it is supposed to contain actual task result.
+Field 'args' changed to JSONField and data is directly available without any conversion.
+
+Action:
+Run db_update-0.2.0-0.3.0 script.
+
+
+Configuration handling in kobo.client and kobo.worker
+-----------------------------------------------------
+Configuration no longer uses os.environ to get config file path.
+ClientCommandContainer, HubProxy and TaskManager constructor has a new mandatory 'conf' argument.
+
+Action:
+    config_file = os.environ.get("<PROJECT_NAME>_CONFIG_FILE", "/etc/<project_name>.conf")
+    conf = kobo.conf.PyConfigParser()
+    conf.load_from_file(config_file)
+    ... and pass conf to ClientCommandContainer, HubProxy or TaskManager
+
+
+Configuration passed to tasks
+-----------------------------
+TaskBase constructor has now a mandatory argument 'conf', which is automatically set in TaskManager.
+
+Action:
+Add 'conf' argument to tasks classes with custom constructor.
