@@ -17,7 +17,7 @@ project_author_email = "dmach@redhat.com"
 project_description  = "Python modules for tools development"
 package_name         = "%s" % project_name
 package_module_name  = project_name
-package_version      = [0, 2, 0, "final", ""]
+package_version      = [0, 3, 0, "final", ""]
 
 
 script_files = []
@@ -42,7 +42,7 @@ package_data = {
     "kobo.hub": [
         "fixtures/*.json",
         "sql/*.sql",
-    ],
+    ] + get_files("kobo/hub", "templates") + get_files("kobo/hub", "media"),
 }
 
 
@@ -58,13 +58,13 @@ if os.path.isdir(".git"):
         git_date = get_git_date(os.path.dirname(__file__))
         package_version[4] = "%s.%s" % (git_date, git_version)
 
-    # !!! this rewrites __init__.py !!!
-    file_name = os.path.join(package_module_name, "__init__.py")
-    write_version(file_name, package_version)
+    for i in project_dirs:
+        file_name = os.path.join(i, "version.py")
+        write_version(file_name, package_version)
 
 
 # read package version from the module
-package_module = __import__(package_module_name)
+package_module = __import__(project_dirs[0] + ".version")
 package_version = get_version(package_module)
 packages = get_packages(project_dirs)
 
@@ -72,6 +72,11 @@ packages = get_packages(project_dirs)
 root_dir = os.path.dirname(__file__)
 if root_dir != "":
     os.chdir(root_dir)
+
+
+# force to install data files to site-packages
+for scheme in INSTALL_SCHEMES.values():
+    scheme["data"] = scheme["purelib"]
 
 
 setup(

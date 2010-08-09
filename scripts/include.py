@@ -8,6 +8,7 @@ import subprocess
 __all__ = (
     "get_module",
     "get_packages",
+    "get_files",
     "get_git_date",
     "get_git_version",
     "get_version",
@@ -28,7 +29,7 @@ def get_module(path):
 def get_packages(project_dirs):
     """Return packages found in project dirs."""
     packages = []
-    
+
     for project_dir in project_dirs:
         for dirpath, dirnames, filenames in os.walk(project_dir):
             # ignore dirnames that start with "."
@@ -42,6 +43,17 @@ def get_packages(project_dirs):
                 continue
 
     return packages
+
+
+def get_files(module_dir, top_dir):
+    """Return list of all files under top_dir."""
+    result = []
+    module_dir = os.path.abspath(module_dir)
+
+    for root, dirs, files in os.walk(os.path.join(module_dir, top_dir)):
+        for fn in files:
+            result.append(os.path.join(top_dir, root, fn)[len(module_dir)+1:])
+    return result
 
 
 def get_git_date(git_repo_path):
@@ -68,7 +80,7 @@ def get_git_version(git_repo_path):
 
 def get_version(module):
     """Get version from the module."""
-    version_tuple = module.VERSION
+    version_tuple = module.version.VERSION
 
     if len(version_tuple) != 5:
         raise ValueError("Tuple with 5 records expected.")
