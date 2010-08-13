@@ -114,4 +114,4 @@ def main(conf, argv=None):
     if opts.foreground:
         main_loop(conf, foreground=True)
     else:
-        kobo.process.daemonize(main_loop, daemon_pid_file=pid_file, foreground=False)
+        kobo.process.daemonize(main_loop, conf=conf, daemon_pid_file=pid_file, foreground=False)
