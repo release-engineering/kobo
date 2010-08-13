@@ -329,7 +329,7 @@ def get_digest_algo_from_header(hdr):
     hdr_key = getattr(rpm, "RPMTAG_FILEDIGESTALGO", 5011)
     algo_id = hdr[hdr_key]
 
-    if algo_id == []:
+    if algo_id == [] or algo_id is None:
         # RPMTAG_FILEDIGESTALGO is empty, fall back to md5
         algo_id = 1
 
