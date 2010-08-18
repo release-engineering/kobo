@@ -1,0 +1,41 @@
+# -*- coding: utf-8 -*-
+
+
+import kobo.client
+
+
+class {{ project_name|camel_cmd }}(kobo.client.ClientCommand):
+    """command description"""
+    enabled = True
+    admin = False # admin type account required
+
+    def options(self):
+        # specify command usage
+        # normalized name contains a lower-case class name with underscores converted to dashes
+        self.parser.usage = "%%prog %s [options] <args>" % self.normalized_name
+
+        # specify command options as in optparse.OptionParser
+        """
+        self.parser.add_option(
+            "--long-option",
+            default=None,
+            action="store",
+            help=""
+        )
+        """
+
+    def run(self, *args, **kwargs):
+        # optparser output is passed via *args (args) and **kwargs (opts)
+        username = kwargs.pop("username", None)
+        password = kwargs.pop("password", None)
+
+        # if not args:
+        #     self.parser.error("please specify at least one argument")
+
+        # login to the hub
+        self.set_hub(username, password)
+
+        # call hub XML-RPC calls or do whatever you want
+        #self.hub.client.some_method(kwargs)
+
+    raise NotImplementedError # remove this line once you're finished with this command

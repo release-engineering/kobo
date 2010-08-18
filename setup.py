@@ -23,16 +23,15 @@ package_version      = [0, 3, 0, "final", ""]
 script_files = []
 
 
-data_files = {}
-#data_files = {
-#    "dst_dir": [
-#        "src_file",
-#        ...,
-#    ],
-#}
+data_files = {
+    "/usr/bin": [
+        "kobo/admin/kobo-admin",
+    ],
+}
 
 
 package_data = {
+    "kobo.admin": get_files("kobo/admin", "templates"),
     "kobo.client": [
         "default.conf",
     ],

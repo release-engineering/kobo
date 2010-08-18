@@ -1,0 +1,52 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+import sys
+import os
+
+import kobo.exceptions
+import kobo.client
+import kobo.client.commands
+
+# assuming all commands are in {{ project_name }}/commands/cmd_*.py modules
+import commands
+
+
+# inherit container to make sure nobody will change plugins I registered
+class {{ project_name|camel }}CommandContainer(kobo.client.ClientCommandContainer):
+    pass
+
+
+def main(args=None):
+    # register generic kobo commands
+    {{ project_name|camel }}CommandContainer.register_module(kobo.client.commands, prefix="cmd_")
+    # register project specific commands
+    {{ project_name|camel }}CommandContainer.register_module(commands, prefix="cmd_")
+
+    # configuration
+    config_file = os.environ.get("{{ project_name|upper }}_CONFIG_FILE", "/etc/{{ project_name }}.conf")
+    conf = kobo.conf.PyConfigParser()
+    try:
+        conf.load_from_file(config_file)
+    except (IOError, TypeError):
+        sys.stderr.write("\n\nError: The config file was not found.\n")
+        return 2
+
+    # initialize command container
+    command_container = {{ project_name|camel }}CommandContainer(conf)
+    parser = kobo.cli.CommandOptionParser(
+        command_container=command_container, # plugin container with registered commands
+        add_username_password_options=True,  # include auth options to each command
+    )
+
+    try:
+        parser.run(args)
+    except kobo.exceptions.ImproperlyConfigured, ex:
+        sys.stderr.write("\n\nError: Improperly configured: " + str(ex) + "\n")
+        return 3
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

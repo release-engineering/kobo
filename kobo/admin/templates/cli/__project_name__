@@ -1,0 +1,40 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+import sys
+import os
+
+import kobo.exceptions
+import kobo.cli
+
+# assuming all commands are in {{ project_name }}/commands/cmd_*.py modules
+import commands
+
+
+# inherit container to make sure nobody will change plugins I registered
+class {{ project_name|camel }}CommandContainer(kobo.cli.CommandContainer):
+    pass
+
+
+def main(args=None):
+    # register project specific commands
+    {{ project_name|camel }}CommandContainer.register_module(commands, prefix="cmd_")
+
+    # initialize command container
+    command_container = {{ project_name|camel }}CommandContainer()
+    parser = kobo.cli.CommandOptionParser(
+        command_container=command_container, # plugin container with registered commands
+        add_username_password_options=True,  # include auth options to each command
+    )
+
+    try:
+        parser.run(args)
+    except kobo.exceptions.ImproperlyConfigured, ex:
+        sys.stderr.write("\n\nError: Improperly configured: " + str(ex) + "\n")
+        return 3
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

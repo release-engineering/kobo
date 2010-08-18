@@ -5,6 +5,6 @@ include LICENSE
 include MANIFEST.in
 include README
 include Makefile
-recursive-include kobo *.py *.conf *.json *.sql *.html *.css *.js *.png
+recursive-include kobo *.py *.conf *.json *.sql *.html *.css *.js *.png kobo-admin __*__
 recursive-include scripts *.py *.sh
 recursive-include tests *
