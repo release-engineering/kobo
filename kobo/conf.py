@@ -21,7 +21,9 @@ PyConfigParser accepts following python-like syntax:
    - from <file_without_suffix> import var1, var2
 """
 
+
 import os
+import fnmatch
 import itertools
 import keyword
 import token
@@ -39,22 +41,31 @@ __all__ = (
 
 
 def get_dict_value(dictionary, key):
-    """Return a value from a dictionary, if not found, use default value with '*' key."""
+    """Return a value from a dictionary, if not found, use 'glob' keys (*, ? metachars), then use default value with '*' key."""
     if dictionary is None:
         return None
 
     if type(dictionary) is not dict:
         raise TypeError("Dictionary expected, got %s." % type(dictionary))
 
-    result = None
     try:
-        result = dictionary[key]
+        return dictionary[key]
     except KeyError:
-        if "*" in dictionary:
-            result = dictionary["*"]
-        else:
-            raise
-    return result
+        if isinstance(key, str):
+            matches = []
+            for pattern in dictionary.iterkeys():
+                if pattern == '*' or not isinstance(pattern, str):
+                    # exclude '*', because it would match every time
+                    continue
+                if fnmatch.fnmatchcase(key, pattern):
+                    matches.append(pattern)
+            if len(matches) == 1:
+                return dictionary[matches[0]]
+            elif len(matches) > 1:
+                raise KeyError("Key matches multiple values: %s" % key)
+        if '*' in dictionary:
+            return dictionary['*']
+        raise
 
 
 class PyConfigParser(dict):
