@@ -9,7 +9,7 @@ from django.views.generic.list_detail import object_detail
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import simplejson
 from django.db.models import Q
 
