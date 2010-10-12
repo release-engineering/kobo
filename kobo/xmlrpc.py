@@ -57,10 +57,15 @@ class CookieTransport(xmlrpclib.Transport):
         # for https:// connections use kobo.xmlrpc.SafeCookieTransport() instead.
     """
 
-    _use_datetime = False # fix for python 2.5
+    _use_datetime = False # fix for python 2.5+
     scheme = "http"
 
-    def __init__(self, cookiejar=None):
+    def __init__(self, *args, **kwargs):
+        cookiejar = kwargs.pop("cookiejar", None)
+
+        if hasattr(xmlrpclib.Transport, "__init__"):
+            xmlrpclib.Transport.__init__(self, *args, **kwargs)
+
         self.cookiejar = cookiejar or cookielib.CookieJar()
 
         if hasattr(self.cookiejar, "load"):
@@ -77,29 +82,75 @@ class CookieTransport(xmlrpclib.Transport):
             if header.startswith("Cookie"):
                 connection.putheader(header, value)
 
-    def send_host(self, connection, host, headers=None):
-        """Send host information and extra headers."""
-        host, extra_headers, x509 = self.get_host_info(host)
-        connection.putheader("Host", host)
-
-        if extra_headers is None:
-            extra_headers = {}
-
-        if headers:
-            extra_headers.update(headers)
-
-        for key, value in extra_headers.iteritems():
-            connection.putheader(key, value)
-
     def _save_cookies(self, headers, cookie_request):
         cookie_response = CookieResponse(headers)
         self.cookiejar.extract_cookies(cookie_response, cookie_request)
         if hasattr(self.cookiejar, "save"):
             self.cookiejar.save(self.cookiejar.filename)
 
-    def request(self, host, handler, request_body, verbose=0):
+    def _kerberos_client_request(self, host, handler, errcode, errmsg, headers):
+        """Kerberos auth - create a client request string"""
+
+        # check if "Negotiate" challenge is present in headers
+        negotiate = [i.lower() for i in headers.get("WWW-Authenticate", "").split(", ")]
+        if "negotiate" not in negotiate:
+            # negotiate not supported, raise 401 error
+            raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
+
+        # initialize GSSAPI
+        service = "HTTP@%s" % host
+        rc, vc = kerberos.authGSSClientInit(service)
+        if rc != 1:
+            errmsg = "KERBEROS: Could not initialize GSSAPI"
+            raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
+
+        # do a client step
+        rc = kerberos.authGSSClientStep(vc, "")
+        if rc != 0:
+            errmsg = "KERBEROS: Client step failed"
+            raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
+
+        return vc, kerberos.authGSSClientResponse(vc)
+
+    def _kerberos_verify_response(self, vc, host, handler, errcode, errmsg, headers):
+        """Kerberos auth - verify client identity"""
+        # verify that headers contain WWW-Authenticate header
+        auth_header = headers.get("WWW-Authenticate", None)
+        if auth_header is None:
+            errcode = 401
+            errmsg = "KERBEROS: No WWW-Authenticate header in second HTTP response"
+            raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
+
+        # verify that WWW-Authenticate contains Negotiate
+        splits = auth_header.split(" ", 1)
+        if (len(splits) != 2) or (splits[0].lower() != "negotiate"):
+            errcode = 401
+            errmsg = "KERBEROS: Incorrect WWW-Authenticate header in second HTTP response: %s" % auth_header
+            raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
+
+        # do another client step to verify response from server
+        errmsg = "KERBEROS: Could not verify server WWW-Authenticate header in second HTTP response"
+        try:
+            rc = kerberos.authGSSClientStep(vc, splits[1])
+            if rc == -1:
+                errcode = 401
+                raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
+        except kerberos.GSSError, ex:
+            errcode = 401
+            errmsg += ": %s/%s" % (ex[0][0], ex[1][0])
+            raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
+
+        # cleanup
+        rc = kerberos.authGSSClientClean(vc)
+        if rc != 1:
+            errcode = 401
+            errmsg = "KERBEROS: Could not clean-up GSSAPI: %s/%s" % (ex[0][0], ex[1][0])
+            raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
+
+    def _request(self, host, handler, request_body, verbose=0):
         """Send a HTTP request."""
         h = self.make_connection(host)
+        self.verbose = verbose
         if verbose:
             h.set_debuglevel(1)
 
@@ -107,95 +158,29 @@ class CookieTransport(xmlrpclib.Transport):
         cookie_request = urllib2.Request(request_url)
 
         self.send_request(h, handler, request_body)
-        self.send_host(h, host, {})
+        self.send_host(h, host)
         self.send_cookies(h, cookie_request)
         self.send_user_agent(h)
         self.send_content(h, request_body)
 
         errcode, errmsg, headers = h.getreply()
-        if errcode / 100 == 2:
-            self._save_cookies(headers, cookie_request)
 
-        elif errcode == 401 and USE_KERBEROS:
-            # ========== KERBEROS AUTH NEGOTIATION - BEGIN ==========
-
-            # check if "Negotiate" challenge is present in headers
-            negotiate = [i.lower() for i in headers.get("WWW-Authenticate", "").split(", ")]
-            if "negotiate" not in negotiate:
-                # negotiate not supported, raise 401 error
-                raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
-
-            # initialize GSSAPI
-            service = "HTTP@%s" % host
-            rc, vc = kerberos.authGSSClientInit(service)
-            if rc != 1:
-                errmsg = "KERBEROS: Could not initialize GSSAPI"
-                raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
-
-            # do a client step
-            rc = kerberos.authGSSClientStep(vc, "")
-            if rc != 0:
-                errmsg = "KERBEROS: Client step failed"
-                raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
-
-            # add a client response to headers
-            extra_headers = {
-                "Authorization": "Negotiate %s" % kerberos.authGSSClientResponse(vc),
-            }
-
-            # make second connection, send request + send extra headers and cookies
-            h = self.make_connection(host)
+        if errcode == 401 and USE_KERBEROS:
+            vc, challenge = self._kerberos_client_request(host, handler, errcode, errmsg, headers)
+            # retry the original request & add the Authorization header:
             self.send_request(h, handler, request_body)
-            self.send_host(h, host, extra_headers)
+            self.send_host(h, host)
+            h.putheader("Authorization", "Negotiate %s" % challenge)
             self.send_cookies(h, cookie_request)
             self.send_user_agent(h)
             self.send_content(h, request_body)
-
             errcode, errmsg, headers = h.getreply()
-            self._save_cookies(headers, cookie_request)
-
-            if errcode / 100 != 2:
-                raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
-
-
-            # verify that headers contain WWW-Authenticate header
-            auth_header = headers.get("WWW-Authenticate", None)
-            if auth_header is None:
-                errcode = 401
-                errmsg = "KERBEROS: No WWW-Authenticate header in second HTTP response"
-                raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
-
-            # verify that WWW-Authenticate contains Negotiate
-            splits = auth_header.split(" ", 1)
-            if (len(splits) != 2) or (splits[0].lower() != "negotiate"):
-                errcode = 401
-                errmsg = "KERBEROS: Incorrect WWW-Authenticate header in second HTTP response: %s" % auth_header
-                raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
-
-            # do another client step to verify response from server
-            errmsg = "KERBEROS: Could not verify server WWW-Authenticate header in second HTTP response"
-            try:
-                rc = kerberos.authGSSClientStep(vc, splits[1])
-                if rc == -1:
-                    errcode = 401
-                    raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
-            except kerberos.GSSError, ex:
-                errcode = 401
-                errmsg += ": %s/%s" % (ex[0][0], ex[1][0])
-                raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
-
-            # cleanup
-            rc = kerberos.authGSSClientClean(vc)
-            if rc != 1:
-                errcode = 401
-                errmsg = "KERBEROS: Could not clean-up GSSAPI: %s/%s" % (ex[0][0], ex[1][0])
-                raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
-            # ========== KERBEROS AUTH NEGOTIATION - END ==========
+            self._kerberos_verify_response(vc, host, handler, errcode, errmsg, headers)
 
         elif errcode != 200:
             raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
 
-        self.verbose = verbose
+        self._save_cookies(headers, cookie_request)
 
         try:
             sock = h._conn.sock
@@ -204,8 +189,70 @@ class CookieTransport(xmlrpclib.Transport):
 
         return self._parse_response(h.getfile(), sock)
 
+    def _single_request(self, host, handler, request_body, verbose=0):
+        # issue XML-RPC request
 
-class SafeCookieTransport(CookieTransport):
+        request_url = "%s://%s/" % (self.scheme, host)
+        cookie_request = urllib2.Request(request_url)
+
+        h = self.make_connection(host)
+        self.verbose = verbose
+        if verbose:
+            h.set_debuglevel(1)
+
+        try:
+            self.send_request(h, handler, request_body)
+            self.send_host(h, host)
+            self.send_cookies(h, cookie_request)
+            self.send_user_agent(h)
+            self.send_content(h, request_body)
+
+            response = h.getresponse(buffering=True)
+
+            if response.status == 401 and USE_KERBEROS:
+                vc, challenge = self._kerberos_client_request(host, handler, response.status, response.reason, response.msg)
+
+                # discard any response data
+                if (response.getheader("content-length", 0)):
+                    response.read()
+
+                # retry the original request & add the Authorization header:
+                self.send_request(h, handler, request_body)
+                self._extra_headers = [("Authorization", "Negotiate %s" % challenge)]
+                self.send_host(h, host)
+                self.send_user_agent(h)
+                self.send_content(h, request_body)
+                self._extra_headers = []
+                response = h.getresponse(buffering=True)
+                self._kerberos_verify_response(vc, host, handler, response.status, response.reason, response.msg)
+
+            if response.status == 200:
+                self.verbose = verbose
+                self._save_cookies(response.msg, cookie_request)
+                return self.parse_response(response)
+        except xmlrpclib.Fault:
+            raise
+        except Exception:
+            # All unexpected errors leave connection in
+            # a strange state, so we clear it.
+            self.close()
+            raise
+
+        # discard any response data and raise exception
+        if (response.getheader("content-length", 0)):
+            response.read()
+        raise xmlrpclib.ProtocolError(host + handler, response.status, response.reason, response.msg)
+
+    # override the appropriate request method
+    if hasattr(xmlrpclib.Transport, "single_request"):
+        # python 2.7+
+        single_request = _single_request
+    else:
+        # python 2.6-
+        request = _request
+
+
+class SafeCookieTransport(xmlrpclib.SafeTransport, CookieTransport):
     """
     Cookie enabled XML-RPC transport over HTTPS.
 
@@ -213,15 +260,16 @@ class SafeCookieTransport(CookieTransport):
     """
     scheme = "https"
 
-    def make_connection(self, host):
-        """Create a HTTPS connection object."""
-        host, extra_headers, x509 = self.get_host_info(host)
-        try:
-            HTTPS = httplib.HTTPS
-        except AttributeError:
-            raise NotImplementedError("your version of httplib doesn't support HTTPS")
-        else:
-            return HTTPS(host, None, **(x509 or {}))
+    # override the appropriate request method
+    if hasattr(xmlrpclib.Transport, "single_request"):
+        # python 2.7+
+        single_request = CookieTransport._single_request
+    else:
+        # python 2.6-
+        request = CookieTransport._request
+
+    def __init__(self, *args, **kwargs):
+        CookieTransport.__init__(self, *args, **kwargs)
 
 
 def retry_request_decorator(transport_class):
