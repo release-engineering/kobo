@@ -31,6 +31,36 @@ __all__ = (
 )
 
 
+class TimeoutHTTPConnection(httplib.HTTPConnection):
+    def connect(self):
+        httplib.HTTPConnection.connect(self)
+        timeout = getattr(self, "timeout", 0)
+        if timeout:
+            self.sock.settimeout(timeout)
+
+
+class TimeoutHTTP(httplib.HTTP):
+   _connection_class = TimeoutHTTPConnection
+
+   def set_timeout(self, timeout):
+       self._conn.timeout = timeout
+
+
+class TimeoutHTTPSConnection(httplib.HTTPSConnection):
+    def connect(self):
+        httplib.HTTPSConnection.connect(self)
+        timeout = getattr(self, "timeout", 0)
+        if timeout:
+            self.sock.settimeout(timeout)
+
+
+class TimeoutHTTPS(httplib.HTTPS):
+   _connection_class = TimeoutHTTPSConnection
+
+   def set_timeout(self, timeout):
+       self._conn.timeout = timeout
+
+
 class CookieResponse(object):
     """Fake response class for cookie extraction."""
 
@@ -62,6 +92,7 @@ class CookieTransport(xmlrpclib.Transport):
 
     def __init__(self, *args, **kwargs):
         cookiejar = kwargs.pop("cookiejar", None)
+        self.timeout = kwargs.pop("timeout", 0)
 
         if hasattr(xmlrpclib.Transport, "__init__"):
             xmlrpclib.Transport.__init__(self, *args, **kwargs)
@@ -73,6 +104,18 @@ class CookieTransport(xmlrpclib.Transport):
                 if hasattr(self.cookiejar, "save"):
                     self.cookiejar.save(self.cookiejar.filename)
             self.cookiejar.load(self.cookiejar.filename)
+
+    def make_connection(self, host):
+        if sys.version_info[:2] < (2, 7):
+            host, extra_headers, x509 = self.get_host_info(host)
+            conn = TimeoutHTTP(host)
+            conn.set_timeout(self.timeout)
+            return conn
+        else:
+            conn = xmlrpclib.Transport.make_connection(self, host)
+            if self.timeout:
+                conn.timeout = self.timeout
+            return conn
 
     def send_cookies(self, connection, cookie_request):
         """Add cookies to the header."""
@@ -162,7 +205,6 @@ class CookieTransport(xmlrpclib.Transport):
         self.send_cookies(h, cookie_request)
         self.send_user_agent(h)
         self.send_content(h, request_body)
-
         errcode, errmsg, headers = h.getreply()
 
         if errcode == 401 and USE_KERBEROS:
@@ -259,6 +301,18 @@ class SafeCookieTransport(xmlrpclib.SafeTransport, CookieTransport):
     USAGE: see CookieTransport
     """
     scheme = "https"
+
+    def make_connection(self, host):
+        if sys.version_info[:2] < (2, 7):
+            host, extra_headers, x509 = self.get_host_info(host)
+            conn = TimeoutHTTPS(host, None, **(x509 or {}))
+            conn.set_timeout(self.timeout)
+            return conn
+        else:
+            conn = xmlrpclib.SafeTransport.make_connection(self, host)
+            if self.timeout:
+                conn.timeout = self.timeout
+            return conn
 
     # override the appropriate request method
     if hasattr(xmlrpclib.Transport, "single_request"):
