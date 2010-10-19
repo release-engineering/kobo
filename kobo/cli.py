@@ -219,24 +219,36 @@ class CommandOptionParser(optparse.OptionParser):
             ]
             self._populate_option_list(option_list, add_help=False)
 
-    def print_help(self, file=None):
+    def print_help(self, file=None, admin=False):
         if file is None:
             file = sys.stdout
         file.write(self.format_help())
-        if self.command is None or self.command == "help":
+        if self.command in (None, "help", "help-admin"):
             file.write("\n")
-            file.write(self.format_help_commands())
+            file.write(self.format_help_commands(admin=admin))
 
+    def format_help_commands(self, admin=False):
+        commands = []
+        admin_commands = []
 
-    def format_help_commands(self):
-        result = []
-        result.append("commands:")
         for name, plugin in sorted(self.container.plugins.iteritems()):
-            admin = (" ", "A")[getattr(plugin, "admin", False)]
-            result.append("%s %-30s %s" % (admin, name, plugin.__doc__ or ""))
-        result.append("")
-        return "\n".join(result)
+            is_admin = getattr(plugin, "admin", False)
+            text = "  %-30s %s" % (name, plugin.__doc__ or "")
+            if is_admin:
+                if admin:
+                    admin_commands.append(text)
+            else:
+                commands.append(text)
 
+        if commands:
+            commands.insert(0, "commands:")
+            commands.append("")
+
+        if admin_commands:
+            admin_commands.insert(0, "admin commands:")
+            admin_commands.append("")
+
+        return "\n".join(commands + admin_commands)
 
     def parse_args(self, args=None, values=None):
         """return (command_instance, opts, args)"""
@@ -279,13 +291,26 @@ class Help(Command):
     """show this help message and exit"""
     enabled = True
 
-
     def options(self):
         pass
 
+    def run(self, *args, **kwargs):
+        self.parser.print_help(admin=False)
+
+
+class Help_Admin(Command):
+    """show help message about administrative commands and exit"""
+    enabled = True
+
+    def options(self):
+        # override default --help option
+        opt = self.parser.get_option("--help")
+        opt.action = "store_true"
+        opt.dest = "help"
 
     def run(self, *args, **kwargs):
-        self.parser.print_help()
+        self.parser.print_help(admin=True)
 
 
 CommandContainer.register_plugin(Help)
+CommandContainer.register_plugin(Help_Admin)
