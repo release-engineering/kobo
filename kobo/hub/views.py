@@ -207,6 +207,7 @@ def task_log(request, id, log_name):
         response.write(content)
         return response
 
+    content = content.decode("utf-8", "replace")
     context = {
         "title": "Task log",
         "offset": offset + len(content) + 1,
