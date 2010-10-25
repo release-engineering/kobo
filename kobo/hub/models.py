@@ -3,6 +3,7 @@
 import os
 import sys
 import datetime
+import gzip
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -13,7 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 
 import kobo.django.fields
 from kobo.client.constants import *
-from kobo.shortcuts import random_string, read_from_file, save_to_file
+from kobo.shortcuts import random_string, read_from_file, save_to_file, run
 
 
 def dump_dict(**kwargs):
@@ -264,10 +265,13 @@ class TaskLogs(object):
             log_path = self._get_absolute_log_path(name)
             if os.path.isfile(log_path):
                 self.cache[name] = "\n".join(read_from_file(log_path))
+            elif os.path.isfile(log_path + ".gz"):
+                fo = gzip.open(log_path + ".gz", "rb")
+                self.cache[name] = fo.read()
+                fo.close()
             else:
                 self.cache[name] = ""
             self.changed[name] = False
-
 
         return self.cache[name]
 
@@ -303,6 +307,8 @@ class TaskLogs(object):
             # logs on disk
             for root, dirs, files in os.walk(task_dir):
                 for i in files:
+                    if i.endswith(".gz"):
+                        i = i[:-3]
                     result.append(os.path.join(root, i)[len(task_dir):])
 
         # cached logs
@@ -311,6 +317,18 @@ class TaskLogs(object):
                 result.append(log)
 
         return result
+
+    def _gzip_log(self, name):
+        """gzip one log, do *not* throw any error on failure"""
+        import pipes
+        path = self._get_absolute_log_path(name)
+        if not os.path.isfile(path + ".gz"):
+            run("gzip %s" % pipes.quote(path), can_fail=True, stdout=False)
+
+    def gzip_logs(self):
+        """gzip all task logs"""
+        for i in self.list:
+            self._gzip_log(i)
 
 
 class Task(models.Model):
@@ -661,6 +679,7 @@ WHERE
             self.__lock(self.worker_id, new_state=TASK_STATES["CLOSED"], initial_states=(TASK_STATES["OPEN"], ))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot close task %d, state is %s" % (self.id, self.state))
+        self.logs.gzip_logs()
 
 
     @transaction.commit_on_success
@@ -678,6 +697,7 @@ WHERE
         if recursive:
             for task in self.subtasks():
                 task.cancel_task(recursive=True)
+        self.logs.gzip_logs()
 
 
     def cancel_subtasks(self):
@@ -702,6 +722,7 @@ WHERE
         if recursive:
             for task in self.subtasks():
                 task.interrupt_task(recursive=True)
+        self.logs.gzip_logs()
 
 
     @transaction.commit_on_success
@@ -715,6 +736,7 @@ WHERE
         if recursive:
             for task in self.subtasks():
                 task.interrupt_task(recursive=True)
+        self.logs.gzip_logs()
 
 
     @transaction.commit_on_success
@@ -728,6 +750,7 @@ WHERE
             self.__lock(self.worker_id, new_state=TASK_STATES["FAILED"], initial_states=(TASK_STATES["OPEN"], ))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot fail task %i, state is %s" % (self.id, self.state))
+        self.logs.gzip_logs()
 
 
     def is_finished(self):
