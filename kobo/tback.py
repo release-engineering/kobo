@@ -150,7 +150,15 @@ class Traceback(object):
                 if self.show_locals:
                     result.append("<LOCALS>")
                     for key, value in sorted(frame["vars"]):
-                        result.append("%s = %s" % (self._to_str(key, "%20s"), self._to_str(value)))
+                        result.append("%20s = %s" % (self._to_str(key), self._to_str(value)))
+                        if key == "self":
+                            for obj_key in sorted(dir(value)):
+                                obj_value = getattr(value, obj_key)
+                                if obj_key.startswith("__"):
+                                    continue
+                                if callable(obj_value):
+                                    continue
+                                result.append("%20s = %s" % ("self." + self._to_str(obj_key), self._to_str(obj_value)))
                     result.append("</LOCALS>")
 
             return "\n".join(( str(i) for i in result ))
