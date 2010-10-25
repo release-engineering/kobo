@@ -20,6 +20,10 @@ function GET_handler(log_watcher) {
 		getElementById('log').innerHTML += result.content;
 		document.log_watcher.task_finished = result.task_finished
 		document.log_watcher.offset = result.new_offset
+		if ((window.pageYOffset + window.innerHeight) >= document.log_watcher.page_height) {
+			window.scroll(window.pageXOffset, document.height);
+			document.log_watcher.page_height = document.height;
+		}
 	}
 }
 
@@ -39,6 +43,7 @@ function LogWatcher(json_url, offset, task_finished) {
 	this.json_url = json_url;
 	this.offset = offset;
 	this.task_finished = task_finished;
+	this.page_height = 0;
 	return this;
 }
 
