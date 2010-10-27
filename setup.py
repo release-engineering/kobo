@@ -17,7 +17,7 @@ project_author_email = "dmach@redhat.com"
 project_description  = "Python modules for tools development"
 package_name         = "%s" % project_name
 package_module_name  = project_name
-package_version      = [0, 3, 1, "final", ""]
+package_version      = [0, 3, 2, "final", ""]
 
 
 script_files = []
