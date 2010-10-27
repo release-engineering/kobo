@@ -34,7 +34,7 @@ __all__ = (
 class TimeoutHTTPConnection(httplib.HTTPConnection):
     def connect(self):
         httplib.HTTPConnection.connect(self)
-        timeout = getattr(self, "timeout", 0)
+        timeout = getattr(self, "_timeout", 0)
         if timeout:
             self.sock.settimeout(timeout)
 
@@ -43,13 +43,13 @@ class TimeoutHTTP(httplib.HTTP):
    _connection_class = TimeoutHTTPConnection
 
    def set_timeout(self, timeout):
-       self._conn.timeout = timeout
+       self._conn._timeout = timeout
 
 
 class TimeoutHTTPSConnection(httplib.HTTPSConnection):
     def connect(self):
         httplib.HTTPSConnection.connect(self)
-        timeout = getattr(self, "timeout", 0)
+        timeout = getattr(self, "_timeout", 0)
         if timeout:
             self.sock.settimeout(timeout)
 
@@ -58,7 +58,7 @@ class TimeoutHTTPS(httplib.HTTPS):
    _connection_class = TimeoutHTTPSConnection
 
    def set_timeout(self, timeout):
-       self._conn.timeout = timeout
+       self._conn._timeout = timeout
 
 
 class CookieResponse(object):
