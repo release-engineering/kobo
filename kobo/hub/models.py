@@ -553,9 +553,12 @@ class Task(models.Model):
     @property
     def time(self):
         """return time spent in the task"""
-        if not self.dt_started or not self.dt_finished:
+        if not self.dt_started:
             return None
-        return self.dt_finished - self.dt_started
+        elif not self.dt_finished:
+            return datetime.datetime.now() - self.dt_started
+        else:
+            return self.dt_finished - self.dt_started
 
 
     def get_time_display(self):
