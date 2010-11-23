@@ -219,26 +219,29 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     if workdir is not None:
         os.chdir(workdir)
 
+    if show_cmd:
+        command = "COMMAND: %s\n%s\n" % (cmd, "-" * (len(cmd) + 9))
+        if stdout:
+            print command,
+        if logfile:
+            save_to_file(logfile, command)
+
     proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output = ""
     while proc.poll() is None:
-        output += proc.stdout.read()
+        lines = proc.stdout.read(4096)
+        if stdout:
+            print lines,
+        if logfile:
+            save_to_file(logfile, lines, append=True)
+        output += lines
 
-    output += proc.stdout.read()
-
-    command = "COMMAND: %s\n%s\n" % (cmd, "-" * (len(cmd)+9))
-
+    lines = proc.stdout.read()
     if stdout:
-        if show_cmd:
-            print command,
-        print output
-
+        print lines,
     if logfile:
-        if show_cmd:
-            save_to_file(logfile, command)
-            save_to_file(logfile, output, append=True)
-        else:
-            save_to_file(logfile, output)
+        save_to_file(logfile, lines, append=True)
+    output += lines
 
     if workdir is not None:
         os.chdir(cwd)

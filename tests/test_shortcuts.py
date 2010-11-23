@@ -97,6 +97,13 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(ret, 0)
         self.assertEqual(out, "hello\n")
 
+        # test a longer output that needs to be read in several chunks
+        ret, out = run("echo -n '%s'; sleep 0.2; echo -n '%s'" % (10000 * "x", 10 * "a"), logfile=self.tmp_file)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 10000 * "x" + 10 * "a")
+        # check if log file is written properly; it is supposed to append data to existing content
+        self.assertEqual("\n".join(read_from_file(self.tmp_file)), "test" + 10000 * "x" + 10 * "a")
+
         ret, out = run("exit 1", can_fail=True)
         self.assertEqual(ret, 1)
 
