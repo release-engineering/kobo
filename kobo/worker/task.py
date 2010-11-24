@@ -101,6 +101,9 @@ class TaskBase(Plugin):
 
     def spawn_subtask(self, method, args, label=""):
         """Spawn a new subtask."""
+        if self.foreground:
+            raise RuntimeError("Foreground tasks can't spawn subtasks.")
+
         subtask_id = self.hub.worker.create_subtask(label, method, args, self.task_id)
         self._subtask_list.append(subtask_id)
         return subtask_id
@@ -111,6 +114,10 @@ class TaskBase(Plugin):
         subtasks = None - wait for all subtasks
         subtasks = [task_id list] - wait for selected subtasks
         """
+
+        if self.foreground:
+            # wait would call signal.pause() in the *main* worker thread and lock program forever
+            raise RuntimeError("Foreground tasks can't wait on subtasks.")
 
         if subtasks is not None:
             subtasks = force_list(subtasks)
