@@ -12,7 +12,7 @@ import tempfile
 from kobo.shortcuts import *
 
 
-class TestBasic(unittest.TestCase):
+class TestEnum(unittest.TestCase):
     def test_force_list(self):
         self.assertEqual(force_list("a"), ["a"])
         self.assertEqual(force_list(["a"]), ["a"])
@@ -69,26 +69,22 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(is_empty(1), False)
 
     def test_iter_chunks(self):
-        # lists
         self.assertEqual(list(iter_chunks([], 100)), [])
         self.assertEqual(list(iter_chunks(range(5), 1)), [[0], [1], [2], [3], [4]])
         self.assertEqual(list(iter_chunks(range(5), 2)), [[0, 1], [2, 3], [4]])
         self.assertEqual(list(iter_chunks(range(5), 5)), [[0, 1, 2, 3, 4]])
         self.assertEqual(list(iter_chunks(range(6), 2)), [[0, 1], [2, 3], [4, 5]])
 
-        # xrange
         self.assertEqual(list(iter_chunks(xrange(5), 2)), [[0, 1], [2, 3], [4]])
         self.assertEqual(list(iter_chunks(xrange(6), 2)), [[0, 1], [2, 3], [4, 5]])
         self.assertEqual(list(iter_chunks(xrange(1, 6), 2)), [[1, 2], [3, 4], [5]])
         self.assertEqual(list(iter_chunks(xrange(1, 7), 2)), [[1, 2], [3, 4], [5, 6]])
 
-        # generator
         def gen(num):
             for i in xrange(num):
                 yield i+1
         self.assertEqual(list(iter_chunks(gen(5), 2)), [[1, 2], [3, 4], [5]])
 
-        # strings
         self.assertEqual(list(iter_chunks("01234", 2)), ["01", "23", "4"])
         self.assertEqual(list(iter_chunks("012345", 2)), ["01", "23", "45"])
 
@@ -122,7 +118,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(out, "hello\n")
 
         # test a longer output that needs to be read in several chunks
-        ret, out = run("echo -n '%s'; sleep 0.2; echo -n '%s'" % (10000 * "x", 10 * "a"), logfile=self.tmp_file)
+        ret, out = run("echo -n '%s'; sleep 0.2; echo -n '%s'" % (10000 * "x", 10 * "a"), logfile=self.tmp_file, can_fail=True)
         self.assertEqual(ret, 0)
         self.assertEqual(out, 10000 * "x" + 10 * "a")
         # check if log file is written properly; it is supposed to append data to existing content
@@ -132,6 +128,15 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(ret, 1)
 
         self.assertRaises(RuntimeError, run, "exit 1")
+
+        # stdin test
+        ret, out = run("xargs -0 echo -n", stdin_data="\0".join([str(i) for i in xrange(10000)]))
+        self.assertEqual(out, " ".join([str(i) for i in xrange(10000)]))
+
+        # return None
+        ret, out = run("xargs echo", stdin_data="\n".join([str(i) for i in xrange(1000000)]), return_stdout=False)
+        self.assertEqual(out, None)
+
 
     def test_parse_checksum_line(self):
         line_text = "d4e64fc7f3c6849888bc456d77e511ca  shortcuts.py"

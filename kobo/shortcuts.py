@@ -12,6 +12,7 @@ import subprocess
 import random
 import re
 import hashlib
+import threading
 
 
 __all__ = (
@@ -138,7 +139,7 @@ def iter_chunks(input_list, chunk_size):
     can_slice = hasattr(input_list, "__getslice__")
     for i in xrange(0, len(input_list), chunk_size):
         if can_slice:
-            # regular list, string
+            # regular list
             yield input_list[i:i + chunk_size]
         else:
             # xrange, etc.
@@ -232,7 +233,7 @@ def find_symlinks_to(target, directory):
     return result
 
 
-def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir=None):
+def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir=None, stdin_data=None, return_stdout=True):
     """Run a command in shell.
 
     @param show_cmd: show command in stdout/log
@@ -241,8 +242,16 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     @type stdout: bool
     @param logfile: save output to logfile
     @type logfile: str
+    @param can_fail: when set, retcode is returned instead of raising RuntimeError
+    @type can_fail: bool
+    @param workdir: change current directory to workdir before starting a command
+    @type workdir: str
+    @param stdin_data: stdin data passed to a command
+    @type stdin_data: str
+    @return_stdout: return command stdout as a function result (turn off when working with large data, None is returned instead of stdout)
+    @return_stdout: bool
     @return: (command return code, merged stdout+stderr)
-    @rtype: (int, str)
+    @rtype: (int, str) or (int, None)
     """
 
     cwd = os.getcwd()
@@ -256,22 +265,36 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         if logfile:
             save_to_file(logfile, command)
 
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    stdin = None
+    if stdin_data is not None:
+        stdin = subprocess.PIPE
+
+    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=stdin)
+
+    if stdin_data is not None:
+        class StdinThread(threading.Thread):
+            def run(self):
+                proc.stdin.write(stdin_data)
+                proc.stdin.close()
+        stdin_thread = StdinThread()
+        stdin_thread.daemon = True
+        stdin_thread.start()
+
     output = ""
-    while proc.poll() is None:
+    while True:
         lines = proc.stdout.read(4096)
+        if lines == "":
+            break
         if stdout:
             print lines,
         if logfile:
             save_to_file(logfile, lines, append=True)
-        output += lines
+        if return_stdout:
+            output += lines
+    proc.wait()
 
-    lines = proc.stdout.read()
-    if stdout:
-        print lines,
-    if logfile:
-        save_to_file(logfile, lines, append=True)
-    output += lines
+    if stdin_data is not None:
+        stdin_thread.join()
 
     if workdir is not None:
         os.chdir(cwd)
@@ -282,6 +305,9 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
 
     if proc.returncode != 0 and not can_fail:
         raise RuntimeError(err_msg)
+
+    if not return_stdout:
+        output = None
 
     return (proc.returncode, output)
 
