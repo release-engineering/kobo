@@ -22,6 +22,7 @@ __all__ = (
     "noneof",
     "oneof",
     "is_empty",
+    "iter_chunks",
     "random_string",
     "hex_string",
     "touch",
@@ -117,6 +118,35 @@ def is_empty(value):
     if not value:
         return True
     return False
+
+
+def iter_chunks(input_list, chunk_size):
+    """Iterate through input_list and yield chunk_size-d chunks."""
+
+    # TODO: any idea how to detect generators better?
+    if hasattr(input_list, "__iter__") and hasattr(input_list, "next"):
+        chunk = []
+        for i in input_list:
+            chunk.append(i)
+            if len(chunk) == chunk_size:
+                yield chunk
+                chunk = []
+        if chunk:
+            yield chunk
+        return
+
+    can_slice = hasattr(input_list, "__getslice__")
+    for i in xrange(0, len(input_list), chunk_size):
+        if can_slice:
+            # regular list, string
+            yield input_list[i:i + chunk_size]
+        else:
+            # xrange, etc.
+            chunk = []
+            for j in xrange(i, i + chunk_size):
+                if j < len(input_list):
+                    chunk.append(input_list[j])
+            yield chunk
 
 
 def random_string(length=32, alphabet=None):

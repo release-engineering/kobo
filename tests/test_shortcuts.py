@@ -12,12 +12,12 @@ import tempfile
 from kobo.shortcuts import *
 
 
-class TestEnum(unittest.TestCase):
+class TestBasic(unittest.TestCase):
     def test_force_list(self):
         self.assertEqual(force_list("a"), ["a"])
         self.assertEqual(force_list(["a"]), ["a"])
         self.assertEqual(force_list(["a", "b"]), ["a", "b"])
-        
+
     def test_force_tuple(self):
         self.assertEqual(force_tuple("a"), ("a",))
         self.assertEqual(force_tuple(("a",)), ("a",))
@@ -67,6 +67,30 @@ class TestEnum(unittest.TestCase):
         self.assertEqual(is_empty((1,)), False)
         self.assertEqual(is_empty({}), True)
         self.assertEqual(is_empty(1), False)
+
+    def test_iter_chunks(self):
+        # lists
+        self.assertEqual(list(iter_chunks([], 100)), [])
+        self.assertEqual(list(iter_chunks(range(5), 1)), [[0], [1], [2], [3], [4]])
+        self.assertEqual(list(iter_chunks(range(5), 2)), [[0, 1], [2, 3], [4]])
+        self.assertEqual(list(iter_chunks(range(5), 5)), [[0, 1, 2, 3, 4]])
+        self.assertEqual(list(iter_chunks(range(6), 2)), [[0, 1], [2, 3], [4, 5]])
+
+        # xrange
+        self.assertEqual(list(iter_chunks(xrange(5), 2)), [[0, 1], [2, 3], [4]])
+        self.assertEqual(list(iter_chunks(xrange(6), 2)), [[0, 1], [2, 3], [4, 5]])
+        self.assertEqual(list(iter_chunks(xrange(1, 6), 2)), [[1, 2], [3, 4], [5]])
+        self.assertEqual(list(iter_chunks(xrange(1, 7), 2)), [[1, 2], [3, 4], [5, 6]])
+
+        # generator
+        def gen(num):
+            for i in xrange(num):
+                yield i+1
+        self.assertEqual(list(iter_chunks(gen(5), 2)), [[1, 2], [3, 4], [5]])
+
+        # strings
+        self.assertEqual(list(iter_chunks("01234", 2)), ["01", "23", "4"])
+        self.assertEqual(list(iter_chunks("012345", 2)), ["01", "23", "45"])
 
 
 class TestUtils(unittest.TestCase):
