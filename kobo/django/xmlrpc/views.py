@@ -34,6 +34,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
 from django.template import Template, RequestContext, loader
+from django.views.decorators.csrf import csrf_exempt
 
 from kobo.django.xmlrpc.dispatcher import DjangoXMLRPCDispatcher
 
@@ -160,6 +161,10 @@ class XMLRPCHandlerFactory(object):
             context_instance = RequestContext(request)
             context_instance.update(c)
             return HttpResponse(t.render(context_instance))
+
+
+# xml-rpc must be excluded from CSRF processing
+XMLRPCHandlerFactory = csrf_exempt(XMLRPCHandlerFactory)
 
 
 for var in ("XMLRPC_METHODS", ):
