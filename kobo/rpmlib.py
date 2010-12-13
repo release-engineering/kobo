@@ -144,6 +144,9 @@ def parse_nvr(nvre):
     @rtype: dict
     """
 
+    if "/" in nvre:
+        nvre = nvre.split("/")[-1]
+
     nvr, epoch = split_nvr_epoch(nvre)
 
     nvr_parts = nvr.rsplit("-", 2)
@@ -174,6 +177,9 @@ def parse_nvra(nvra):
     @return: {name, version, release, epoch, arch}
     @rtype: dict
     """
+
+    if "/" in nvra:
+        nvra = nvra.split("/")[-1]
 
     epoch = ""
     for i in xrange(2):
