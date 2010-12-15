@@ -117,6 +117,14 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(ret, 0)
         self.assertEqual(out, "hello\n")
 
+        ret, out = run(["echo", "'hello'"])
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, "'hello'\n")
+
+        ret, out = run(["echo", "\" ' "])
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, "\" ' \n")
+
         # test a longer output that needs to be read in several chunks
         ret, out = run("echo -n '%s'; sleep 0.2; echo -n '%s'" % (10000 * "x", 10 * "a"), logfile=self.tmp_file, can_fail=True)
         self.assertEqual(ret, 0)

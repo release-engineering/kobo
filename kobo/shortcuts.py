@@ -258,6 +258,10 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     if workdir is not None:
         os.chdir(workdir)
 
+    if type(cmd) in (list, tuple):
+        import pipes
+        cmd = " ".join(( pipes.quote(i) for i in cmd ))
+
     if show_cmd:
         command = "COMMAND: %s\n%s\n" % (cmd, "-" * (len(cmd) + 9))
         if stdout:
