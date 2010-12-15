@@ -319,8 +319,10 @@ class StateEnum(Enum):
         if commit:
             self.set_state(new_state)
             self._to = None
+            return True
         else:
             self._to = new_state
+        return False
 
 
 class DictSet(dict):
