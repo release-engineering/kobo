@@ -117,7 +117,6 @@ class TestStateEnum(unittest.TestCase):
         )
         self.state_enum.set_state("NEW")
 
-
     def test_invalid_states(self):
         self.assertRaises(ValueError, StateEnum,
             State(
@@ -130,13 +129,24 @@ class TestStateEnum(unittest.TestCase):
             ),
         )
 
-
     def test_transitions(self):
+        self.state_enum.set_state("NEW")
         self.state_enum.change_state("MODIFIED")
         self.state_enum.change_state("ON_QA")
         self.state_enum.change_state("VERIFIED")
         self.state_enum.change_state("CLOSED")
 
+        self.state_enum.set_state("NEW")
+        # don't commit the state transition -> False
+        self.assertEqual(self.state_enum.change_state("MODIFIED", commit=False), False)
+        self.assertEqual(self.state_enum.change_state("MODIFIED", commit=True), True)
+        # stay in MODIFIED -> False
+        self.assertEqual(self.state_enum.change_state("MODIFIED", commit=True), False)
+
+        # and now without the commit argument
+        self.state_enum.set_state("NEW")
+        self.assertEqual(self.state_enum.change_state("MODIFIED"), True)
+        self.assertEqual(self.state_enum.change_state("MODIFIED"), False)
 
     def test_invalid_transitions(self):
         self.assertRaises(ValueError, self.state_enum.change_state, "CLOSED")
@@ -144,11 +154,9 @@ class TestStateEnum(unittest.TestCase):
         self.assertRaises(ValueError, self.state_enum.change_state, "NEW")
         self.assertRaises(ValueError, self.state_enum.change_state, 0)
 
-
     def test_final_states(self):
         self.assertEqual(self.state_enum.get_final_states(), ["CLOSED"])
         self.assertEqual(self.state_enum.get_final_states(return_id_list=True), [6])
-
 
     def test_commit(self):
         self.state_enum.set_state('NEW')
@@ -163,12 +171,6 @@ class TestStateEnum(unittest.TestCase):
         self.assertEqual(str(self.state_enum), '3')
         # no prepared new_state raises exception
         self.assertRaises(ValueError, self.state_enum.change_state, None, commit=True)
-
-
-#    def test_foo(self):
-#        print self.state_enum.get_state(), self.state_enum.get_state_id()
-#        print self.state_enum.get_mapping()
-
 
 
 class TestStateEnumField(unittest.TestCase):
@@ -191,7 +193,7 @@ class TestStateEnumField(unittest.TestCase):
         )
         self.state_enum.set_state("NEW")
 
-        self.field = StateEnumField(self.state_enum, default = 'NEW')
+        self.field = StateEnumField(self.state_enum, default='NEW')
 
     def test_to_python(self):
         t = self.field.to_python('0')
@@ -212,6 +214,7 @@ class TestStateEnumField(unittest.TestCase):
     def test_choices(self):
         correct = ((0, 'NEW'), (1, 'ASSIGNED'), (2, 'MODIFIED'))
         self.assertEqual(correct, self.field.choices)
+
 
 if __name__ == '__main__':
     unittest.main()
