@@ -16,6 +16,16 @@ urlpatterns = patterns('',
     # to INSTALLED_APPS to enable admin documentation:
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
+    #url(r"^$", '{{ project_name }}.home.views.index_redirect', name="index"),
+    #url(r"^auth/", include("kobo.hub.urls.auth")),
+    #url(r"^task/", include("kobo.hub.urls.task")),
+    #url(r"^info/arch/", include("kobo.hub.urls.arch")),
+    #url(r"^info/channel/", include("kobo.hub.urls.channel")),
+    #url(r"^info/user/", include("kobo.hub.urls.user")),
+    #url(r"^info/worker/", include("kobo.hub.urls.worker")),
+
+    url(r"^media/(?P<path>.*)$", "django.views.static.serve", kwargs={"document_root": settings.MEDIA_ROOT}),
+
     # Uncomment the next line to enable the admin:
     (r'^admin/', include(admin.site.urls)),
 

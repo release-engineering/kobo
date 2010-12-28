@@ -16,7 +16,7 @@
 <body>
 <div id="header">{% block header_site_name %}{% endblock %}{% if title %} - {{ title }}{% endif %}
   <div id="login">
-    {% if user.is_authenticated %}user: <strong>{{ user }}</strong> | <a href="{% url auth/logout %}">logout</a>{% else %}<a href="{% url auth/krb5login %}">login</a>{% endif %}
+    {% if user.is_authenticated %}user: <strong>{{ user }}</strong> | <a href="{% url auth/logout %}?next={{ request.path }}">logout</a>{% else %}{% block login %}<a href="{% url auth/login %}?next={{ request.path }}">login</a>{% endblock %}{% endif %}
     {% if user.is_superuser %} | <a href="{% url index %}admin/">admin</a>{% endif %}
     {% block header_login %}{% endblock %}
   </div>

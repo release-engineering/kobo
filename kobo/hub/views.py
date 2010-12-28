@@ -3,11 +3,15 @@
 
 import os
 
+import django.contrib.auth.views
+import django.views.generic.simple
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.generic.list_detail import object_detail
+from django.conf import settings
+from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import simplejson
@@ -236,3 +240,21 @@ def task_log_json(request, id, log_name):
     }
 
     return HttpResponse(simplejson.dumps(result), mimetype="application/json")
+
+
+def login(request, redirect_field_name=REDIRECT_FIELD_NAME):
+    return django.contrib.auth.views.login(request, template_name="auth/login.html", redirect_field_name=redirect_field_name)
+
+
+def krb5login(request, redirect_field_name=REDIRECT_FIELD_NAME):
+    middleware = "kobo.django.auth.krb5.Krb5AuthenticationMiddleware"
+    if middleware not in settings.MIDDLEWARE_CLASSES:
+        raise ImproperlyConfigured("krb5login view requires '%s' middleware installed" % middleware)
+    redirect_to = request.REQUEST.get(redirect_field_name, "")
+    if not redirect_to:
+        redirect_to = reverse("home/index")
+    return django.views.generic.simple.redirect_to(request, url=redirect_to)
+    
+
+def logout(request, redirect_field_name=REDIRECT_FIELD_NAME):
+    return django.contrib.auth.views.logout(request, redirect_field_name=redirect_field_name)

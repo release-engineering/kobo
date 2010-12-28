@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>{% trans "Login" %}</h1>
+{% if form.errors %}
+<p>Your username and password didn't match. Please try again.</p>
+{% endif %}
+
+<form method="POST" action="{{ request.META.REQUEST_URI }}">
+{% csrf_token %}
+<table class="details">
+<tr>
+    <th>{{ form.username.label_tag }}</th>
+    <td>{{ form.username }}</td>
+</tr>
+<tr>
+    <th>{{ form.password.label_tag }}</th>
+    <td>{{ form.password }}</td>
+</tr>
+</table>
+
+<input type="submit" value="login" />
+<input type="hidden" name="next" value="{{ next }}" />
+</form>
+
+{% endblock %}
+
