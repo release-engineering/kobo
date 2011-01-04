@@ -99,6 +99,14 @@ class TaskBase(Plugin):
         """Fail the task."""
         raise FailTaskException()
 
+    @classmethod
+    def cleanup(cls, hub, conf, task_info):
+        pass
+
+    @classmethod
+    def notification(cls, hub, conf, task_info):
+        pass
+
     def spawn_subtask(self, method, args, label=""):
         """Spawn a new subtask."""
         if self.foreground:

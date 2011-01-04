@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 
+from django.core.urlresolvers import reverse
+
 import kobo.hub.models as models
 from kobo.django.xmlrpc.decorators import admin_required, login_required
 
@@ -13,6 +15,7 @@ __all__ = (
     "resubmit_task",
     "list_workers",
     "create_task",
+    "task_url",
 )
 
 
@@ -85,3 +88,23 @@ def create_task(request, kwargs):
     kwargs["resubmitted_by"] = request.user
     kwargs["resubmitted_from"] = None
     return models.Task.create_task(**kwargs)
+
+
+def task_url(request, task_id):
+    """
+    Get a task URL.
+
+    @param task_id: task ID
+    @type  task_id: int
+    @return: task URL
+    @rtype:  str
+    """
+    prefix = request.META["SERVER_PORT"] == 443 and "https://" or "http://"
+
+    # use HTTP_HOST (address can point to a virtual host)
+    # if address points to localhost, use SERVER_NAME in order to make link globally valid
+    server_name = request.META["HTTP_HOST"]
+    if server_name in ("localhost", "localhost.localdomain"):
+        server_name = request.META["SERVER_NAME"]
+
+    return prefix + server_name + reverse("task/detail", args=[task_id])

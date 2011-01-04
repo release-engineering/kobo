@@ -25,3 +25,13 @@ class {{ project_name|camel }}(TaskBase):
         # self.result = str(num)
 
         raise NotImplementedError
+
+    @classmethod
+    def cleanup(cls, hub, conf, task_info):
+        pass
+        # remove temp files, etc.
+
+    @classmethod
+    def notification(cls, hub, conf, task_info):
+        pass
+        # hub.worker.email_<foo>_notification(task_info["id"])

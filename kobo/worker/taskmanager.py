@@ -57,11 +57,11 @@ from cStringIO import StringIO
 import kobo.conf
 import kobo.worker.logger
 import kobo.log
+import kobo.tback
 from kobo.client import HubProxy
 from kobo.exceptions import ShutdownException
 
 from kobo.process import kill_process_group, get_process_status
-from kobo.tback import Traceback
 from kobo.plugins import PluginContainer
 
 from task import FailTaskException
@@ -178,6 +178,7 @@ class TaskManager(kobo.log.LoggingBase):
         task_list = {}
         interrupted_list = []
         timeout_list = []
+        finished_tasks = set()
 
         for task_info in self.hub.worker.get_worker_tasks():
             self.log_debug("Checking task: %s." % self._task_str(task_info))
@@ -186,6 +187,7 @@ class TaskManager(kobo.log.LoggingBase):
                 # an interrupted task appears to be open, but running task manager doesn't track it in it's pid list
                 # this happens after a power outage, for example
                 interrupted_list.append(task_info["id"])
+                finished_tasks.add(task_info["id"])
                 continue
 
             if task_info["timeout"] is not None:
@@ -193,6 +195,7 @@ class TaskManager(kobo.log.LoggingBase):
                 #time_delta = datetime.datetime.now() - datetime.datetime.strptime(task_info["dt_started"], "%Y-%m-%d %H:%M:%S") #for Python2.5+
                 if time_delta.seconds >= (int(task_info["timeout"])):
                     timeout_list.append(task_info["id"])
+                    finished_tasks.add(task_info["id"])
                     continue
 
             task_list[task_info["id"]] = task_info
@@ -223,6 +226,7 @@ class TaskManager(kobo.log.LoggingBase):
         for task_id in self.pid_dict.keys():
             if self.is_finished_task(task_id):
                 self.log_info("Task has finished: %s" % task_id)
+                finished_tasks.add(task_id)
                 # the subprocess handles most everything, we just need to clear things out
                 if self.cleanup_task(task_id):
                     del self.pid_dict[task_id]
@@ -243,12 +247,15 @@ class TaskManager(kobo.log.LoggingBase):
                         self.log_info("Killing canceled task %r (pid %r)" % (task_id, pid))
                         if self.cleanup_task(task_id):
                             del self.pid_dict[task_id]
+                            finished_tasks.add(task_id)
                     if task["state"] == TASK_STATES["TIMEOUT"]:
                         self.log_info("Killing timed out task %r (pid %r)" % (task_id, pid))
                         if self.cleanup_task(task_id):
                             del self.pid_dict[task_id]
+                            finished_tasks.add(task_id)
                     elif "worker_id" in task and task["worker_id"] != self.worker_info["id"]:
                         self.log_info("Killing reassigned task %r (pid %r)" % (task_id, pid))
+                        # TODO: Task.cleanup() - be careful, cleanup may remove running task's data!
                         if self.cleanup_task(task_id):
                             del self.pid_dict[task_id]
                     else:
@@ -259,6 +266,10 @@ class TaskManager(kobo.log.LoggingBase):
                     # TODO: do not catch generic error
                     self.log_error("Invalid task %r (pid %r)" % (task_id, pid))
                     raise
+
+        for task_id in sorted(finished_tasks):
+            task_info = self.hub.worker.get_task(task_id)
+            self.finish_task(task_info)
 
         self.update_worker_info()
 
@@ -426,7 +437,7 @@ class TaskManager(kobo.log.LoggingBase):
             message = "ERROR: %s\n" % kobo.tback.get_exception()
             message += "See traceback.log for details (admin only).\n"
             self.hub.upload_task_log(StringIO(message), task.task_id, "error.log")
-            self.hub.upload_task_log(StringIO(Traceback().get_traceback()), task.task_id, "traceback.log", mode=0600)
+            self.hub.upload_task_log(StringIO(kobo.tback.Traceback().get_traceback()), task.task_id, "traceback.log", mode=0600)
             failed = True
 
         thread.stop()
@@ -434,6 +445,18 @@ class TaskManager(kobo.log.LoggingBase):
             self.hub.worker.fail_task(task.task_id, task.result)
         else:
             self.hub.worker.close_task(task.task_id, task.result)
+
+
+    def finish_task(self, task_info):
+        TaskClass = self.task_container[task_info["method"]]
+        try:
+            TaskClass.cleanup(self.hub, self.conf, task_info)
+        except:
+            self.log_critical(kobo.tback.get_exception())
+        try:
+            TaskClass.notification(self.hub, self.conf, task_info)
+        except:
+            self.log_critical(kobo.tback.get_exception())
 
 
     def is_finished_task(self, task_id):
