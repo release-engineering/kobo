@@ -9,6 +9,7 @@ import httplib
 import os
 import socket
 import sys
+import threading
 import time
 import urllib2
 import xmlrpclib
@@ -29,6 +30,9 @@ __all__ = (
     "encode_xmlrpc_chunks_iterator",
     "decode_xmlrpc_chunk",
 )
+
+
+CONNECTION_LOCK = threading.Lock()
 
 
 class TimeoutHTTPConnection(httplib.HTTPConnection):
@@ -112,7 +116,10 @@ class CookieTransport(xmlrpclib.Transport):
             conn.set_timeout(self.timeout)
             return conn
         else:
+            CONNECTION_LOCK.acquire()
+            self._connection = (None, None) # this disables connection caching which causes a race condition when running in threads
             conn = xmlrpclib.Transport.make_connection(self, host)
+            CONNECTION_LOCK.release()
             if self.timeout:
                 conn.timeout = self.timeout
             return conn
