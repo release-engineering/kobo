@@ -99,6 +99,9 @@ class Traceback(object):
 
     def get_traceback(self):
         """Return a traceback string."""
+        if self.exc_info[0] is None:
+            return ""
+
         result = []
 
         if self.show_traceback:
@@ -161,7 +164,14 @@ class Traceback(object):
                                 result.append("%20s = %s" % ("self." + self._to_str(obj_key), self._to_str(obj_value)))
                     result.append("</LOCALS>")
 
-            return "\n".join(( str(i) for i in result ))
+        s = u''
+        for i in result:
+            if type(i) == unicode:
+                s += i
+            else:
+                s += unicode(str(i), errors='replace')
+            s += '\n'
+        return s.encode('ascii', errors='replace')
 
 
     def print_traceback(self):
