@@ -31,6 +31,6 @@ class WorkerMiddleware(object):
     """
 
     def process_request(self, request):
-        assert hasattr(request, "user"), "Worker middleware requires authentication middleware to be installed."
+        assert hasattr(request, "user"), "Worker middleware requires authentication middleware to be installed. Also make sure the database is set and writable."
         request.__class__.worker = LazyWorker()
         return None
