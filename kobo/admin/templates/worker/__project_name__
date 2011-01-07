@@ -21,12 +21,14 @@ def main():
     kobo.worker.main.TaskContainer.register_module(tasks, prefix="task_")
 
     # configuration
-    config_file = os.environ.get("{{ project_name|upper }}_CONFIG_FILE", "/etc/{{ project_name }}.conf")
+    config_env = "{{ project_name|upper }}_CONFIG_FILE"
+    config_default = "/etc/{{ project_name }}.conf"
+    config_file = os.environ.get(config_env, config_default)
     conf = kobo.conf.PyConfigParser()
     try:
         conf.load_from_file(config_file)
     except (IOError, TypeError):
-        sys.stderr.write("\n\nError: The config file was not found.\n")
+        sys.stderr.write("\n\nError: The config file '%s' was not found.\nCreate the config file or specify the '%s'\nenvironment variable to override config file location.\n" % (config_default, config_env))
         return 2
 
     try:
@@ -35,10 +37,10 @@ def main():
         sys.stderr.write("\n\nExiting on user cancel.\n")
         return 1
     except kobo.exceptions.ImproperlyConfigured, ex:
-        sys.stderr.write("\n\nImproperly configured: " + str(ex) + "\n")
+        sys.stderr.write("\n\nImproperly configured: %s\n" % ex)
         return 3
     except IOError, ex:
-        sys.stderr.write("\n\nIO Error: " + str(ex) + "\n")
+        sys.stderr.write("\n\nIO Error: %s\n" % ex)
         return 4
 
 

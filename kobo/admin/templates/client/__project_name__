@@ -25,12 +25,14 @@ def main(args=None):
     {{ project_name|camel }}CommandContainer.register_module(commands, prefix="cmd_")
 
     # configuration
-    config_file = os.environ.get("{{ project_name|upper }}_CONFIG_FILE", "/etc/{{ project_name }}.conf")
+    config_env = "{{ project_name|upper }}_CONFIG_FILE"
+    config_default = "/etc/{{ project_name }}.conf"
+    config_file = os.environ.get(config_env, config_default)
     conf = kobo.conf.PyConfigParser()
     try:
         conf.load_from_file(config_file)
     except (IOError, TypeError):
-        sys.stderr.write("\n\nError: The config file was not found.\n")
+        sys.stderr.write("\n\nError: The config file '%s' was not found.\nCreate the config file or specify the '%s'\nenvironment variable to override config file location.\n" % (config_default, config_env))
         return 2
 
     # initialize command container
@@ -43,7 +45,7 @@ def main(args=None):
     try:
         parser.run(args)
     except kobo.exceptions.ImproperlyConfigured, ex:
-        sys.stderr.write("\n\nError: Improperly configured: " + str(ex) + "\n")
+        sys.stderr.write("\n\nError: Improperly configured: %s\n" % ex)
         return 3
     return 0
 

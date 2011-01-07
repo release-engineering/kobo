@@ -31,7 +31,7 @@ def main(args=None):
     try:
         parser.run(args)
     except kobo.exceptions.ImproperlyConfigured, ex:
-        sys.stderr.write("\n\nError: Improperly configured: " + str(ex) + "\n")
+        sys.stderr.write("\n\nError: Improperly configured: %s\n" % ex)
         return 3
     return 0
 

@@ -28,3 +28,19 @@ from kobo.django.menu import MenuItem, include
 # css_active_class = "active_menu"
 
 # Source of example: docstring in kobo/django/menu/__init__.py
+
+
+menu = (
+    MenuItem("Home", "index"),
+    MenuItem("Tasks", "task/index", menu=(
+        MenuItem("All", "task/index"),
+        MenuItem("Running", "task/running"),
+        MenuItem("Finished", "task/finished"),
+    )),
+    MenuItem("Info", "worker/list", menu=(
+        include("kobo.hub.menu"),
+    )),
+)
+
+
+css_active_class = "active"
