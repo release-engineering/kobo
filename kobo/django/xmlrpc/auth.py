@@ -25,15 +25,11 @@ __all__ = (
 def renew_session(request):
     """renew_session(): bool
 
-    Should we renew current session? (It's expiration time is lower than 1 day.)
+    Renew current session. Return True if session is no longer valid and user should log in.
     """
-    try:
-        session = Session.objects.get(session_key=request.session.session_key)
-        if session.expire_date < datetime.datetime.now() + datetime.timedelta(days=1):
-            return True
-    except:
-        return True
-    return False
+
+    request.session.modified = True
+    return not request.user.is_authenticated()
 
 
 def login_password(request, username, password):

@@ -417,15 +417,15 @@ class TaskManager(kobo.log.LoggingBase):
             thread.stop()
             if TaskClass.foreground and TaskClass.exclusive:
                 # close task (shutdown-worker and similar control tasks) and raise
-                self.hub.worker.close_task(task.task_id, task.result)
+                hub.worker.close_task(task.task_id, task.result)
                 raise
             # interrupt otherwise
-            self.hub.worker.interrupt_tasks([task.task_id])
+            hub.worker.interrupt_tasks([task.task_id])
             return
         except KeyboardInterrupt:
             thread.stop()
             # interrupt otherwise
-            self.hub.worker.interrupt_tasks([task.task_id])
+            hub.worker.interrupt_tasks([task.task_id])
             return
         except SystemExit, ex:
             if len(ex.args) > 0 and ex.args[0] != 0:
@@ -436,15 +436,15 @@ class TaskManager(kobo.log.LoggingBase):
         except:
             message = "ERROR: %s\n" % kobo.tback.get_exception()
             message += "See traceback.log for details (admin only).\n"
-            self.hub.upload_task_log(StringIO(message), task.task_id, "error.log")
-            self.hub.upload_task_log(StringIO(kobo.tback.Traceback().get_traceback()), task.task_id, "traceback.log", mode=0600)
+            hub.upload_task_log(StringIO(message), task.task_id, "error.log")
+            hub.upload_task_log(StringIO(kobo.tback.Traceback().get_traceback()), task.task_id, "traceback.log", mode=0600)
             failed = True
 
         thread.stop()
         if failed:
-            self.hub.worker.fail_task(task.task_id, task.result)
+            hub.worker.fail_task(task.task_id, task.result)
         else:
-            self.hub.worker.close_task(task.task_id, task.result)
+            hub.worker.close_task(task.task_id, task.result)
 
 
     def finish_task(self, task_info):
