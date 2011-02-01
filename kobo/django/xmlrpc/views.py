@@ -25,6 +25,9 @@ XMLRPC_METHODS = {
 (xmlrpc1_handler and xmlrpc2_handler in this case).
 
 It is encouraged to use __all__ when exporting whole module.
+
+All double underscores in method names will be replaced with dots:
+def task__create(request, ...): will be registered as task.create(...)
 """
 
 import sys

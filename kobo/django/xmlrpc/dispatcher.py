@@ -64,6 +64,7 @@ class DjangoXMLRPCDispatcher(SimpleXMLRPCDispatcher):
             name = fn
             if function_prefix:
                 name = "%s.%s" % (function_prefix, name)
+            name = name.replace("__", ".")
 
             self.register_function(function, name)
 
