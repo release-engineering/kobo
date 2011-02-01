@@ -19,7 +19,7 @@ class TestTraceback(unittest.TestCase):
         try:
             raise Exception('Simple text')
         except:
-            regexp = re.compile('Traceback \(most recent call last\):\n *File "./test_tback.py", line .+, in test_text\n *raise Exception\(\'Simple text\'\)\n *Exception: Simple text', re.M)
+            regexp = re.compile('Traceback \(most recent call last\):\n *File ".*test_tback.py", line .+, in test_text\n *raise Exception\(\'Simple text\'\)\n *Exception: Simple text', re.M)
             self.assertRegexpMatches(get_traceback(), regexp)
             tb = Traceback(show_traceback = True, show_code = False, show_locals = False, show_environ = False, show_modules = False)
             self.assertRegexpMatches(tb.get_traceback(), regexp)
