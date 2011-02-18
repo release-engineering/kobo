@@ -4,6 +4,7 @@
 __all__ = (
     "decorator_with_args",
     "well_behaved",
+    "log_traceback",
 )
 
 
@@ -48,3 +49,23 @@ def well_behaved(decorator):
     new_decorator.__doc__ = decorator.__doc__
     new_decorator.__dict__.update(decorator.__dict__)
     return new_decorator
+
+
+@decorator_with_args
+def log_traceback(func, log_file):
+    """Save tracebacks of exceptions raised in a decorated function to a file."""
+
+    def new_func(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except:
+            import datetime
+            import kobo.shortcuts
+            import kobo.tback
+            date = datetime.datetime.strftime(datetime.datetime.now(), "%F %R:%S")
+            data =  "--- TRACEBACK BEGIN: %s ---\n" % date
+            data += kobo.tback.Traceback().get_traceback()
+            data +=  "--- TRACEBACK END: %s ---\n\n\n" % date
+            kobo.shortcuts.save_to_file(log_file, data, append=True)
+            raise
+    return new_func
