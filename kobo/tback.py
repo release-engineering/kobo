@@ -171,7 +171,7 @@ class Traceback(object):
             else:
                 s += unicode(str(i), errors='replace')
             s += '\n'
-        return s.encode('ascii', errors='replace')
+        return s.encode('ascii', 'replace')
 
 
     def print_traceback(self):
