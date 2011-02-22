@@ -156,8 +156,16 @@ class PluginContainer(object):
 
 
     @classmethod
-    def register_module(cls, module, prefix=None):
-        """Register all plugins in a module's submodules."""
+    def register_module(cls, module, prefix=None, skip_broken=False):
+        """Register all plugins in a module's sub-modules.
+
+        @param module: a python module that contains plugin sub-modules
+        @type  module: module
+        @param prefix: if specified, only modules with this prefix will be processed
+        @type  prefix: str
+        @param skip_broken: skip broken sub-modules and print a warning
+        @type  skip_broken: bool
+        """
         path = os.path.dirname(module.__file__)
         module_list = []
 
@@ -172,7 +180,16 @@ class PluginContainer(object):
                 continue
             module_list.append(fn[:-3])
 
-        __import__(module.__name__, {}, {}, module_list)
+        if skip_broken:
+            for mod in module_list[:]:
+                try:
+                    __import__(module.__name__, {}, {}, [mod])
+                except:
+                    import sys
+                    print >> sys.stderr, "WARNING: Skipping broken plugin module: %s.%s" % (module.__name__, mod)
+                    module_list.remove(mod)
+        else:
+            __import__(module.__name__, {}, {}, module_list)
 
         for mn in module_list:
             mod = getattr(module, mn)

@@ -40,7 +40,7 @@ class ContainerE(ContainerC, ContainerD):
         return name.upper()
 
 
-class TestConf(unittest.TestCase):
+class TestPlugins(unittest.TestCase):
     def setUp(self):
         ContainerA._class_plugins = {}
         ContainerB._class_plugins = {}
@@ -133,6 +133,15 @@ class TestConf(unittest.TestCase):
 
         container_e = ContainerE()
         self.assertRaises(RuntimeError, getattr, container_e, "plugins")
+
+    def test_skip_broken(self):
+        import plugins
+        self.assertRaises(RuntimeError, ContainerA.register_module, plugins)
+
+        ContainerA.register_module(plugins, skip_broken=True)
+        container_a = ContainerA()
+        container_a["WorkingPlugin"]
+        self.assertRaises(KeyError, container_a.__getitem__, "BrokenPlugin")
 
 
 if __name__ == '__main__':
