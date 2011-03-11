@@ -18,7 +18,7 @@ __all__ = (
 )
 
 
-def daemonize(daemon_func, daemon_pid_file=None, daemon_start_dir=".", daemon_out_log="/dev/null", daemon_err_log="/dev/null", *args, **kwargs):
+def daemonize(daemon_func, daemon_pid_file=None, daemon_start_dir="/", daemon_out_log="/dev/null", daemon_err_log="/dev/null", *args, **kwargs):
     """Robustly turn into a UNIX daemon, running in daemon_start_dir."""
 
     if daemon_pid_file and os.path.exists(daemon_pid_file):
@@ -53,7 +53,11 @@ def daemonize(daemon_func, daemon_pid_file=None, daemon_start_dir=".", daemon_ou
 
     # decouple from parent environment
     os.setsid()
-    os.chdir(daemon_start_dir)
+    try:
+        os.chdir(daemon_start_dir)
+    except OSError:
+        # fallback to "/" (just in case the first chdir fails on insufficient perms or another OSError)
+        os.chdir("/")
     os.umask(0)
 
     # second fork
