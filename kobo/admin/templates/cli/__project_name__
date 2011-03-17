@@ -9,7 +9,7 @@ import kobo.exceptions
 import kobo.cli
 
 # assuming all commands are in {{ project_name }}/commands/cmd_*.py modules
-import commands
+import {{ project_name }}.commands
 
 
 # inherit container to make sure nobody will change plugins I registered
@@ -19,7 +19,7 @@ class {{ project_name|camel }}CommandContainer(kobo.cli.CommandContainer):
 
 def main(args=None):
     # register project specific commands
-    {{ project_name|camel }}CommandContainer.register_module(commands, prefix="cmd_")
+    {{ project_name|camel }}CommandContainer.register_module({{ project_name }}.commands, prefix="cmd_")
 
     # initialize command container
     command_container = {{ project_name|camel }}CommandContainer()

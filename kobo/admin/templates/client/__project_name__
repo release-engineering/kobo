@@ -10,7 +10,7 @@ import kobo.client
 import kobo.client.commands
 
 # assuming all commands are in {{ project_name }}/commands/cmd_*.py modules
-import commands
+import {{ project_name }}.commands
 
 
 # inherit container to make sure nobody will change plugins I registered
@@ -22,7 +22,7 @@ def main(args=None):
     # register generic kobo commands
     {{ project_name|camel }}CommandContainer.register_module(kobo.client.commands, prefix="cmd_")
     # register project specific commands
-    {{ project_name|camel }}CommandContainer.register_module(commands, prefix="cmd_")
+    {{ project_name|camel }}CommandContainer.register_module({{ project_name }}.commands, prefix="cmd_")
 
     # configuration
     config_env = "{{ project_name|upper }}_CONFIG_FILE"

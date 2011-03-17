@@ -11,14 +11,14 @@ import kobo.worker.main
 import kobo.worker.tasks
 
 # assuming all tasks are in {{ project_name }}/tasks/task_*.py modules
-import tasks
+import {{ project_name }}.tasks
 
 
 def main():
     # register generic kobo tasks
     kobo.worker.main.TaskContainer.register_module(kobo.worker.tasks, prefix="task_")
     # register project specific tasks
-    kobo.worker.main.TaskContainer.register_module(tasks, prefix="task_")
+    kobo.worker.main.TaskContainer.register_module({{ project_name }}.tasks, prefix="task_")
 
     # configuration
     config_env = "{{ project_name|upper }}_CONFIG_FILE"
