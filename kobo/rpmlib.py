@@ -196,6 +196,9 @@ def parse_nvra(nvra):
         raise ValueError("Invalid NVRA: %s" % nvra)
 
     nvr, arch = nvra_parts
+    if "-" in arch:
+        raise ValueError("Invalid arch '%s' in '%s'" % (arch, nvra))
+
     result = parse_nvr(nvr)
     result["arch"] = arch
     result["src"] = (arch == "src")

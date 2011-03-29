@@ -44,6 +44,7 @@ class TestNVR(unittest.TestCase):
     def test_invalid_nvra(self):
         self.assertEqual(parse_nvra("net-snmp-5.3.2.2-5.el5.i386.rpm:1"), dict(name="net-snmp", version="5.3.2.2", release="5.el5", epoch="1", arch="i386", src=False))
         self.assertEqual(parse_nvra("net-snmp-5.3.2.2-5.el5.i386:1.rpm"), dict(name="net-snmp", version="5.3.2.2", release="5.el5", epoch="1", arch="i386", src=False))
+        self.assertRaises(ValueError, parse_nvra, "net-snmp-5.3.2.2-5")
 
     def test_compare_nvr(self):
         first = {'name': 'a', 'version': '1', 'release': '1', 'epoch': '1'}
