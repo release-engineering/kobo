@@ -18,6 +18,7 @@ __all__ = (
     "split_nvr_epoch",
     "parse_nvr",
     "parse_nvra",
+    "parse_evr",
     "get_keys_from_header",
     "get_digest_algo_from_header",
 )
@@ -136,7 +137,7 @@ def split_nvr_epoch(nvre):
 
 
 def parse_nvr(nvre):
-    """Split N-V-R into dictionary of data.
+    """Split N-V-R into a dictionary.
 
     @param nvre: N-V-R:E, E:N-V-R or N-E:V-R string
     @type nvre: str
@@ -170,7 +171,7 @@ def parse_nvr(nvre):
 
 
 def parse_nvra(nvra):
-    """Split N-V-R.A[.rpm] into dictionary of data.
+    """Split N-V-R.A[.rpm] into a dictionary.
 
     @param nvra: N-V-R:E.A[.rpm], E:N-V-R.A[.rpm], N-V-R.A[.rpm]:E or N-E:V-R.A[.rpm] string
     @type nvra: str
@@ -204,6 +205,38 @@ def parse_nvra(nvra):
     result["src"] = (arch == "src")
     if epoch != "":
         result["epoch"] = epoch
+    return result
+
+
+def parse_evr(evr, allow_empty_release=False):
+    """Split E:V-R into a dictionary."""
+
+    if ":" in evr:
+        epoch, vr = evr.split(":", 1)
+        try:
+            int(epoch)
+        except ValueError:
+            try:
+                int(vr)
+            except ValueError:
+                raise ValueError("Invalid epoch in '%s'" % evr)
+            epoch, vr = vr, epoch
+    else:
+        epoch, vr = ("", evr)
+
+    if "-" in vr:
+        version, release = vr.split("-", 1)
+    else:
+        if not allow_empty_release:
+            raise ValueError("Missing release in '%s'" % evr)
+        version, release = (vr, "")
+
+    result = {
+        "epoch": epoch,
+        "version": version,
+        "release": release,
+    }
+
     return result
 
 

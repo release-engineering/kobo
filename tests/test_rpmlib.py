@@ -73,6 +73,22 @@ class TestNVR(unittest.TestCase):
         first = {'name': 'a', 'version': '1', 'release': '1'}
         self.assertEqual(compare_nvr(first, second), -1)
 
+    def test_valid_evr(self):
+        self.assertEqual(parse_evr("5.3.2.2-5.el5"), {"epoch": "", "version": "5.3.2.2", "release": "5.el5"})
+        self.assertEqual(parse_evr("1:5.3.2.2-5.el5"), {"epoch": "1", "version": "5.3.2.2", "release": "5.el5"})
+        self.assertEqual(parse_evr("5.3.2.2-5.el5:1"), {"epoch": "1", "version": "5.3.2.2", "release": "5.el5"})
+        self.assertEqual(parse_evr("5.3.2.2:1", allow_empty_release=True), {"epoch": "1", "version": "5.3.2.2", "release": ""})
+        self.assertEqual(parse_evr("1:5.3.2.2", allow_empty_release=True), {"epoch": "1", "version": "5.3.2.2", "release": ""})
+        self.assertEqual(parse_evr("1:5", allow_empty_release=True), {"epoch": "1", "version": "5", "release": ""})
+        self.assertEqual(parse_evr("1", allow_empty_release=True), {"epoch": "", "version": "1", "release": ""})
+
+    def test_invalid_evr(self):
+        self.assertRaises(ValueError, parse_evr, "a:b")
+        self.assertRaises(ValueError, parse_evr, "5.3.2.2:1", allow_empty_release=False)
+        self.assertRaises(ValueError, parse_evr, "1:5.3.2.2", allow_empty_release=False)
+        self.assertRaises(ValueError, parse_evr, "1:5", allow_empty_release=False)
+        self.assertRaises(ValueError, parse_evr, "1", allow_empty_release=False)
+
 
 if __name__ == '__main__':
     unittest.main()
