@@ -20,7 +20,7 @@ class Start_Hub(kobo.cli.Command):
         if len(args) < 1:
             self.parser.error("Please specify a name of the project.")
 
-        name = args[0]
+        name = args[0].replace("-", "_")
         directory = os.getcwd()
 
         try:
