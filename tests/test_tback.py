@@ -52,6 +52,23 @@ class TestTraceback(unittest.TestCase):
         output = tb.get_traceback()
         self.assertIsInstance(output, str)
 
+    def test_uninitialized_variables(self):
+        class Foo(object):
+            __slots__ = ( "bar", "version" )
+
+            def __init__(self):
+                self.version = 1
+
+            def test(self):
+                try:
+                    raise
+                except:
+                    # bar is uninitialized
+                    return Traceback().get_traceback()
+
+        obj = Foo()
+        self.assertTrue(obj.test())
+
 
 if __name__ == "__main__":
     unittest.main()

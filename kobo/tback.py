@@ -156,7 +156,11 @@ class Traceback(object):
                         result.append("%20s = %s" % (self._to_str(key), self._to_str(value)))
                         if key == "self":
                             for obj_key in sorted(dir(value)):
-                                obj_value = getattr(value, obj_key)
+                                try:
+                                    obj_value = getattr(value, obj_key)
+                                except:
+                                    result.append("%20s - uninitialized variable" % ("self." + self._to_str(obj_key)))
+                                    continue
                                 if obj_key.startswith("__"):
                                     continue
                                 if callable(obj_value):
