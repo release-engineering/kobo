@@ -8,6 +8,7 @@ import os
 import datetime
 
 from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseForbidden, HttpResponseServerError
+from django.views.decorators.csrf import csrf_exempt
 from kobo.decorators import well_behaved
 
 from models import UPLOAD_STATES, FileUpload
@@ -24,6 +25,7 @@ def catch_exceptions(old_view):
     return new_view
 
 
+@csrf_exempt
 @catch_exceptions
 def file_upload(request):
     if request.method != "POST":
