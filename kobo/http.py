@@ -25,14 +25,11 @@ class POSTTransport(object):
         self._boundary = random_string(32)
         self.last_response = None
 
-
     def get_content_type(self, file_name):
         return mimetypes.guess_type(file_name)[0] or "application/octet-stream"
 
-
     def add_variable(self, key, value):
         self._variables.append((str(key), str(value)))
-
 
     def add_file(self, key, file_name):
         if type(file_name) is not str:
@@ -43,40 +40,41 @@ class POSTTransport(object):
 
         self._files.append((str(key), str(file_name)))
 
-
     def flush_data(self):
         self._variables = []
         self._files = []
 
-
     def send_to_host(self, host, selector, port=None, secure=False, flush=True):
-        data = []
+        content_length = 0
+
+        variables = []
         for key, value in self._variables:
-            data.extend((
+            variables.extend((
                 "--%s" % self._boundary,
                 'Content-Disposition: form-data; name="%s"' % key,
                 "",
                 value,
             ))
+        variables_data = "\r\n".join(variables)
+        content_length += len(variables_data)
+        content_length += 2 # '\r\n'
 
+        files = []
         for key, file_name in self._files:
-            fo = open(file_name, "rb")
-            file_data = fo.read()
-            fo.close()
-
-            data.extend((
+            file_data = "\r\n".join((
                 "--%s" % self._boundary,
                 'Content-Disposition: form-data; name="%s"; filename="%s"' % (key, os.path.basename(file_name)),
                 "Content-Type: %s" % self.get_content_type(file_name),
                 "",
-                file_data,
+                "", # this adds extra newline before file data
             ))
+            files.append((file_name, file_data))
+            content_length += len(file_data)
+            content_length += os.path.getsize(file_name)
+            content_length += 2 # '\r\n'
 
-        if not data:
-            return None
-
-        data.extend(("--%s--" % self._boundary, ""))
-        content = "\r\n".join(data)
+        footer_data = "\r\n".join(("--%s--" % self._boundary, ""))
+        content_length += len(footer_data)
         content_type = "multipart/form-data; boundary=" + self._boundary
 
         if secure:
@@ -86,9 +84,21 @@ class POSTTransport(object):
 
         request.putrequest("POST", selector)
         request.putheader("content-type", content_type)
-        request.putheader("content-length", str(len(content)))
+        request.putheader("content-length", str(content_length))
         request.endheaders()
-        request.send(content)
+        request.send(variables_data)
+        request.send("\r\n")
+        for file_name, file_data in files:
+            request.send(file_data)
+            file_obj = open(file_name, "r")
+            while 1:
+                chunk = file_obj.read(1024**2)
+                if not chunk:
+                    break
+                request.send(chunk)
+            request.send("\r\n")
+
+        request.send(footer_data)
         response = request.getresponse()
 
         if flush:
