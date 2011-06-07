@@ -432,7 +432,11 @@ def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, w
 
     target_dir = os.path.dirname(write_to)
     if not os.path.isdir(target_dir):
-        os.makedirs(target_dir, mode=0755)
+        try:
+            os.makedirs(target_dir, mode=0755)
+        except OSError, ex:
+            if ex.errno != 17:
+                raise
 
     fd = os.open(write_to, os.O_RDWR | os.O_CREAT, mode)
     fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
