@@ -66,4 +66,8 @@ class FileUpload(models.Model):
         # if file was successfully uploaded it should be removed from
         # filesystem, otherwise it shouldn't be there
         if self.state == UPLOAD_STATES['FINISHED']:
-            os.unlink(self.get_full_path())
+            try:
+                os.unlink(self.get_full_path())
+            except OSError, ex:
+                if ex.errno != 2:
+                    raise
