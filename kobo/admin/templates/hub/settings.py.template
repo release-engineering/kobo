@@ -53,10 +53,13 @@ USE_I18N = True
 USE_L10N = True
 
 # Absolute path to task logs and other files
-FILES_PATH = '/var/www/django/{{ project_name }}/files'
+FILES_PATH = '/var/lib/{{ project_name }}'
 
 # Files for kobo tasks with predefined structure
 TASK_DIR = os.path.join(FILES_PATH, 'tasks')
+
+# Root directory for uploaded files
+UPLOAD_DIR = os.path.join(FILES_PATH, 'upload')
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"

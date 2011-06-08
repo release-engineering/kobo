@@ -307,7 +307,7 @@ class TaskLogs(object):
             # logs on disk
             for root, dirs, files in os.walk(task_dir):
                 for i in files:
-                    if i.endswith(".gz"):
+                    if i.endswith(".log.gz"):
                         i = i[:-3]
                     result.append(os.path.join(root, i)[len(task_dir):])
 
@@ -320,6 +320,11 @@ class TaskLogs(object):
 
     def _gzip_log(self, name):
         """gzip one log, do *not* throw any error on failure"""
+
+        # compress only log files
+        if not name.endswith(".log"):
+            return
+
         import pipes
         path = self._get_absolute_log_path(name)
         if not os.path.isfile(path + ".gz"):

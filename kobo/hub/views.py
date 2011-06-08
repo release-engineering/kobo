@@ -194,27 +194,59 @@ def task_detail(request, id):
     return object_detail(request, **args)
 
 
+def _stream_file(file_path, offset=0):
+    """Generator that returns 1M file chunks."""
+    try:
+        f = open(file_path, "r")
+    except IOError:
+        return
+
+    f.seek(offset)
+    while 1:
+        data = f.read(1024 ** 2)
+        if not data:
+            break
+        yield data
+    f.close()
+
+
 def task_log(request, id, log_name):
     """
     IMPORTANT: reverse to 'task/log-json' *must* exist
     """
     if os.path.basename(log_name).startswith("traceback") and not request.user.is_superuser:
-        return HttpResponseForbidden()
+        return HttpResponseForbidden("Traceback is available only for superusers.")
 
     task = get_object_or_404(Task, id=id)
-    offset = int(request.GET.get("offset", 0))
-    content = task.logs[log_name][offset:]
 
-    if request.GET.get("format") == "txt":
-        response = HttpResponse(mimetype='text/plain')
+    file_path = task.logs._get_absolute_log_path(log_name)
+    if not os.path.isfile(file_path) and not file_path.endswith(".gz"):
+        file_path = task.logs._get_absolute_log_path(log_name + ".gz")
+
+    import mimetypes
+    mimetype = mimetypes.guess_type(file_path)[0] or 'application/octet-stream'
+    offset = int(request.GET.get("offset", 0))
+    try:
+        content_len = os.path.getsize(file_path) - offset
+    except OSError:
+        content_len = 0
+
+    if request.GET.get("format") == "raw":
+        # use _stream_file() instad of passing file object in order to improve performance
+        response = HttpResponse(_stream_file(file_path, offset), mimetype=mimetype)
+
+        response["Content-Length"] = content_len
         response['Content-Disposition'] = 'attachment; filename=%s' % os.path.basename(log_name)
-        response.write(content)
         return response
 
+    if not log_name.endswith(".log"):
+        return HttpResponseForbidden("Can display only logs.")
+
+    content = task.logs[log_name][offset:]
     content = content.decode("utf-8", "replace")
     context = {
         "title": "Task log",
-        "offset": offset + len(content) + 1,
+        "offset": offset + content_len + 1,
         "task_finished": task.is_finished() and 1 or 0,
         "content": content,
         "log_name": log_name,
