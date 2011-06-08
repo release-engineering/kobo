@@ -3,6 +3,7 @@
 
 import os
 
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -47,7 +48,7 @@ class FileUpload(models.Model):
         return result
 
     def get_full_path(self):
-        return os.path.join(self.target_dir, self.name)
+        return os.path.abspath(os.path.join(self.target_dir, self.name))
 
     def __unicode__(self):
         return unicode(os.path.join(self.target_dir, self.name))
@@ -71,3 +72,18 @@ class FileUpload(models.Model):
             except OSError, ex:
                 if ex.errno != 2:
                     raise
+
+            upload_dir = getattr(settings, "UPLOAD_DIR", None)
+            if upload_dir is not None:
+                upload_dir = os.path.abspath(upload_dir)
+                file_dir = os.path.dirname(self.get_full_path())
+                while 1:
+                    if not file_dir.startswith(upload_dir):
+                        break
+                    if file_dir == upload_dir:
+                        break
+                    try:
+                        os.rmdir(file_dir)
+                    except OSError, ex:
+                        break
+                    file_dir = os.path.split(file_dir)[0]
