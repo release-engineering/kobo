@@ -4,18 +4,18 @@
 <div class="paginator">
   {% trans "Page" %} {{ page }}/{{ pages }}. {% trans "Records" %} {{ first_on_page }} - {{ last_on_page }} {% trans "of" %} {{ hits }}.
 {% ifequal page 1 %}
-  <img src="{{ MEDIA_URL }}/kobo/img/list-first-disabled.png" />
-  <img src="{{ MEDIA_URL }}/kobo/img/list-prev-disabled.png" />
+  <img src="{{ MEDIA_URL }}kobo/img/list-first-disabled.png" />
+  <img src="{{ MEDIA_URL }}kobo/img/list-prev-disabled.png" />
 {% else %}
-  <a href="?page=1{{ get_vars }}"><img src="{{ MEDIA_URL }}/kobo/img/list-first.png" /></a>
-  <a href="?page={{ previous }}{{ get_vars }}"><img src="{{ MEDIA_URL }}/kobo/img/list-prev.png" /></a>
+  <a href="?page=1{{ get_vars }}"><img src="{{ MEDIA_URL }}kobo/img/list-first.png" /></a>
+  <a href="?page={{ previous }}{{ get_vars }}"><img src="{{ MEDIA_URL }}kobo/img/list-prev.png" /></a>
 {% endifequal %}
 {% ifequal page pages %}
-  <img src="{{ MEDIA_URL }}/kobo/img/list-next-disabled.png" />
-  <img src="{{ MEDIA_URL }}/kobo/img/list-last-disabled.png" />
+  <img src="{{ MEDIA_URL }}kobo/img/list-next-disabled.png" />
+  <img src="{{ MEDIA_URL }}kobo/img/list-last-disabled.png" />
 {% else %}
-  <a href="?page={{ next }}{{ get_vars }}"><img src="{{ MEDIA_URL }}/kobo/img/list-next.png" /></a>
-  <a href="?page={{ pages }}{{ get_vars }}"><img src="{{ MEDIA_URL }}/kobo/img/list-last.png" /></a>
+  <a href="?page={{ next }}{{ get_vars }}"><img src="{{ MEDIA_URL }}kobo/img/list-next.png" /></a>
+  <a href="?page={{ pages }}{{ get_vars }}"><img src="{{ MEDIA_URL }}kobo/img/list-last.png" /></a>
 {% endifequal %}
 </div>
 <div style="clear: both" />
