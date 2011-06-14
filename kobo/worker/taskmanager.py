@@ -357,6 +357,7 @@ class TaskManager(kobo.log.LoggingBase):
 
         if TaskClass.foreground:
             self.run_task(task_info)
+            self.finish_task(task_info)
         else:
             pid = self.fork_task(task_info)
             self.pid_dict[task_info["id"]] = pid
