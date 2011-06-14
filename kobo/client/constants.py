@@ -20,6 +20,7 @@ TASK_STATES = Enum(
     "FAILED",      # failed
     "INTERRUPTED", # interrupted by an external event (power outage, process killed, etc.)
     "TIMEOUT",     # reached timeout and killed by task manager
+    "CREATED",     # task is created, but still not ready to be processed
 )
 
 

@@ -223,6 +223,10 @@ class TaskManager(models.Manager):
         """Return list of tasks killed on a timeout."""
         return self.filter(state=TASK_STATES["TIMEOUT"]).order_by("-exclusive", "id")
 
+    def created(self):
+        """Return list of created tasks."""
+        return self.filter(state=TASK_STATES["CREATED"]).order_by("-exclusive", "id")
+
 
 class TaskLogs(object):
     """Task log wrapper."""
@@ -433,7 +437,7 @@ class Task(models.Model):
 
 
     @classmethod
-    def create_task(cls, owner_name, label, method, args=None, comment=None, parent_id=None, worker_name=None, arch_name="noarch", channel_name="default", timeout=None, priority=10, weight=1, exclusive=False, resubmitted_by=None, resubmitted_from=None):
+    def create_task(cls, owner_name, label, method, args=None, comment=None, parent_id=None, worker_name=None, arch_name="noarch", channel_name="default", timeout=None, priority=10, weight=1, exclusive=False, resubmitted_by=None, resubmitted_from=None, state=None):
         """Create a new task."""
         task = cls()
         task.owner = User.objects.get(username=owner_name)
@@ -444,6 +448,9 @@ class Task(models.Model):
 
         if parent_id is not None:
             task.parent = cls.objects.get(id=parent_id)
+
+        if state is not None:
+            task.state = state
 
         if worker_name is not None:
             task.worker = Worker.objects.get(name=worker_name)
@@ -649,7 +656,7 @@ WHERE
     def free_task(self):
         """Free the task."""
         try:
-            self.__lock(self.worker.id, new_state=TASK_STATES["FREE"], initial_states=(TASK_STATES["FREE"], TASK_STATES["ASSIGNED"]))
+            self.__lock(self.worker_id, new_state=TASK_STATES["FREE"], initial_states=(TASK_STATES["FREE"], TASK_STATES["ASSIGNED"], TASK_STATES["CREATED"]))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot free task %d, state is %s" % (self.id, self.state))
 
@@ -660,7 +667,7 @@ WHERE
             worker_id = self.worker_id
 
         try:
-            self.__lock(worker_id, new_state=TASK_STATES["ASSIGNED"], initial_states=(TASK_STATES["FREE"], ))
+            self.__lock(worker_id, new_state=TASK_STATES["ASSIGNED"], initial_states=(TASK_STATES["FREE"], TASK_STATES["CREATED"]))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot assign task %d" % (self.id))
 
@@ -698,7 +705,7 @@ WHERE
                 raise Exception("You are not task owner or superuser.")
 
         try:
-            self.__lock(self.worker_id, new_state=TASK_STATES["CANCELED"], initial_states=(TASK_STATES["FREE"], TASK_STATES["ASSIGNED"], TASK_STATES["OPEN"]))
+            self.__lock(self.worker_id, new_state=TASK_STATES["CANCELED"], initial_states=(TASK_STATES["FREE"], TASK_STATES["ASSIGNED"], TASK_STATES["OPEN"], TASK_STATES["CREATED"]))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot cancel task %d, state is %s" % (self.id, self.state))
 
