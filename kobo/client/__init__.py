@@ -299,7 +299,7 @@ class HubProxy(object):
         try:
             ac, req = ctx.mk_req(server=sprinc, client=cprinc, auth_context=ac, ccache=ccache, options=krbV.AP_OPTS_MUTUAL_REQUIRED)
         except krbV.Krb5Error, ex:
-            if ex.err_code == -1765328377:
+            if getattr(ex, "err_code", None) == -1765328377:
                 ex.message += ". Make sure you correctly set KRB_REALM (current value: %s)." % realm
                 ex.args = (ex.err_code, ex.message)
             raise ex
