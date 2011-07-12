@@ -129,6 +129,9 @@ class Traceback(object):
 
         if self.show_code or self.show_locals:
             for frame in reversed(self.get_frames()):
+                if frame["filename"] == "?" or frame["lineno"] == "?":
+                    continue
+
                 result.append("Frame %s in %s at line %s" % (
                     self._to_str(frame["function"]),
                     self._to_str(frame["filename"]),
