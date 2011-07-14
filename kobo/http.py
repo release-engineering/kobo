@@ -12,6 +12,17 @@ from kobo.shortcuts import random_string
 
 
 class POSTTransport(object):
+    """
+    POST transport.
+
+    USAGE:
+    >>> import kobo.http
+        t = kobo.http.POSTTransport()
+        t.add_variable("foo", "bar")
+        t.add_file("foofile", "/tmp/some_file")
+        t.send_to_host("somehost", "/cgi-bin/upload")
+    """
+
     __slots__ = (
         "_variables",
         "_files",
@@ -26,12 +37,28 @@ class POSTTransport(object):
         self.last_response = None
 
     def get_content_type(self, file_name):
+        """Guess the mime type of a file.
+
+        @param file_name: file name
+        @type file_name: str
+        @return: MIME type
+        @rtype: str
+        """
         return mimetypes.guess_type(file_name)[0] or "application/octet-stream"
 
     def add_variable(self, key, value):
+        """Add a variable to the POST request."""
         self._variables.append((str(key), str(value)))
 
     def add_file(self, key, file_name):
+        """
+        Add a file to the POST request.
+
+        @param key: key
+        @type key: str
+        @param file_name: file name
+        @type file_name: str
+        """
         if type(file_name) is not str:
             raise TypeError("Invalid type of 'file_name': %s" % type(file_name))
 
@@ -41,10 +68,27 @@ class POSTTransport(object):
         self._files.append((str(key), str(file_name)))
 
     def flush_data(self):
+        """Flush variables and files from the request."""
         self._variables = []
         self._files = []
 
     def send_to_host(self, host, selector, port=None, secure=False, flush=True):
+        """
+        Send the POST request to a host.
+
+        @param host: host address
+        @type host: str
+        @param selector: selector/path string
+        @type selector: str
+        @param port: port number
+        @type port: int
+        @param secure: use https
+        @type secure: bool
+        @param flush: flush data after send
+        @type flush: bool
+        @return: (response status code, response data body)
+        @rtype: (int, str)
+        """
         content_length = 0
 
         variables = []
