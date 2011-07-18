@@ -9,6 +9,7 @@ import tempfile
 
 __all__ = (
     "Hardlink",
+    "UndoHardlink",
 )
 
 
