@@ -243,7 +243,7 @@ class UndoHardlink(object):
 
         os.chown(file_path, st.st_uid, st.st_gid)
         os.chmod(file_path, st.st_mode)
-        os.utime(file_path, st.st_atime, st.st_mtime)
+        os.utime(file_path, (st.st_atime, st.st_mtime))
 
         try:
             os.rmdir(tmp_dir)
