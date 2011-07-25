@@ -22,6 +22,10 @@ class TestPOSTTransport(unittest.TestCase):
         tf3 = tempfile.mkstemp(suffix=".avi")[1]
         self.assertEqual(self.postt.get_content_type(tf0), "application/octet-stream")
         self.assertEqual(self.postt.get_content_type(tf1), "text/plain")
+        # *.rtf
+        # Python2.7 returns: application/rtf
+        # Python2.4 returns: text/rtf
+        self.assertEqual(self.postt.get_content_type(tf2).split("/")[1], "rtf")
         self.assertEqual(self.postt.get_content_type(tf2), "application/rtf")
         self.assertEqual(self.postt.get_content_type(tf3), "video/x-msvideo")
 
