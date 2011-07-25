@@ -17,6 +17,8 @@ __all__ = (
 class FileWrapper(object):
     __slots__ = (
         "_checksums",
+        "size",
+        "mtime",
         "file_path",
         "__dict__",
     )
@@ -24,6 +26,11 @@ class FileWrapper(object):
     def __init__(self, file_path, **kwargs):
         self._checksums = {}
         self.file_path = os.path.abspath(file_path)
+        st = kwargs.get("stat", None)
+        if not st:
+            st = os.stat(file_path)
+        self.size = st.st_size
+        self.mtime = st.st_mtime
 
     def __str__(self):
         return self.file_path
@@ -129,7 +136,7 @@ class FileCache(object):
             return self.inode_cache[cache_key]
 
         file_wrapper_class = file_wrapper_class or self.file_wrapper_class
-        value = file_wrapper_class(file_path, **kwargs)
+        value = file_wrapper_class(file_path, stat=st, **kwargs)
         self.inode_cache[cache_key] = value
         self.file_cache[file_path] = value
         return value
