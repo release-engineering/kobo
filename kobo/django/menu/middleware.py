@@ -15,7 +15,7 @@ class LazyMenu(object):
     """
     def __get__(self, request, obj_type=None):
         if not hasattr(request, "_cached_menu"):
-            request._cached_menu = menu(request)
+            request._cached_menu = menu.setup(request)
         return request._cached_menu
 
 

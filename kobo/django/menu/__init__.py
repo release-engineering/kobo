@@ -111,6 +111,7 @@ class MenuItem(object):
         "submenu_list",
         "active",
         "depth",
+        "alters_data",
     )
 
 
@@ -127,6 +128,7 @@ class MenuItem(object):
         self.acl_perms = acl_perms and set(acl_perms) or set()
         self.main_menu = None
         self.parent_menu = None
+        self.alters_data = False
 
         self.submenu_list = []
         for i in menu or []:
@@ -300,7 +302,7 @@ class MainMenu(MenuItem):
         return menu
 
 
-    def __call__(self, request):
+    def setup(self, request):
         self.user = request.user
         self.path = request.get_full_path()
         self.acl_groups = set([i.name for i in request.user.groups.all().only("name")])
