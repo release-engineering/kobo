@@ -71,7 +71,7 @@ class StateEnumField(models.IntegerField):
     choices = property(_get_choices, kobo.django.forms.StateChoiceFormField._set_choices)
 
 
-    def get_db_prep_value(self, value):
+    def get_db_prep_value(self, value, connection, prepared=False):
         if value is not None:
             try:
                 value = self.state_machine.get_value(value)
@@ -84,8 +84,8 @@ class StateEnumField(models.IntegerField):
         return self.state_machine.get_num(value)
 
 
-    def get_db_prep_save(self, value):
-        return self.get_db_prep_value(value)
+    def get_db_prep_save(self, value, connection):
+        return self.get_db_prep_value(value, connection=connection)
 
 
     def pre_save(self, instance, add):
