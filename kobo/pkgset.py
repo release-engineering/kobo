@@ -106,7 +106,7 @@ class FileCache(object):
         self.file_cache = {}
         self.file_wrapper_class = file_wrapper_class or FileWrapper
 
-    def __get__(self, name):
+    def __getitem__(self, name):
         return self.file_cache[os.path.abspath(name)]
 
     def __iter__(self):
