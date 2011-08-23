@@ -8,6 +8,7 @@ import hashlib
 import httplib
 import os
 import socket
+import ssl
 import sys
 import threading
 import time
@@ -98,6 +99,11 @@ class CookieTransport(xmlrpclib.Transport):
         cookiejar = kwargs.pop("cookiejar", None)
         self.timeout = kwargs.pop("timeout", 0)
 
+        self.proxy = kwargs.pop("proxy", None)
+        if self.proxy is None:
+            self.proxy = os.environ.get("http_proxy", None)
+        self.realhost = None
+
         if hasattr(xmlrpclib.Transport, "__init__"):
             xmlrpclib.Transport.__init__(self, *args, **kwargs)
 
@@ -110,6 +116,10 @@ class CookieTransport(xmlrpclib.Transport):
             self.cookiejar.load(self.cookiejar.filename)
 
     def make_connection(self, host):
+        if self.proxy:
+            self.realhost = host
+            host = self.proxy
+
         if sys.version_info[:2] < (2, 7):
             host, extra_headers, x509 = self.get_host_info(host)
             conn = TimeoutHTTP(host)
@@ -123,6 +133,16 @@ class CookieTransport(xmlrpclib.Transport):
             if self.timeout:
                 conn.timeout = self.timeout
             return conn
+
+    def send_request(self, connection, handler, request_body):
+        if self.realhost:
+            handler = "%s://%s%s" % (self.scheme, self.realhost, handler) 
+        return xmlrpclib.Transport.send_request(self, connection, handler, request_body)
+
+    def send_host(self, connection, host):
+        if self.realhost:
+            host = self.realhost
+        return xmlrpclib.Transport.send_host(self, connection, host)
 
     def send_cookies(self, connection, cookie_request):
         """Add cookies to the header."""
@@ -310,6 +330,28 @@ class SafeCookieTransport(xmlrpclib.SafeTransport, CookieTransport):
     scheme = "https"
 
     def make_connection(self, host):
+        if self.proxy:
+            # Connect to proxy and send CONNECT command
+            connection = CookieTransport.make_connection(self, host) # sets self.realhost
+            request = "CONNECT %s HTTP/1.0\r\n\r\n" % self.realhost
+            connection.send(request)
+
+            # Get proxy response
+            response = connection.response_class(connection.sock, strict=connection.strict, method=connection._method)
+            version, code, message = response._read_status()
+
+            if code != 200:
+                self.close()
+                raise socket.error("Tunnel connection failed: %d %s" % (code, message.strip()))
+
+            while True:
+                line = response.fp.readline()
+                if line == '\r\n': 
+                    break
+
+            connection.sock = ssl.wrap_socket(connection.sock, None, None)
+            return connection
+
         if sys.version_info[:2] < (2, 7):
             host, extra_headers, x509 = self.get_host_info(host)
             conn = TimeoutHTTPS(host, None, **(x509 or {}))
@@ -331,6 +373,16 @@ class SafeCookieTransport(xmlrpclib.SafeTransport, CookieTransport):
 
     def __init__(self, *args, **kwargs):
         CookieTransport.__init__(self, *args, **kwargs)
+
+    def send_request(self, connection, handler, request_body):
+        if self.realhost:
+            handler = "%s://%s%s" % (self.scheme, self.realhost, handler) 
+        return xmlrpclib.SafeTransport.send_request(self, connection, handler, request_body)
+
+    def send_host(self, connection, host):
+        if self.realhost:
+            host = self.realhost
+        return xmlrpclib.SafeTransport.send_host(self, connection, host)
 
 
 def retry_request_decorator(transport_class):
