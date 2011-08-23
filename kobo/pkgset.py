@@ -17,20 +17,17 @@ __all__ = (
 class FileWrapper(object):
     __slots__ = (
         "_checksums",
-        "size",
-        "mtime",
         "file_path",
+        "stat",
         "__dict__",
     )
 
     def __init__(self, file_path, **kwargs):
         self._checksums = {}
         self.file_path = os.path.abspath(file_path)
-        st = kwargs.get("stat", None)
-        if not st:
-            st = os.stat(file_path)
-        self.size = st.st_size
-        self.mtime = st.st_mtime
+        self.stat = kwargs.get("stat", None)
+        if not self.stat:
+            self.stat = os.stat(file_path)
 
     def __str__(self):
         return self.file_path
@@ -38,6 +35,16 @@ class FileWrapper(object):
     @property
     def file_name(self):
         return os.path.basename(self.file_path)
+
+    @property
+    def size(self):
+        """Return file size from cached stat value."""
+        return self.stat.st_size
+
+    @property
+    def mtime(self):
+        """Return file mtime from cached stat value."""
+        return self.stat.st_mtime
 
     def compute_checksums(self, checksum_types):
         """Compute and cache checksums of given types."""
