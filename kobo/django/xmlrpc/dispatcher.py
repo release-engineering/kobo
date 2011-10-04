@@ -105,7 +105,7 @@ class DjangoXMLRPCDispatcher(SimpleXMLRPCDispatcher):
             if settings.DEBUG:
                 from kobo.tback import Traceback
                 response = xmlrpclib.dumps(
-                    xmlrpclib.Fault(1, "%s" % Traceback().get_traceback()),
+                    xmlrpclib.Fault(1, u"%s" % Traceback().get_traceback()),
                     allow_none=self.allow_none, encoding=self.encoding)
             else:
                 response = xmlrpclib.dumps(
