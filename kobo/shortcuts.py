@@ -265,9 +265,8 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     @rtype: (int, str) or (int, None)
     """
 
-    cwd = os.getcwd()
-    if workdir is not None:
-        os.chdir(workdir)
+    if logfile:
+        logfile = os.path.join(workdir, logfile)
 
     if type(cmd) in (list, tuple):
         import pipes
@@ -284,7 +283,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     if stdin_data is not None:
         stdin = subprocess.PIPE
 
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=stdin)
+    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=stdin, cwd=workdir)
 
     if stdin_data is not None:
         class StdinThread(threading.Thread):
@@ -310,9 +309,6 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
 
     if stdin_data is not None:
         stdin_thread.join()
-
-    if workdir is not None:
-        os.chdir(cwd)
 
     err_msg = "ERROR running command: %s" % cmd
     if proc.returncode != 0 and show_cmd:
