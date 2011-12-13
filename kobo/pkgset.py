@@ -4,7 +4,7 @@
 import os
 
 import kobo.rpmlib
-from kobo.shortcuts import compute_file_checksums, force_tuple
+from kobo.shortcuts import compute_file_checksums, force_list
 
 
 __all__ = (
@@ -51,7 +51,7 @@ class FileWrapper(object):
 
         result = {}
         missing = []
-        checksum_types = force_tuple(checksum_types)
+        checksum_types = force_list(checksum_types)
 
         for checksum_type in checksum_types:
             if checksum_type in self._checksums:
@@ -147,3 +147,21 @@ class FileCache(object):
         self.inode_cache[cache_key] = value
         self.file_cache[file_path] = value
         return value
+
+    def remove(self, file_path):
+        if type(file_path) not in (str, unicode):
+            file_obj = file_path
+            file_path = file_obj.file_path
+        else:
+            file_obj = self.file_cache[file_path]
+
+        cache_key = (file_obj.stat.st_dev, file_obj.stat.st_ino)
+        del self.inode_cache[cache_key]
+        del self.file_cache[file_path]
+        return file_obj
+
+    def remove_by_filenames(self, file_names):
+        file_names = [ os.path.basename(i) for i in force_list(file_names) ]
+        for i in self.file_cache.keys():
+            if os.path.basename(i) in file_names:
+                self.remove(i)

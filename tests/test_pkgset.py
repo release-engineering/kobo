@@ -45,79 +45,134 @@ class TestFileWrapperClass(unittest.TestCase):
 class TestFileCacheClass(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
+        self.cache = FileCache()
+        self.file1 = os.path.join(self.tmp_dir, "file_1")
+        self.file2 = os.path.join(self.tmp_dir, "file_2")
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
 
     def test_add_two_same_hardlinks(self):
-        file1 = os.path.join(self.tmp_dir, "file_1")
-        file2 = os.path.join(self.tmp_dir, "file_2")
-        open(file1, "w").write("hello\n")
-        os.link(file1, file2)
+        open(self.file1, "w").write("hello\n")
+        os.link(self.file1, self.file2)
 
-        cache = FileCache()
-        wrap1 = cache.add(file1)
-        wrap2 = cache.add(file2)
+        self.cache = FileCache()
+        wrap1 = self.cache.add(self.file1)
+        wrap2 = self.cache.add(self.file2)
 
-        self.assertEqual(len(cache), 1)
+        self.assertEqual(len(self.cache.inode_cache), 1)
+        self.assertEqual(len(self.cache.file_cache), 1)
+        self.assertEqual(len(self.cache), 1)
         self.assertEqual(id(wrap1), id(wrap2))
 
     def test_add_two_different_files(self):
-        file1 = os.path.join(self.tmp_dir, "file_1")
-        file2 = os.path.join(self.tmp_dir, "file_2")
-        open(file1, "w").write("roses are red\n")
-        open(file2, "w").write("violets are blue\n")
+        open(self.file1, "w").write("roses are red\n")
+        open(self.file2, "w").write("violets are blue\n")
 
-        cache = FileCache()
-        wrap1 = cache.add(file1)
-        wrap2 = cache.add(file2)
+        self.cache = FileCache()
+        wrap1 = self.cache.add(self.file1)
+        wrap2 = self.cache.add(self.file2)
 
-        self.assertEqual(len(cache), 2)
+        self.assertEqual(len(self.cache.inode_cache), 2)
+        self.assertEqual(len(self.cache.file_cache), 2)
+        self.assertEqual(len(self.cache), 2)
         self.assertNotEqual(id(wrap1), id(wrap2))
 
     def test_getitem(self):
-        file1 = os.path.join(self.tmp_dir, "file_1")
-        file2 = os.path.join(self.tmp_dir, "file_2")
-        open(file1, "w").write("hello\n")
-        open(file2, "w").write("hello\n")
+        open(self.file1, "w").write("hello\n")
+        open(self.file2, "w").write("hello\n")
 
-        cache = FileCache()
-        wrap1 = cache.add(file1)
-        wrap2 = cache.add(file2)
+        self.cache = FileCache()
+        wrap1 = self.cache.add(self.file1)
+        wrap2 = self.cache.add(self.file2)
 
-        self.assertEqual(id(cache[file1]), id(wrap1))
-        self.assertEqual(id(cache[file2]), id(wrap2))
+        self.assertEqual(len(self.cache.inode_cache), 2)
+        self.assertEqual(len(self.cache.file_cache), 2)
+        self.assertEqual(id(self.cache[self.file1]), id(wrap1))
+        self.assertEqual(id(self.cache[self.file2]), id(wrap2))
 
     def test_iteritems(self):
-        file1 = os.path.join(self.tmp_dir, "file_1")
-        file2 = os.path.join(self.tmp_dir, "file_2")
-        open(file1, "w").write("hello\n")
-        open(file2, "w").write("hello\n")
+        open(self.file1, "w").write("hello\n")
+        open(self.file2, "w").write("hello\n")
 
-        cache = FileCache()
-        wrap1 = cache.add(file1)
-        wrap2 = cache.add(file2)
+        self.cache = FileCache()
+        wrap1 = self.cache.add(self.file1)
+        wrap2 = self.cache.add(self.file2)
 
-        items = [path for path, _ in cache.iteritems()]
+        items = [path for path, _ in self.cache.iteritems()]
+
+        self.assertEqual(len(self.cache.inode_cache), 2)
+        self.assertEqual(len(self.cache.file_cache), 2)
         self.assertEqual(len(items), 2)
-        self.assertTrue(file1 in items)
-        self.assertTrue(file2 in items)
+        self.assertTrue(self.file1 in items)
+        self.assertTrue(self.file2 in items)
 
     def test_iter(self):
-        file1 = os.path.join(self.tmp_dir, "file_1")
-        file2 = os.path.join(self.tmp_dir, "file_2")
-        open(file1, "w").write("hello\n")
-        open(file2, "w").write("hello\n")
+        open(self.file1, "w").write("hello\n")
+        open(self.file2, "w").write("hello\n")
 
-        cache = FileCache()
-        wrap1 = cache.add(file1)
-        wrap2 = cache.add(file2)
+        self.cache = FileCache()
+        wrap1 = self.cache.add(self.file1)
+        wrap2 = self.cache.add(self.file2)
 
-        items = [item for item in cache]
+        items = [item for item in self.cache]
 
+        self.assertEqual(len(self.cache.inode_cache), 2)
+        self.assertEqual(len(self.cache.file_cache), 2)
         self.assertEqual(len(items), 2)
-        self.assertTrue(file1 in items)
-        self.assertTrue(file2 in items)
+        self.assertTrue(self.file1 in items)
+        self.assertTrue(self.file2 in items)
+
+    def test_remove_by_file_path(self):
+        self.test_add_two_different_files()
+        self.cache.remove(self.file1)
+
+        items = [item for item in self.cache]
+
+        self.assertEqual(len(self.cache.inode_cache), 1)
+        self.assertEqual(len(self.cache.file_cache), 1)
+        self.assertEqual(len(items), 1)
+        self.assertTrue(self.file1 not in items)
+        self.assertTrue(self.file2 in items)
+
+    def test_remove_by_obj(self):
+        self.test_add_two_different_files()
+
+        self.file1_obj = self.cache[self.file1]
+        self.cache.remove(self.file1_obj)
+
+        items = [item for item in self.cache]
+
+        self.assertEqual(len(self.cache.inode_cache), 1)
+        self.assertEqual(len(self.cache.file_cache), 1)
+        self.assertEqual(len(items), 1)
+        self.assertTrue(self.file1 not in items)
+        self.assertTrue(self.file2 in items)
+
+    def test_remove_by_filenames(self):
+        self.test_add_two_different_files()
+
+        # add a file with existing name to a subdir
+        os.makedirs(os.path.join(self.tmp_dir, "dir"))
+        file1a = os.path.join(self.tmp_dir, "dir", "file_1")
+        open(file1a, "w").write("hello\n")
+        self.cache.add(file1a)
+
+        self.cache.remove_by_filenames("does-not-exist")
+        self.assertEqual(len(self.cache.inode_cache), 3)
+        self.assertEqual(len(self.cache.file_cache), 3)
+
+        # ignores the path, only the file name is important
+        # removes both files with the file name "file_1"
+        self.cache.remove_by_filenames("/foo/bar/file_1")
+
+        items = [item for item in self.cache]
+
+        self.assertEqual(len(self.cache.inode_cache), 1)
+        self.assertEqual(len(self.cache.file_cache), 1)
+        self.assertEqual(len(items), 1)
+        self.assertTrue(self.file1 not in items)
+        self.assertTrue(self.file2 in items)
 
 
 if __name__ == "__main__":
