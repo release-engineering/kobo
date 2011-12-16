@@ -45,7 +45,9 @@ def force_list(value):
 
     @rtype: list
     """
-    if type(value) in (list, tuple):
+    if type(value) is list:
+        return value
+    if type(value) in (tuple, set):
         return list(value)
     return [value]
 
@@ -55,7 +57,9 @@ def force_tuple(value):
 
     @rtype: tuple
     """
-    if type(value) in (list, tuple):
+    if type(value) is tuple:
+        return value
+    if type(value) in (list, set):
         return tuple(value)
     return (value, )
 
