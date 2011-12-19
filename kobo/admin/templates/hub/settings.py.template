@@ -93,6 +93,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # Krb5AuthenticationMiddleware must be loaded *after* AuthenticationMiddleware
     #'kobo.django.auth.krb5.Krb5AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # kobo related middleware:
