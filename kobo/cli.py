@@ -68,10 +68,12 @@ parser.run()
 
 import sys
 import optparse
+import datetime
 from optparse import Option
 from xmlrpclib import Fault
 
 from kobo.plugins import Plugin, PluginContainer
+from kobo.shortcuts import force_list
 
 
 __all__ = (
@@ -312,5 +314,98 @@ class Help_Admin(Command):
         self.parser.print_help(admin=True)
 
 
+class Help_RST(Command):
+    """print program usage as reStructuredText"""
+    enabled = True
+
+    def options(self):
+        pass
+
+    def run(self, *args, **kwargs):
+        prog = self.parser.get_prog_name()
+        print ".. -*- coding: utf-8 -*-"
+        print
+        print "=" * len(prog)
+        print prog
+        print "=" * len(prog)
+        print
+
+        # add subtitle (command description)
+        description = getattr(self.parser.container, "_description", None)
+        if description:
+            print ":Subtitle: %s" % description
+            print
+
+        # add copyright
+        copyright = getattr(self.parser.container, "_copyright", None)
+        if copyright:
+            print ":Copyright: %s" % copyright
+
+        # add date
+        print ":Date: $Date: %s $" % datetime.datetime.strftime(datetime.datetime.utcnow(), format="%F %X")
+        print
+
+        print "--------"
+        print "COMMANDS"
+        print "--------"
+
+        for command_name, CommandClass in sorted(self.parser.container.plugins.items()):
+            parser = optparse.OptionParser(usage=self.parser.usage)
+            cmd = CommandClass(parser)
+            cmd.normalized_name = command_name
+            cmd.options()
+            cmd.container = self.parser.container
+            cmd_opts, cmd_args = parser.parse_args()
+
+            print command_name
+            print "-" * len(command_name)
+
+            if cmd.admin:
+                print "[ADMIN ONLY]",
+
+            print cmd.__doc__.strip()
+            print
+            usage = parser.get_usage().strip().replace("Usage: ", "**Usage:** ", 1)
+            if usage:
+                print usage
+                print 
+
+            for opt in sorted(parser.option_list, lambda x, y: cmp(str(x), str(y))):
+                if "-h/--help" in str(opt):
+                    continue
+                if opt.nargs:
+                    metavar = opt.metavar or opt.dest.upper()
+                opt_list = []
+                for opt_str in opt._short_opts + opt._long_opts:
+                    if opt.nargs is not None:
+                        opt_list.append("%s=%s" % (opt_str, metavar))
+                    else:
+                        opt_list.append(opt_str)
+                print "/".join(opt_list)
+                print "  %s" % opt.help
+                if opt.action == "append":
+                    print
+                    print "  This option can be specified multiple times"
+                print
+            print
+
+        # handle :Contact: and :Author: ourselves
+        authors = force_list(getattr(self.parser.container, "_authors", []))
+        contact = getattr(self.parser.container, "_contact", None)
+        if authors or contact:
+            print "-------"
+            print "AUTHORS"
+            print "-------"
+
+            for author in sorted(authors):
+                print "- %s" % author
+            print
+
+            if contact:
+                print "**Contact:** %s" % contact
+                print
+
+
 CommandContainer.register_plugin(Help)
 CommandContainer.register_plugin(Help_Admin)
+CommandContainer.register_plugin(Help_RST)
