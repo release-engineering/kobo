@@ -268,9 +268,8 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     @return: (command return code, merged stdout+stderr)
     @rtype: (int, str) or (int, None)
     """
-
     if logfile:
-        logfile = os.path.join(workdir, logfile)
+        logfile = os.path.join(workdir or "", logfile)
 
     if type(cmd) in (list, tuple):
         import pipes

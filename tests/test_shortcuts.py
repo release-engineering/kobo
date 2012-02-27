@@ -154,6 +154,18 @@ class TestUtils(unittest.TestCase):
         ret, out = run("xargs echo", stdin_data="\n".join([str(i) for i in xrange(1000000)]), return_stdout=False)
         self.assertEqual(out, None)
 
+        # log file with absolute path
+        log_file = os.path.join(self.tmp_dir, "a.log")
+        ret, out = run("echo XXX", logfile=log_file)
+        self.assertEqual(open(log_file, "r").read(), "XXX\n")
+
+        # log file with relative path
+        log_file = "b.log"
+        cwd = os.getcwd()
+        os.chdir(self.tmp_dir)
+        ret, out = run("echo XXX", logfile=log_file)
+        self.assertEqual(open(log_file, "r").read(), "XXX\n")
+        os.chdir(cwd)
 
     def test_parse_checksum_line(self):
         line_text = "d4e64fc7f3c6849888bc456d77e511ca  shortcuts.py"
