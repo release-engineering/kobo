@@ -37,6 +37,7 @@ __all__ = (
     "read_checksum_file",
     "split_path",
     "relative_path",
+    "makedirs",
 )
 
 
@@ -457,3 +458,16 @@ def relative_path(src_path, dst_path=None):
     src_path.append(src_file)
     dst_path.append(dst_file)
     return os.path.join(*src_path)
+
+def makedirs(path, mode=0777):
+    """
+    Wrapper to os.makedirs which does not
+    throw an exception on existing directory.
+    """
+    try:
+        os.makedirs(path, mode)
+    except OSError, ex:
+        if ex.errno != 17:
+            raise
+        if not os.path.isdir(path):
+            raise
