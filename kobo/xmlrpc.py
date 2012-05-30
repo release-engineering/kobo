@@ -332,6 +332,8 @@ class SafeCookieTransport(xmlrpclib.SafeTransport, CookieTransport):
     def make_connection(self, host):
         if self.proxy:
             # Connect to proxy and send CONNECT command
+            if not ":" in host:
+                host = "%s:443" % host
             connection = CookieTransport.make_connection(self, host) # sets self.realhost
             request = "CONNECT %s HTTP/1.0\r\n\r\n" % self.realhost
             connection.send(request)
@@ -372,7 +374,10 @@ class SafeCookieTransport(xmlrpclib.SafeTransport, CookieTransport):
         request = CookieTransport._request
 
     def __init__(self, *args, **kwargs):
+        proxy_param = kwargs.get("proxy", None)
         CookieTransport.__init__(self, *args, **kwargs)
+        if not proxy_param and "https_proxy" in os.environ and os.environ["https_proxy"]:
+            self.proxy = os.environ["https_proxy"]
 
     def send_request(self, connection, handler, request_body):
         if self.realhost:
