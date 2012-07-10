@@ -38,9 +38,9 @@ def daemonize(daemon_func, daemon_pid_file=None, daemon_start_dir="/", daemon_ou
             except:
                 cmdline = None
 
-        if cmdline and cmdline.find(sys.argv[0]) >=0:
-            sys.stderr.write("A proces is still running, pid: %s\n" % pid)
-            sys.exit(1)
+            if cmdline and cmdline.find(sys.argv[0]) >= 0:
+                sys.stderr.write("A proces is still running, pid: %s\n" % pid)
+                sys.exit(1)
 
     # first fork
     try:
@@ -66,9 +66,9 @@ def daemonize(daemon_func, daemon_pid_file=None, daemon_start_dir="/", daemon_ou
         if pid > 0:
             # write pid to pid_file
             if daemon_pid_file is not None:
-                f = open(daemon_pid_file, "w")
-                f.write("%s" % pid)
-                f.close()
+                fd = os.open(daemon_pid_file, os.O_WRONLY | os.O_CREAT, 0644)
+                os.write(fd, "%s" % pid)
+                os.close(fd)
             # exit from second parent
             sys.exit(0)
     except OSError, ex:
