@@ -239,8 +239,19 @@ def task_log(request, id, log_name):
         response['Content-Disposition'] = 'attachment; filename=%s' % os.path.basename(log_name)
         return response
 
-    if not log_name.endswith(".log"):
-        return HttpResponseForbidden("Can display only logs.")
+    if log_name.endswith(".html") or log_name.endswith(".htm"):
+        # use _stream_file() instad of passing file object in order to improve performance
+        response = HttpResponse(_stream_file(file_path, offset), mimetype=mimetype)
+        response["Content-Length"] = content_len
+        return response
+
+    exts = getattr(settings, "VALID_TASK_LOG_EXTENSIONS", [".log"])
+    found = False
+    for ext in exts:
+        if log_name.endswith(ext):
+            found = True
+    if not found:
+        return HttpResponseForbidden("Can display only specific file types: %s" % ", ".join(exts))
 
     content = task.logs[log_name][offset:]
     content = content.decode("utf-8", "replace")

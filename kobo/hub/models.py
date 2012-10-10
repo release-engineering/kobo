@@ -4,6 +4,7 @@ import os
 import sys
 import datetime
 import gzip
+import shutil
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -11,6 +12,8 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models, connection, transaction
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
+from django.db.models.signals import post_delete
+from django.dispatch.dispatcher import receiver
 
 import kobo.django.fields
 from kobo.client.constants import *
@@ -877,3 +880,15 @@ WHERE
                 unfinished.append(task.id)
 
         return [finished, unfinished]
+
+@receiver(post_delete, sender=Task)
+def _task_delete(sender, instance, **kwargs):
+    """
+    When Task object is deleted, appropriate task_dir is deleted also. This is
+    done by catching post_delete signal
+    """
+    task_dir = Task.get_task_dir(instance.id)    
+    try:
+        shutil.rmtree(task_dir)
+    except OSError:
+        pass
