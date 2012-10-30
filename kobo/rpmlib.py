@@ -4,9 +4,13 @@
 # Some code comes from koji: https://fedorahosted.org/koji/
 
 
+from itertools import izip
+import datetime
+import time
+import email.utils
+
 import koji
 import rpm
-from kobo.shortcuts import hex_string
 
 
 __all__ = (
@@ -21,6 +25,7 @@ __all__ = (
     "parse_evr",
     "get_keys_from_header",
     "get_digest_algo_from_header",
+    "get_changelogs_from_header",
 )
 
 
@@ -395,4 +400,73 @@ def get_file_list_from_header(hdr):
     for file_obj in fi:
         name = file_obj[0]
         result[name] = (fi.FColor(), fi.MD5())
+    return result
+
+
+class ChangelogEntry(object):
+    def __init__(self, ch_name, ch_time, ch_text):
+        self.name = ch_name
+        self.time = ch_time
+        self.text = ch_text
+
+    def __str__(self):
+        return "* %s %s\n%s" % (self.ctime, self.name, self.text)
+
+    def format_time(self, fmt):
+        return time.strftime(fmt, time.gmtime(self.time))
+
+    @property
+    def ctime(self):
+        return self.format_time("%a %b %d %Y")
+
+    @property
+    def iso_date(self):
+        return self.format_time("%F")
+
+    @property
+    def author(self):
+        return email.utils.parseaddr(self.name)[0]
+
+    @property
+    def email(self):
+        return email.utils.parseaddr(self.name)[1]
+
+
+def get_changelogs_from_header(hdr, max_records=None, newer_than=None):
+    """Read changelogs from a rpm header.
+
+    @param hdr: rpm header
+    @type hdr: rpm.hdr
+    @param max_records: limit output to max_records
+    @type max_records: int
+    @param newer_than: return records newer than YYYY-MM-DD
+    @type newer_than: str
+    @return: [ChangelogEntry()]
+    @rtype: list
+    """
+
+    if max_records < 0:
+        max_records = None
+    if max_records == 0:
+        return []
+
+    names = get_header_field(hdr, "CHANGELOGNAME")
+    times = get_header_field(hdr, "CHANGELOGTIME")
+    texts = get_header_field(hdr, "CHANGELOGTEXT")
+
+    if isinstance(newer_than, (float, int)):
+        newer_than = int(newer_than)
+    elif isinstance(newer_than, str):
+        newer_than = int(datetime.datetime(*(time.strptime(newer_than, "%Y-%m-%d")[0:6])).strftime("%s"))
+    elif isinstance(newer_than, datetime.datetime):
+        newer_than = int(newer_than.strftime("%s"))
+
+    result = []
+    for num, (ch_name, ch_time, ch_text) in enumerate(izip(names, times, texts)):
+        if max_records is not None and num >= max_records:
+            break
+        if newer_than is not None and ch_time < newer_than:
+            break
+        log = ChangelogEntry(ch_name, ch_time, ch_text)
+        result.append(log)
     return result

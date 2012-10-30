@@ -107,6 +107,10 @@ class RpmWrapper(FileWrapper):
     def nvra(self):
         return "%s-%s-%s.%s" % (self.name, self.version, self.release, self.arch)
 
+    @property
+    def changelogs(self):
+        return kobo.rpmlib.get_changelogs_from_header(self.header)
+
 
 class FileCache(object):
     __slots__ = (
