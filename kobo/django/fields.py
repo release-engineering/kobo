@@ -143,6 +143,13 @@ class JSONField(models.TextField):
             return None
         return django.utils.simplejson.dumps(value)
 
+    def value_to_string(self, obj):
+        value = self._get_val_from_obj(obj)
+        try:
+            return django.utils.simplejson.dumps(value)
+        except Exception, ex:
+            raise exceptions.ValidationError(_("Cannot serialize JSON data."))
+
     def formfield(self, form_class=kobo.django.forms.JSONFormField, **kwargs):
         kwargs["form_class"] = form_class
         return super(JSONField, self).formfield(**kwargs)
