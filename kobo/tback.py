@@ -96,17 +96,19 @@ class Traceback(object):
             result = "<ERROR WHILE CONVERTING VALUE TO STRING>"
         return result
 
-
     def get_traceback(self):
         """Return a traceback string."""
         if self.exc_info[0] is None:
             return ""
-
         result = []
 
         if self.show_traceback:
+            # substitue all '\\n' '\n' strings for line breaks
+            # \n = line break, \\\\n = r'\n', \\\\\\\\n = r'\\n'
+            c_pattern = re.compile('\\\\\\\\n|\\\\n|\n')
             for i in traceback.format_exception(*self.exc_info):
-                for line in i.split("\n"):
+                i = i.replace(r"\'", "'")
+                for line in c_pattern.split(i):
                     line and result.append(line)
 
         if self.show_environ:
@@ -158,7 +160,14 @@ class Traceback(object):
                     for key, value in sorted(frame["vars"]):
                         result.append("%20s = %s" % (self._to_str(key), self._to_str(value)))
                         if key == "self":
-                            for obj_key in sorted(dir(value)):
+                            try:
+                                variables = sorted(dir(value))
+                            except Exception, ex:
+                                # this exception may be thrown on xmlrpc proxy object
+                                # e.g. <ServerProxy>.__dir__ will be handled as xmlrpc call,
+                                # expected behaviour is that the call returns list of strings for the scope
+                                variables = []
+                            for obj_key in variables:
                                 try:
                                     obj_value = getattr(value, obj_key)
                                 except:
@@ -168,16 +177,25 @@ class Traceback(object):
                                     continue
                                 if callable(obj_value):
                                     continue
-                                result.append("%20s = %s" % ("self." + self._to_str(obj_key), self._to_str(obj_value)))
+                                obj_value_str = self._to_str(obj_value)
+                                # make output more nicer, get rid of u''
+                                obj_value_str = re.sub(" {0,1}u'(.*?)', ",r'\1', obj_value_str)
+                                obj_value_str = re.sub('u"(.*?)",', r'\1', obj_value_str)
+                                obj_value_str = re.sub(r"\\\\n|\\n", '\n', obj_value_str)
+                                obj_value_str = re.sub(r"\\'", "'", obj_value_str)
+                                result.append("%20s = %s" % ("self." + self._to_str(obj_key), obj_value_str))
                     result.append("</LOCALS>")
-
         s = u''
+
         for i in result:
+            line = i.replace(r'\\n', '\n').replace(r'\n', '\n')
+
             if type(i) == unicode:
                 s += i
             else:
                 s += unicode(str(i), errors='replace')
             s += '\n'
+
         return s.encode('ascii', 'replace')
 
 
