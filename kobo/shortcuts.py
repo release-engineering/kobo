@@ -249,7 +249,7 @@ def find_symlinks_to(target, directory):
     return result
 
 
-def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir=None, stdin_data=None, return_stdout=True):
+def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir=None, stdin_data=None, return_stdout=True, buffer_size=4096):
     """Run a command in shell.
 
     @param show_cmd: show command in stdout/log
@@ -264,6 +264,8 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     @type workdir: str
     @param stdin_data: stdin data passed to a command
     @type stdin_data: str
+    @param buffer_size: size of buffer for reading from proc's stdout
+    @type buffer_size: int
     @return_stdout: return command stdout as a function result (turn off when working with large data, None is returned instead of stdout)
     @return_stdout: bool
     @return: (command return code, merged stdout+stderr)
@@ -300,7 +302,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
 
     output = ""
     while True:
-        lines = proc.stdout.read(4096)
+        lines = proc.stdout.read(buffer_size)
         if lines == "":
             break
         if stdout:
