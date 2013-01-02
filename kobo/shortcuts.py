@@ -264,7 +264,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     @type workdir: str
     @param stdin_data: stdin data passed to a command
     @type stdin_data: str
-    @param buffer_size: size of buffer for reading from proc's stdout
+    @param buffer_size: size of buffer for reading from proc's stdout, use -1 for line-buffering
     @type buffer_size: int
     @return_stdout: return command stdout as a function result (turn off when working with large data, None is returned instead of stdout)
     @return_stdout: bool
@@ -302,7 +302,10 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
 
     output = ""
     while True:
-        lines = proc.stdout.read(buffer_size)
+        if buffer_size == -1:
+            lines = proc.stdout.readline()
+        else:
+            lines = proc.stdout.read(buffer_size)
         if lines == "":
             break
         if stdout:
