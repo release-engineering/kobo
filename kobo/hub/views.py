@@ -144,7 +144,7 @@ def arch_detail(request, id):
     return object_detail(request, **args)
 
 
-def task_list(request, state, title="Tasks"):
+def task_list(request, state, title="Tasks", order_by=None):
     search_form = TaskSearchForm(request.GET)
 
     if state is None:
@@ -152,8 +152,10 @@ def task_list(request, state, title="Tasks"):
     else:
         state_q = Q(state__in=state)
 
+    order_by = order_by or ["-id"]
+
     args = {
-        "queryset": Task.objects.filter(state_q, parent__isnull=True).filter(search_form.get_query(request)).order_by("-dt_finished", "id").defer("result", "args").select_related("owner", "worker"),
+        "queryset": Task.objects.filter(state_q, parent__isnull=True).filter(search_form.get_query(request)).order_by(*order_by).defer("result", "args").select_related("owner", "worker"),
         "allow_empty": True,
         "paginate_by": 50,
         "template_name": "task/list.html",
