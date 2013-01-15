@@ -14,6 +14,7 @@ import threading
 import time
 import urllib2
 import xmlrpclib
+import urlparse
 
 import kobo.shortcuts
 
@@ -43,12 +44,66 @@ class TimeoutHTTPConnection(httplib.HTTPConnection):
         if timeout:
             self.sock.settimeout(timeout)
 
+class TimeoutHTTPProxyConnection(TimeoutHTTPConnection):
+    default_port = httplib.HTTPConnection.default_port
+
+    def __init__(self, host, proxy, port=None, proxy_user=None, proxy_password=None, **kwargs):
+        TimeoutHTTPConnection.__init__(self, proxy, **kwargs)
+        self.proxy, self.proxy_port = self.host, self.port
+        self._set_hostport(host, port)
+        self.real_host, self.real_port = self.host, self.port
+        self.proxy_user = proxy_user
+        self.proxy_password = proxy_password
+
+    def connect(self):
+        # Connect to the proxy
+        self._set_hostport(self.proxy, self.proxy_port)
+        httplib.HTTPConnection.connect(self)
+        self._set_hostport(self.real_host, self.real_port)
+        timeout = getattr(self, "_timeout", 0)
+        if timeout:
+            self.sock.settimeout(timeout)
+
+    def putrequest(self, method, url, skip_host=0, skip_accept_encoding=0):
+        host = self.real_host
+        if self.default_port != self.real_port:
+            host = host + ':' + str(self.real_port)
+        url = "http://%s%s" % (host, url)
+        httplib.HTTPConnection.putrequest(self, method, url)
+        self._add_auth_proxy_header()
+
+    def _add_auth_proxy_header(self):
+        if not self.proxy_user:
+            return
+        userpass = "%s:%s" % (self.proxy_user, self.proxy_password)
+        enc_userpass = base64.encodestring(userpass).strip()
+        self.putheader("Proxy-Authorization", "Basic %s" % enc_userpass)
+
 
 class TimeoutHTTP(httplib.HTTP):
-   _connection_class = TimeoutHTTPConnection
+    _connection_class = TimeoutHTTPConnection
 
-   def set_timeout(self, timeout):
-       self._conn._timeout = timeout
+    def set_timeout(self, timeout):
+        self._conn._timeout = timeout
+
+
+class TimeoutProxyHTTP(TimeoutHTTP):
+    _connection_class = TimeoutHTTPProxyConnection
+
+    def __init__(self, host='', proxy='',  port=None, strict=None,
+                 proxy_user=None, proxy_password=None):
+        if port == 0:
+            port = None
+        self._setup(self._connection_class(host, proxy, port=port,
+                    strict=strict,
+                    proxy_user=proxy_user,
+                    proxy_password=proxy_password))
+
+    def _setup(self, conn):
+        httplib.HTTP._setup(self, conn)
+        # XXX: Hack for python >= 2.7 where a _single_request method is used
+        # and the method needs a connection object with .getresponse() method
+        self.getresponse = conn.getresponse
 
 
 class TimeoutHTTPSConnection(httplib.HTTPSConnection):
@@ -59,11 +114,69 @@ class TimeoutHTTPSConnection(httplib.HTTPSConnection):
             self.sock.settimeout(timeout)
 
 
-class TimeoutHTTPS(httplib.HTTPS):
-   _connection_class = TimeoutHTTPSConnection
+class TimeoutHTTPSProxyConnection(TimeoutHTTPProxyConnection):
+    default_port = httplib.HTTPSConnection.default_port
 
-   def set_timeout(self, timeout):
-       self._conn._timeout = timeout
+    def __init__(self, host, proxy, port=None, proxy_user=None,
+                 proxy_password=None, cert_file=None, key_file=None, **kwargs):
+        TimeoutHTTPProxyConnection.__init__(self, host, proxy, port,
+            proxy_user, proxy_password, **kwargs)
+        self.cert_file = cert_file
+        self.key_file = key_file
+        self.connect()
+
+    def connect(self):
+        TimeoutHTTPProxyConnection.connect(self)
+        host = "%s:%s" % (self.real_host, self.real_port)
+        TimeoutHTTPConnection.putrequest(self, "CONNECT", host)
+        self._add_auth_proxy_header()
+        TimeoutHTTPConnection.endheaders(self)
+
+        class MyHTTPSResponse(httplib.HTTPResponse):
+            def begin(self):
+                httplib.HTTPResponse.begin(self)
+                self.will_close = 0
+
+        response_class = self.response_class
+        self.response_class = MyHTTPSResponse
+        response = httplib.HTTPConnection.getresponse(self)
+        self.response_class = response_class
+        response.close()
+        if response.status != 200:
+            self.close()
+            raise socket.error(1001, response.status, response.msg)
+
+        self.sock = ssl.wrap_socket(self.sock, keyfile=self.key_file, certfile=self.cert_file)
+
+    def putrequest(self, method, url, skip_host=0, skip_accept_encoding=0):
+        return TimeoutHTTPConnection.putrequest(self, method, url)
+
+
+class TimeoutHTTPS(httplib.HTTPS):
+    _connection_class = TimeoutHTTPSConnection
+
+    def set_timeout(self, timeout):
+        self._conn._timeout = timeout
+
+
+class TimeoutProxyHTTPS(TimeoutHTTPS):
+    _connection_class = TimeoutHTTPSProxyConnection
+
+    def __init__(self, host='', proxy='',  port=None, strict=None,
+                 proxy_user=None, proxy_password=None, cert_file=None,
+                 key_file=None):
+        if port == 0:
+            port = None
+        self._setup(self._connection_class(host, proxy, port=port,
+                    strict=strict, proxy_user=proxy_user,
+                    proxy_password=proxy_password, cert_file=cert_file,
+                    key_file=key_file))
+
+    def _setup(self, conn):
+        httplib.HTTP._setup(self, conn)
+        # XXX: Hack for python >= 2.7 where a _single_request method is used
+        # and the method needs a connection object with .getresponse() method
+        self.getresponse = conn.getresponse
 
 
 class CookieResponse(object):
@@ -98,11 +211,8 @@ class CookieTransport(xmlrpclib.Transport):
     def __init__(self, *args, **kwargs):
         cookiejar = kwargs.pop("cookiejar", None)
         self.timeout = kwargs.pop("timeout", 0)
-
-        self.proxy = kwargs.pop("proxy", None)
-        if self.proxy is None:
-            self.proxy = os.environ.get("http_proxy", None)
-        self.realhost = None
+        self.proxy_config = self._get_proxy(**kwargs)
+        self.no_proxy = os.environ.get("no_proxy", "").lower().split(',')
 
         if hasattr(xmlrpclib.Transport, "__init__"):
             xmlrpclib.Transport.__init__(self, *args, **kwargs)
@@ -115,10 +225,77 @@ class CookieTransport(xmlrpclib.Transport):
                     self.cookiejar.save(self.cookiejar.filename)
             self.cookiejar.load(self.cookiejar.filename)
 
+    def _get_proxy(self, **kwargs):
+        """Return dict with appropriate proxy settings"""
+        proxy = None
+        proxy_user = None
+        proxy_password = None
+
+        if kwargs.get("proxy", None):
+            # Use proxy from __init__ params
+            proxy = kwargs["proxy"]
+            if kwargs.get("proxy_user", None):
+                proxy_user = kwargs["proxy_user"]
+                if kwargs.get("proxy_password", None):
+                    proxy_password = kwargs["proxy_user"]
+        else:
+            # Try to get proxy settings from environmental vars
+            if self.scheme == "http" and os.environ.get("http_proxy", None):
+                proxy = os.environ["http_proxy"]
+            elif self.scheme == "https" and os.environ.get("https_proxy", None):
+                proxy = os.environ["https_proxy"]
+
+        if proxy:
+            # Parse proxy address
+            # e.g. http://user:password@proxy.company.com:8001/foo/bar
+
+            # Get raw location without path
+            location = urlparse.urlparse(proxy)[1]
+            if not location:
+                # proxy probably doesn't have a protocol in prefix
+                location = urlparse.urlparse("http://%s" % proxy)[1]
+
+            # Parse out username and password if present
+            if '@' in location:
+                userpas, location = location.split('@', 1)
+                if userpas and location and not proxy_user:
+                    # Set proxy user only if proxy_user is not set yet
+                    proxy_user = userpas
+                    if ':' in userpas:
+                        proxy_user, proxy_password = userpas.split(':', 1)
+
+            proxy = location
+
+        proxy_settings = {
+            "proxy": proxy,
+            "proxy_user": proxy_user,
+            "proxy_password": proxy_password,
+        }
+
+        return proxy_settings
+
     def make_connection(self, host):
-        if self.proxy:
-            self.realhost = host
-            host = self.proxy
+        host.lower()
+        host_ = host  # Host with(out) port
+        if ':' in host:
+            # Remove port from the host
+            host_ = host.split(':')[0]
+        else:
+            host_ = "%s:%s" % (host, TimeoutHTTPProxyConnection.default_port)
+
+        if self.proxy_config["proxy"] and host not in self.no_proxy and host_ not in self.no_proxy:
+            if sys.version_info[:2] < (2, 7):
+                host, extra_headers, x509 = self.get_host_info(host)
+                conn = TimeoutProxyHTTP(host, **self.proxy_config)
+                conn.set_timeout(self.timeout)
+                return conn
+            else:
+                CONNECTION_LOCK.acquire()
+                host, extra_headers, x509 = self.get_host_info(host)
+                conn = TimeoutProxyHTTPS(host, **self.proxy_config)
+                conn.set_timeout(self.timeout)
+                CONNECTION_LOCK.release()
+                return conn
 
         if sys.version_info[:2] < (2, 7):
             host, extra_headers, x509 = self.get_host_info(host)
@@ -135,13 +312,9 @@ class CookieTransport(xmlrpclib.Transport):
             return conn
 
     def send_request(self, connection, handler, request_body):
-        if self.realhost:
-            handler = "%s://%s%s" % (self.scheme, self.realhost, handler) 
         return xmlrpclib.Transport.send_request(self, connection, handler, request_body)
 
     def send_host(self, connection, host):
-        if self.realhost:
-            host = self.realhost
         return xmlrpclib.Transport.send_host(self, connection, host)
 
     def send_cookies(self, connection, cookie_request):
@@ -330,29 +503,27 @@ class SafeCookieTransport(xmlrpclib.SafeTransport, CookieTransport):
     scheme = "https"
 
     def make_connection(self, host):
-        if self.proxy:
-            # Connect to proxy and send CONNECT command
-            if not ":" in host:
-                host = "%s:443" % host
-            connection = CookieTransport.make_connection(self, host) # sets self.realhost
-            request = "CONNECT %s HTTP/1.0\r\n\r\n" % self.realhost
-            connection.send(request)
+        host.lower()
+        host_ = host  # Host with(out) port
+        if ':' in host:
+            # Remove port from the host
+            host_ = host.split(':')[0]
+        else:
+            host_ = "%s:%s" % (host, TimeoutHTTPSProxyConnection.default_port)
 
-            # Get proxy response
-            response = connection.response_class(connection.sock, strict=connection.strict, method=connection._method)
-            version, code, message = response._read_status()
-
-            if code != 200:
-                self.close()
-                raise socket.error("Tunnel connection failed: %d %s" % (code, message.strip()))
-
-            while True:
-                line = response.fp.readline()
-                if line == '\r\n': 
-                    break
-
-            connection.sock = ssl.wrap_socket(connection.sock, None, None)
-            return connection
+        if self.proxy_config["proxy"] and host not in self.no_proxy and host_ not in self.no_proxy:
+            if sys.version_info[:2] < (2, 7):
+                host, extra_headers, x509 = self.get_host_info(host)
+                conn = TimeoutProxyHTTPS(host, **self.proxy_config)
+                conn.set_timeout(self.timeout)
+                return conn
+            else:
+                CONNECTION_LOCK.acquire()
+                host, extra_headers, x509 = self.get_host_info(host)
+                conn = TimeoutProxyHTTPS(host, **self.proxy_config)
+                conn.set_timeout(self.timeout)
+                CONNECTION_LOCK.release()
+                return conn
 
         if sys.version_info[:2] < (2, 7):
             host, extra_headers, x509 = self.get_host_info(host)
@@ -374,19 +545,12 @@ class SafeCookieTransport(xmlrpclib.SafeTransport, CookieTransport):
         request = CookieTransport._request
 
     def __init__(self, *args, **kwargs):
-        proxy_param = kwargs.get("proxy", None)
         CookieTransport.__init__(self, *args, **kwargs)
-        if not proxy_param and "https_proxy" in os.environ and os.environ["https_proxy"]:
-            self.proxy = os.environ["https_proxy"]
 
     def send_request(self, connection, handler, request_body):
-        if self.realhost:
-            handler = "%s://%s%s" % (self.scheme, self.realhost, handler) 
         return xmlrpclib.SafeTransport.send_request(self, connection, handler, request_body)
 
     def send_host(self, connection, host):
-        if self.realhost:
-            host = self.realhost
         return xmlrpclib.SafeTransport.send_host(self, connection, host)
 
 
