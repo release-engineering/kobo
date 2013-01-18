@@ -13,7 +13,6 @@ from django.db import models, connection, transaction
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_delete
-from django.dispatch.dispatcher import receiver
 
 import kobo.django.fields
 from kobo.client.constants import *
@@ -881,7 +880,6 @@ WHERE
 
         return [finished, unfinished]
 
-@receiver(post_delete, sender=Task)
 def _task_delete(sender, instance, **kwargs):
     """
     When Task object is deleted, appropriate task_dir is deleted also. This is
@@ -892,3 +890,5 @@ def _task_delete(sender, instance, **kwargs):
         shutil.rmtree(task_dir)
     except OSError:
         pass
+
+post_delete.connect(_task_delete, sender=Task)
