@@ -7,7 +7,10 @@
 from itertools import izip
 import datetime
 import time
-import email.utils
+try:
+    import email.utils as email_utils
+except ImportError:
+    import email.Utils as email_utils
 
 import koji
 import rpm
@@ -425,11 +428,11 @@ class ChangelogEntry(object):
 
     @property
     def author(self):
-        return email.utils.parseaddr(self.name)[0]
+        return email_utils.parseaddr(self.name)[0]
 
     @property
     def email(self):
-        return email.utils.parseaddr(self.name)[1]
+        return email_utils.parseaddr(self.name)[1]
 
 
 def get_changelogs_from_header(hdr, max_records=None, newer_than=None):
