@@ -19,6 +19,7 @@ class TaskSearchForm(forms.Form):
         if search:
             query |= Q(method__icontains=search)
             query |= Q(owner__username__icontains=search)
+            query |= Q(label__icontains=search)
 
         if my and request.user.is_authenticated():
             query &= Q(owner=request.user)
