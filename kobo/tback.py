@@ -158,7 +158,7 @@ class Traceback(object):
                 if self.show_locals:
                     result.append("<LOCALS>")
                     for key, value in sorted(frame["vars"]):
-                        result.append("%20s = %s" % (self._to_str(key), self._to_str(value)))
+                        result.append("%20s = %s" % (self._to_str(key), self._to_str(value, "%.200r")))
                         if key == "self":
                             try:
                                 variables = sorted(dir(value))
@@ -177,7 +177,7 @@ class Traceback(object):
                                     continue
                                 if callable(obj_value):
                                     continue
-                                obj_value_str = self._to_str(obj_value)
+                                obj_value_str = self._to_str(obj_value, "%.200r")
                                 # make output more nicer, get rid of u''
                                 obj_value_str = re.sub(" {0,1}u'(.*?)', ",r'\1', obj_value_str)
                                 obj_value_str = re.sub('u"(.*?)",', r'\1', obj_value_str)
