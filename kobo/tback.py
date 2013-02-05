@@ -103,11 +103,8 @@ class Traceback(object):
         result = []
 
         if self.show_traceback:
-            # substitue all '\\n' '\n' strings for line breaks
-            # \n = line break, \\\\n = r'\n', \\\\\\\\n = r'\\n'
-            c_pattern = re.compile('\\\\\\\\n|\\\\n|\n')
+            c_pattern = re.compile('\n')
             for i in traceback.format_exception(*self.exc_info):
-                i = i.replace(r"\'", "'")
                 for line in c_pattern.split(i):
                     line and result.append(line)
 
@@ -178,11 +175,6 @@ class Traceback(object):
                                 if callable(obj_value):
                                     continue
                                 obj_value_str = self._to_str(obj_value, "%.200r")
-                                # make output more nicer, get rid of u''
-                                obj_value_str = re.sub(" {0,1}u'(.*?)', ",r'\1', obj_value_str)
-                                obj_value_str = re.sub('u"(.*?)",', r'\1', obj_value_str)
-                                obj_value_str = re.sub(r"\\\\n|\\n", '\n', obj_value_str)
-                                obj_value_str = re.sub(r"\\'", "'", obj_value_str)
                                 result.append("%20s = %s" % ("self." + self._to_str(obj_key), obj_value_str))
                     result.append("</LOCALS>")
         s = u''

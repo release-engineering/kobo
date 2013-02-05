@@ -359,3 +359,16 @@ class HubProxy(object):
                     # skip finializing chunk
                     break
             self._hub.worker.upload_task_log(task_id, remote_file_name, mode, chunk_start, chunk_len, chunk_checksum, encoded_chunk)
+
+
+from xmlrpclib import Fault
+
+
+# default implementation of Fault.__repr__ is:
+#    "<Fault %s: %s>" % (self.faultCode, repr(self.faultString))
+# repr of string does not escape newlines ('\n') and produces very ugly output
+# so using direct string is much nicer for users
+def fault_repr(self):
+    return "<Fault %s: %s>" % (self.faultCode, str(self.faultString))
+
+Fault.__repr__ = fault_repr
