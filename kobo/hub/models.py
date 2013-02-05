@@ -722,7 +722,7 @@ WHERE
         result = True
         for task in self.subtasks():
             try:
-                result &= task.cancel()
+                result &= task.cancel_task()
             except (MultipleObjectsReturned, ObjectDoesNotExist):
                 result = False
         return result
