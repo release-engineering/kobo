@@ -2,6 +2,7 @@
 
 
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ObjectDoesNotExist
 
 import kobo.hub.models as models
 from kobo.django.xmlrpc.decorators import admin_required, login_required
@@ -50,7 +51,10 @@ def get_tasks(request, task_id_list):
 
 @login_required
 def cancel_task(request, task_id):
-    task = models.Task.objects.get(id=task_id)
+    try:
+        task = models.Task.objects.get(id=task_id)
+    except ObjectDoesNotExist:
+        return "Specified task %s does not exist." % task_id
     return task.cancel_task(user=request.user)
 
 

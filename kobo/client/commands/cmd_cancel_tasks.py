@@ -28,7 +28,9 @@ class Cancel_Tasks(ClientCommand):
         failed = False
         for task_id in tasks:
             try:
-                self.hub.client.cancel_task(task_id)
+                result = self.hub.client.cancel_task(task_id)
+                if result and isinstance(result, basestring):
+                    print result
             except Exception, ex:
                 failed = True
                 print ex
