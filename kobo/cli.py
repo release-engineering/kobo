@@ -275,18 +275,11 @@ class CommandOptionParser(optparse.OptionParser):
         cmd_opts, cmd_args = optparse.OptionParser.parse_args(self, args, values)
         return (cmd, cmd_opts, cmd_args)
 
-
     def run(self, args=None, values=None):
         """parse arguments and run a command"""
         cmd, cmd_opts, cmd_args = self.parse_args(args, values)
         cmd_kwargs = cmd_opts.__dict__
-        try:
-            cmd.run(*cmd_args, **cmd_kwargs)
-        except Fault, ex:
-            print "Exception: %s" % ex.faultString
-        except Exception, ex:
-            raise
-            print "Exception: %s" % ex
+        cmd.run(*cmd_args, **cmd_kwargs)
 
 
 class Help(Command):
