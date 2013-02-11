@@ -10,6 +10,7 @@ from kobo.shortcuts import compute_file_checksums, force_list
 __all__ = (
     "FileWrapper",
     "RpmWrapper",
+    "SimpleRpmWrapper",
     "FileCache",
 )
 
@@ -31,6 +32,29 @@ class FileWrapper(object):
 
     def __str__(self):
         return self.file_path
+
+    def __getstate__(self):
+        result = {}
+        all_slots = set()
+        for cls in type(self).__mro__:
+            all_slots.update(getattr(cls, "__slots__", []))
+
+        try:
+            # dict is a special case
+            all_slots.remove("__dict__")
+            result.update(self.__dict__)
+        except KeyError:
+            pass
+
+        # get data from all slots
+        for slot in all_slots:
+            result[slot] = getattr(self, slot)
+
+        return result
+
+    def __setstate__(self, value_dict):
+        for key, value in value_dict.iteritems():
+            setattr(self, key, value)
 
     @property
     def file_name(self):
@@ -69,7 +93,6 @@ class FileWrapper(object):
 class RpmWrapper(FileWrapper):
     __slots__ = (
         "header",
-        "signature",
     )
 
     def __init__(self, file_path, **kwargs):
@@ -108,8 +131,88 @@ class RpmWrapper(FileWrapper):
         return "%s-%s-%s.%s" % (self.name, self.version, self.release, self.arch)
 
     @property
+    def nevra(self):
+        epoch = self.epoch
+        if epoch is None:
+            epoch = 0
+        return "%s-%s:%s-%s.%s" % (self.name, epoch, self.version, self.release, self.arch)
+
+    @property
     def changelogs(self):
         return kobo.rpmlib.get_changelogs_from_header(self.header)
+
+    @property
+    def is_source(self):
+        return bool(self.sourcepackage)
+
+    @property
+    def is_system_release(self):
+        return "system-release" in self.providename
+
+
+class SimpleRpmWrapper(FileWrapper):
+    """
+    SimpleRpmWrapper extracts only certain RPM fields instead of
+    keeping the whole RPM header in memory.
+    """
+    __slots__ = (
+        "name",
+        "version",
+        "release",
+        "epoch",
+        "arch",
+        "signature",
+        "excludearch",
+        "exclusivearch",
+        "sourcerpm",
+        "is_source",
+        "is_system_release",
+    )
+
+    def __init__(self, file_path, **kwargs):
+        FileWrapper.__init__(self, file_path)
+
+        ts = kwargs.pop("ts", None)
+        header = kobo.rpmlib.get_rpm_header(file_path, ts=ts)
+
+        self.name = kobo.rpmlib.get_header_field(header, "name")
+        self.version = kobo.rpmlib.get_header_field(header, "version")
+        self.release = kobo.rpmlib.get_header_field(header, "release")
+        self.epoch = kobo.rpmlib.get_header_field(header, "epoch")
+        self.arch = kobo.rpmlib.get_header_field(header, "arch")
+        self.signature = kobo.rpmlib.get_keys_from_header(header)
+        if self.signature is not None:
+            self.signature = self.signature.upper()
+        self.excludearch = kobo.rpmlib.get_header_field(header, "excludearch")
+        self.exclusivearch = kobo.rpmlib.get_header_field(header, "exclusivearch")
+        self.sourcerpm = kobo.rpmlib.get_header_field(header, "sourcerpm")
+        self.is_source = bool(kobo.rpmlib.get_header_field(header, "sourcepackage"))
+        self.is_system_release = "system-release" in kobo.rpmlib.get_header_field(header, "providename")
+
+    def __str__(self):
+        return "%s-%s-%s.%s.rpm" % (self.name, self.version, self.release, self.arch)
+
+    def __repr__(self):
+        return str(self)
+
+    @property
+    def vr(self):
+        return "%s-%s" % (self.version, self.release)
+
+    @property
+    def nvr(self):
+        return "%s-%s-%s" % (self.name, self.version, self.release)
+
+    @property
+    def nvra(self):
+        return "%s-%s-%s.%s" % (self.name, self.version, self.release, self.arch)
+
+    @property
+    def nevra(self):
+        epoch = self.epoch
+        if epoch is None:
+            epoch = 0
+        return "%s-%s:%s-%s.%s" % (self.name, epoch, self.version, self.release, self.arch)
 
 
 class FileCache(object):

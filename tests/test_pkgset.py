@@ -5,10 +5,11 @@
 import unittest
 import run_tests # set sys.path
 
+import os
 import tempfile
-import os.path
 import shutil
 import hashlib
+import cPickle as pickle
 
 from kobo.pkgset import *
 
@@ -16,30 +17,84 @@ from kobo.pkgset import *
 class TestFileWrapperClass(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
+        self.file_path = os.path.join(self.tmp_dir, "file")
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
 
     def test_file_name_property(self):
-        name = "file"
-        file1 = os.path.join(self.tmp_dir, name)
-        open(file1, "w").write("hello\n")
-        wrap = FileWrapper(file1)
-        self.assertEqual(wrap.file_name, name)
+        open(self.file_path, "w").write("hello\n")
+        wrap = FileWrapper(self.file_path)
+        self.assertEqual(wrap.file_path, self.file_path)
+        self.assertEqual(wrap.file_name, os.path.basename(self.file_path))
 
     def test_compute_checksums(self):
-        file1 = os.path.join(self.tmp_dir, "file")
-        open(file1, "w").write("hello\n")
+        open(self.file_path, "w").write("hello\n")
 
         res_origin = {}
         for name in ("md5", "sha1", "sha256", "sha512"):
             m = hashlib.new(name)
-            m.update(open(file1, "rb").read())
+            m.update(open(self.file_path, "rb").read())
             res_origin[name] = m.hexdigest()
 
-        wrap = FileWrapper(file1)
+        wrap = FileWrapper(self.file_path)
         res = wrap.compute_checksums(["md5", "sha1", "sha256", "sha512"])
         self.assertEqual(res_origin, res)
+
+    def test_pickle(self):
+        self.test_file_name_property()
+        name = "file"
+        file1 = os.path.join(self.tmp_dir, name)
+        wrap = FileWrapper(file1)
+        pickled_data = pickle.dumps(wrap)
+        wrap2 = pickle.loads(pickled_data)
+        print wrap2.file_path
+
+
+class TestRpmWrapperClass(unittest.TestCase):
+    def setUp(self):
+        self.file_path = "data/dummy-basesystem-10.0-6.noarch.rpm"
+        self.source_path = "data/dummy-basesystem-10.0-6.src.rpm"
+
+    def test_is_source(self):
+        wrap = RpmWrapper(self.file_path)
+        self.assertEqual(wrap.sourcepackage, None)
+        self.assertEqual(wrap.is_source, False)
+        wrap = RpmWrapper(self.source_path)
+        self.assertEqual(wrap.sourcepackage, True)
+        self.assertEqual(wrap.is_source, True)
+
+    def test_is_system_release(self):
+        wrap = RpmWrapper(self.file_path)
+        self.assertEqual(wrap.is_system_release, False)
+
+    def test_pickle(self):
+        wrap = RpmWrapper(self.file_path)
+        pickled_data = pickle.dumps(wrap)
+        wrap2 = pickle.loads(pickled_data)
+        self.assertEqual(wrap.name, wrap2.name)
+
+
+class TestSimpleRpmWrapperClass(unittest.TestCase):
+    def setUp(self):
+        self.file_path = "data/dummy-basesystem-10.0-6.noarch.rpm"
+        self.source_path = "data/dummy-basesystem-10.0-6.src.rpm"
+
+    def test_is_source(self):
+        wrap = SimpleRpmWrapper(self.file_path)
+        self.assertEqual(wrap.is_source, False)
+        wrap = SimpleRpmWrapper(self.source_path)
+        self.assertEqual(wrap.is_source, True)
+
+    def test_is_system_release(self):
+        wrap = RpmWrapper(self.file_path)
+        self.assertEqual(wrap.is_system_release, False)
+
+    def test_pickle(self):
+        wrap = SimpleRpmWrapper(self.file_path)
+        pickled_data = pickle.dumps(wrap)
+        wrap2 = pickle.loads(pickled_data)
+        self.assertEqual(wrap.name, wrap2.name)
 
 
 class TestFileCacheClass(unittest.TestCase):
