@@ -59,6 +59,12 @@ def get_rpm_header(file_name, ts=None):
 
     if ts is None:
         ts = rpm.TransactionSet()
+        # no rpm.keyring on rhel5
+        if hasattr(rpm, "keyring"):
+            # Set an empty keyring to prevent accessing rpmdb,
+            # which may cause race-conditions when running in threads.
+            # NOTE: RPM is *not* tread-safe, but this *usually* works in threads.
+            ts.setKeyring(rpm.keyring())
         ts.setVSFlags(rpm._RPMVSF_NOSIGNATURES|rpm._RPMVSF_NODIGESTS)
 
     if type(file_name) in (str, unicode):
