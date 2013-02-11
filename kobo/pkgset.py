@@ -216,12 +216,6 @@ class SimpleRpmWrapper(FileWrapper):
 
 
 class FileCache(object):
-    __slots__ = (
-        "inode_cache",
-        "file_cache",
-        "file_wrapper_class",
-    )
-
     def __init__(self, file_wrapper_class=None):
         self.inode_cache = {}
         self.file_cache = {}
