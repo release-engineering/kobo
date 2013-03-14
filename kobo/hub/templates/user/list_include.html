@@ -9,7 +9,7 @@
   </tr>
 {% for usr in usr_list %}
   <tr>
-    <td><a href="{% url user/detail usr.id %}">{{ usr.username }}</a></td>
+    <td><a href="{% url 'user/detail' usr.id %}">{{ usr.username }}</a></td>
     <td>{% if usr.is_superuser %}<span class="FREE">YES</span>{% else %}<span class="FAILED">NO</span>{% endif %}</td>
     <td>{% if usr.is_staff %}<span class="FREE">YES</span>{% else %}<span class="FAILED">NO</span>{% endif %}</td>
     <td>{% if usr.is_active %}<span class="FREE">YES</span>{% else %}<span class="FAILED">NO</span>{% endif %}</td>

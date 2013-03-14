@@ -12,7 +12,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.sessions.models import Session
 
 from kobo.hub.models import Worker
-from kobo.django.auth.krb5 import Krb5Backend
+from kobo.django.auth.krb5 import Krb5RemoteUserBackend
 from kobo.django.xmlrpc.auth import *
 
 
@@ -33,7 +33,7 @@ def login_worker_key(request, worker_key):
         raise PermissionDenied()
 
     username = "worker/%s" % worker.name
-    backend = Krb5Backend()
+    backend = Krb5RemoteUserBackend()
     user = backend.authenticate(username)
     if user is None:
         raise PermissionDenied()

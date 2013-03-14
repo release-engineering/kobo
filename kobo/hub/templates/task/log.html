@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block head %}
-<script type="text/javascript" src="{{ MEDIA_URL }}kobo/js/log_watcher.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}kobo/js/log_watcher.js"></script>
 <script type="text/javascript" language="javascript">
 document.log_watcher = new LogWatcher('{{ json_url }}', {{ offset }}, {{ task_finished }});
 document.log_watcher.watch();
@@ -11,7 +11,7 @@ document.log_watcher.watch();
 
 {% block content %}
 <h2>Task #{{ task.id }} - {{ log_name }}</h2>
-<a href="{% url task/detail task.id %}">{% trans "back to task" %} #{{ task.id }}</a><br />
+<a href="{% url 'task/detail' task.id %}">{% trans "back to task" %} #{{ task.id }}</a><br />
 <a href="?format=raw">download</a>
 <pre class="log" id="log">
 {{ content }}

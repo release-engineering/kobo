@@ -11,7 +11,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import PermissionDenied
 from django.contrib.sessions.models import Session
 
-from kobo.django.auth.krb5 import Krb5Backend
+from kobo.django.auth.krb5 import Krb5RemoteUserBackend
 
 
 __all__ = (
@@ -63,7 +63,7 @@ def login_krbv(request, krb_request, proxy_user=None):
 
     # remove @REALM
     username = cprinc.name.split("@")[0]
-    backend = Krb5Backend()
+    backend = Krb5RemoteUserBackend()
     user = backend.authenticate(username)
     if user is None:
         raise PermissionDenied()

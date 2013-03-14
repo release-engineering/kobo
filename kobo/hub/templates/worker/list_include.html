@@ -10,7 +10,7 @@
   </tr>
 {% for worker in worker_list %}
   <tr>
-    <td><a href="{% url worker/detail worker.id %}">{{ worker.name }}</a></td>
+    <td><a href="{% url 'worker/detail' worker.id %}">{{ worker.name }}</a></td>
     <td>{{ worker.get_arches_display }}</td>
     <td>{% if worker.enabled %}<span class="FREE">YES</span>{% else %}<span class="FAILED">NO</span>{% endif %}</td>
     <td>{% if worker.ready %}<span class="FREE">YES</span>{% else %}<span class="FAILED">NO</span>{% endif %}</td>

@@ -39,7 +39,7 @@ if settings.DEBUG:
     import kobo
     import urlparse
 
-    scheme, netloc, path, params, query, fragment = urlparse.urlparse(settings.MEDIA_URL)
+    scheme, netloc, path, params, query, fragment = urlparse.urlparse(settings.STATIC_URL)
     if not netloc:
         # netloc is empty -> media is not on remote server
         urlpatterns.extend(patterns("",

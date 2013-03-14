@@ -7,7 +7,7 @@
   </tr>
 {% for channel in channel_list %}
   <tr>
-    <td><a href="{% url channel/detail channel.id %}">{{ channel.name }}</a></td>
+    <td><a href="{% url 'channel/detail' channel.id %}">{{ channel.name }}</a></td>
     <td>{{ channel.worker_count }}</td>
   </tr>
 {% endfor %}

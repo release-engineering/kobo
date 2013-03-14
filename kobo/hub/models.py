@@ -7,7 +7,7 @@ import gzip
 import shutil
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models, connection, transaction
 from django.utils import simplejson
@@ -345,7 +345,7 @@ class TaskLogs(object):
 class Task(models.Model):
     """Model for hub_task table."""
     archive             = models.BooleanField(default=False, help_text=_("When a task is archived, it disappears from admin interface and cannot be accessed by taskd.<br />Make sure that archived tasks are finished and you won't need them anymore."))
-    owner               = models.ForeignKey(User)
+    owner               = models.ForeignKey(settings.AUTH_USER_MODEL)
     worker              = models.ForeignKey(Worker, null=True, blank=True, help_text=_("A worker which has this task assigned."))
     parent              = models.ForeignKey("self", null=True, blank=True, help_text=_("Parent task."))
     state               = models.PositiveIntegerField(default=TASK_STATES["FREE"], choices=TASK_STATES.get_mapping(), help_text=_("Current task state."))
@@ -371,7 +371,7 @@ class Task(models.Model):
     priority            = models.PositiveIntegerField(default=10, help_text=_("Priority."))
     weight              = models.PositiveIntegerField(default=1, help_text=_("Weight determines how many resources is used when processing the task."))
 
-    resubmitted_by      = models.ForeignKey(User, null=True, blank=True, related_name="resubmitted_by1")
+    resubmitted_by      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="resubmitted_by1")
     resubmitted_from    = models.ForeignKey("self", null=True, blank=True, related_name="resubmitted_from1")
 
     subtask_count       = models.PositiveIntegerField(default=0, help_text=_("Subtask count.<br />This is a generated field."))
@@ -442,7 +442,7 @@ class Task(models.Model):
     def create_task(cls, owner_name, label, method, args=None, comment=None, parent_id=None, worker_name=None, arch_name="noarch", channel_name="default", timeout=None, priority=10, weight=1, exclusive=False, resubmitted_by=None, resubmitted_from=None, state=None):
         """Create a new task."""
         task = cls()
-        task.owner = User.objects.get(username=owner_name)
+        task.owner = get_user_model().objects.get(username=owner_name)
         task.label = label
         task.method = method
         task.args = args or {}

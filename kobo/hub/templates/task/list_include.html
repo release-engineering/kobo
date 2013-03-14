@@ -14,7 +14,7 @@
   </tr>
 {% for task in task_list %}
   <tr>
-    <td><a href="{% url task/detail task.id %}">{{ task.id }}</a></td>
+    <td><a href="{% url 'task/detail' task.id %}">{{ task.id }}</a></td>
     <td>{{ task.method }}</td>
     <td>{{ task.owner }}</td>
     <td class="{{ task.get_state_display }}">{{ task.get_state_display }}</td>

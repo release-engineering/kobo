@@ -4,196 +4,99 @@
 import os
 
 import django.contrib.auth.views
-import django.views.generic.simple
-from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
-from django.views.generic.list_detail import object_detail
 from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.models import User
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseForbidden
-from django.utils import simplejson
 from django.db.models import Q
+from django.http import HttpResponse, HttpResponseForbidden
+from django.shortcuts import render_to_response, get_object_or_404
+from django.template import RequestContext
+from django.utils import simplejson
+from django.utils.translation import ugettext_lazy as _
+from django.views.generic import RedirectView
+from django.views.generic.detail import DetailView
+from django.views.generic.list import ListView
 
-from kobo.django.views.generic import object_list
-from kobo.hub.models import Task, Worker, Channel, Arch
+from kobo.hub.models import Arch, Channel, Task
 from kobo.hub.forms import TaskSearchForm
 
+class UserDetailView(DetailView):
+    model = User
+    template_name = "user/detail.html"
+    context_object_name = "usr"
 
-def user_list(request):
-    args = {
-        "queryset": User.objects.order_by("username"),
-        "allow_empty": True,
-        "paginate_by": 50,
-        "template_name": "user/list.html",
-        "template_object_name": "usr",
-        "extra_context": {
-            "title": "Users",
-        }
-    }
+    def get_context_data(self, **kwargs):
+        context = super(DetailView, self).get_context_data(**kwargs)
+        context['title'] = _("User detail")
+        context['tasks'] = kwargs['object'].task_set.count()
+        return context
 
-    return object_list(request, **args)
+class ChannelDetailView(DetailView):
+    model = Channel
+    template_name = "channel/detail.html"
+    context_object_name = "channel"
 
+    def get_context_data(self, **kwargs):
+        context = super(DetailView, self).get_context_data(**kwargs)
+        context["title"] = _("Architecture detail")
+        context["worker_list"] = kwargs["object"].worker_set.order_by("name")
+        return context
 
-def user_detail(request, id):
-    user = get_object_or_404(User, id=id)
-    args = {
-        "queryset": User.objects,
-        "object_id": id,
-        "template_object_name": "usr",
-        "template_name": "user/detail.html",
-        "extra_context": {
-            "title": "User detail",
-            "tasks": Task.objects.filter(owner=user).count(),
-        }
-    }
+class ArchDetailView(DetailView):
+    model = Arch
+    template_name = "arch/detail.html"
+    context_object_name = "arch"
 
-    return object_detail(request, **args)
-
-
-def worker_list(request):
-    args = {
-        "queryset": Worker.objects.order_by("name"),
-        "allow_empty": True,
-        "paginate_by": 50,
-        "template_name": "worker/list.html",
-        "template_object_name": "worker",
-        "extra_context": {
-            "title": "Workers",
-        }
-    }
-
-    return object_list(request, **args)
+    def get_context_data(self, **kwargs):
+        context = super(DetailView, self).get_context_data(**kwargs)
+        context["title"] = _("Architecture detail")
+        context["worker_list"] = kwargs["object"].worker_set.order_by("name"),
+        return context
 
 
-def worker_detail(request, id):
-    args = {
-        "queryset": Worker.objects.select_related(),
-        "object_id": id,
-        "template_object_name": "worker",
-        "template_name": "worker/detail.html",
-        "extra_context": {
-            "title": "Worker detail",
-        }
-    }
+class TaskListView(ListView):
+    template_name = "task/list.html"
+    context_object_name = "task_list"
+    title = _("Tasks")
+    state = None
+    order_by = None
+    paginate_by = 50
 
-    return object_detail(request, **args)
+    def get_queryset(self):
+        q = TaskSearchForm(self.request.GET).get_query(self.request)
+        q &= Q(parent__isnull=True)
+        if self.state is not None:
+            q &= Q(state__in=self.state)
+        if self.kwargs:
+            q &= Q(self.kwargs)
+        order_by = self.order_by or ["-id"]
+        return Task.objects.filter(q).order_by(*order_by).defer("result", "args").select_related("owner", "worker")
 
-
-def channel_list(request):
-    args = {
-        "queryset": Channel.objects.order_by("name"),
-        "allow_empty": True,
-        "paginate_by": 50,
-        "template_name": "channel/list.html",
-        "template_object_name": "channel",
-        "extra_context": {
-            "title": "Channels",
-        }
-    }
-
-    return object_list(request, **args)
+    def get_context_data(self, **kwargs):
+        context = super(TaskListView, self).get_context_data(**kwargs)
+        context["search_form"] = TaskSearchForm(self.request.GET)
+        return context
 
 
-def channel_detail(request, id):
-    channel = get_object_or_404(Channel, id=id)
-    args = {
-        "queryset": Channel.objects,
-        "object_id": id,
-        "template_object_name": "channel",
-        "template_name": "channel/detail.html",
-        "extra_context": {
-            "title": "Channel detail",
-            "worker_list": Worker.objects.filter(channels__name=channel.name),
-        }
-    }
+class TaskDetail(DetailView):
+    queryset = Task.objects.select_related()
+    context_object_name = "task"
+    template_name = "task/detail.html"
+    title = _("Task detail")
 
-    return object_detail(request, **args)
-
-
-def arch_list(request):
-    args = {
-        "queryset": Arch.objects.order_by("name"),
-        "allow_empty": True,
-        "paginate_by": 50,
-        "template_name": "arch/list.html",
-        "template_object_name": "arch",
-        "extra_context": {
-            "title": "Arches",
-        }
-    }
-
-    return object_list(request, **args)
-
-
-def arch_detail(request, id):
-    arch = get_object_or_404(Arch, id=id)
-    args = {
-        "queryset": Arch.objects,
-        "object_id": id,
-        "template_object_name": "arch",
-        "template_name": "arch/detail.html",
-        "extra_context": {
-            "title": "Arch detail",
-            "worker_list": Worker.objects.filter(arches__name=arch.name),
-        }
-    }
-
-    return object_detail(request, **args)
-
-
-def task_list(request, state, title="Tasks", order_by=None, **kwargs):
-    search_form = TaskSearchForm(request.GET)
-
-    if state is None:
-        state_q = Q()
-    else:
-        state_q = Q(state__in=state)
-
-    order_by = order_by or ["-id"]
-
-    args = {
-        "queryset": Task.objects.filter(**kwargs).filter(state_q, parent__isnull=True).filter(search_form.get_query(request)).order_by(*order_by).defer("result", "args").select_related("owner", "worker"),
-        "allow_empty": True,
-        "paginate_by": 50,
-        "template_name": "task/list.html",
-        "template_object_name": "task",
-        "extra_context": {
-            "title": title,
-            "search_form": search_form,
-        }
-    }
-
-    return object_list(request, **args)
-
-
-def task_detail(request, id):
-    task = get_object_or_404(Task, id=id)
-
-    logs = []
-    for i in task.logs.list:
-        if request.user.is_superuser:
-            logs.append(i)
-            continue
-        if not os.path.basename(i).startswith("traceback"):
-            logs.append(i)
-    logs.sort(lambda x, y: cmp(os.path.split(x), os.path.split(y)))
-
-    args = {
-        "queryset": Task.objects.select_related(),
-        "object_id": id,
-        "template_object_name": "task",
-        "template_name": "task/detail.html",
-        "extra_context": {
-            "title": "Task detail",
-            "task_list": task.subtasks(),
-            "logs": logs,
-        },
-    }
-
-    return object_detail(request, **args)
+    def get_context_data(self, **kwargs):
+        context = super(TaskDetail, self).get_context_data(**kwargs)
+        logs = []
+        for i in kwargs['object'].logs.list:
+            if self.request.user.is_superuser:
+                logs.append(i)
+                continue
+            if not os.path.basename(i).startswith("traceback"):
+                logs.append(i)
+        context["logs"] = logs
+        return context
 
 
 def _stream_file(file_path, offset=0):
@@ -292,13 +195,14 @@ def login(request, redirect_field_name=REDIRECT_FIELD_NAME):
 
 
 def krb5login(request, redirect_field_name=REDIRECT_FIELD_NAME):
-    middleware = "kobo.django.auth.krb5.Krb5AuthenticationMiddleware"
+    #middleware = 'django.contrib.auth.middleware.RemoteUserMiddleware'
+    middleware = 'kobo.django.auth.middleware.LimitedRemoteUserMiddleware'
     if middleware not in settings.MIDDLEWARE_CLASSES:
         raise ImproperlyConfigured("krb5login view requires '%s' middleware installed" % middleware)
     redirect_to = request.REQUEST.get(redirect_field_name, "")
     if not redirect_to:
         redirect_to = reverse("home/index")
-    return django.views.generic.simple.redirect_to(request, url=redirect_to)
+    return RedirectView.as_view(url=redirect_to)(request)
     
 
 def logout(request, redirect_field_name=REDIRECT_FIELD_NAME):

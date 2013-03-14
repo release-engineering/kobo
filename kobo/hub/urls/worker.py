@@ -1,10 +1,23 @@
 # -*- coding: utf-8 -*-
 
 
-from django.conf.urls.defaults import *
+from django.conf.urls import url, patterns
+from django.utils.translation import ugettext_lazy as _
+from kobo.django.views.generic import ExtraListView, ExtraDetailView
+from kobo.hub.models import Worker
 
 
 urlpatterns = patterns("",
-    url(r"^$", "kobo.hub.views.worker_list", name="worker/list"),
-    url(r"^(?P<id>\d+)/$", "kobo.hub.views.worker_detail", name="worker/detail"),
+    url(r"^$", ExtraListView.as_view(
+        queryset=Worker.objects.order_by("name"),
+        template_name="worker/list.html",
+        context_object_name="worker_list",
+        extra_context={"title": _("Workers")},
+    ), name="worker/list"),
+    url(r"^(?P<pk>\d+)/$", ExtraDetailView.as_view(
+        queryset=Worker.objects.select_related(),
+        template_name="worker/detail.html",
+        context_object_name="worker",
+        extra_context={"title": _("Worker detail")},
+    ), name="worker/detail"),
 )

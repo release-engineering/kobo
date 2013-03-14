@@ -135,7 +135,7 @@ class JSONField(models.TextField):
         try:
             return django.utils.simplejson.loads(value)
         except ValueError:
-            raise exceptions.ValidationError(_("Cannot deserialize JSON data."))
+            raise exceptions.ValidationError(_("Cannot deserialize JSON data. '%s'") % value)
 
     def pre_save(self, model_instance, add):
         value = getattr(model_instance, self.attname, None)

@@ -81,7 +81,7 @@ class DjangoXMLRPCDispatcher(SimpleXMLRPCDispatcher):
         of changing method dispatch behavior.
         """
 
-        data = request.raw_post_data
+        data = request.body
         params, method = xmlrpclib.loads(data)
 
         # add request to params
