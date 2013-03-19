@@ -112,3 +112,32 @@ class ThreadPool(kobo.log.LoggingBase):
         for i in self.threads:
             i.kill = True
             i.running = False
+
+def run_in_threads(func, params, threads=5, full_queue=True, use_lock=False):
+    '''Run func with params (thread_task, param, queue_num) in threads
+    - func: threadable function
+    - params: iterable with arguments to func
+    - threads: how many threads should be spawn
+    - full_queue: start threads after filling queue - it will make value
+                  of pool.queue_total same for all tasks. Otherwise pool will be started asap.
+    - use_lock: add Lock objects for pool to func calls
+    '''
+    assert(threads > 0)
+    if use_lock:
+        lock = threading.Lock()
+    class MyWorker(WorkerThread):
+        def process(self, *args):
+            if use_lock:
+                args = list(args)
+                args.append(lock)
+            func(self, *args)
+    pool = ThreadPool()
+    if not full_queue:
+        pool.start()
+    for i in range(threads):
+        pool.add(MyWorker(pool))
+    for param in params:
+        pool.queue_put(param)
+    if full_queue:
+        pool.start()
+    pool.stop()
