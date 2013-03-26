@@ -188,6 +188,7 @@ class SimpleRpmWrapper(FileWrapper):
         self.sourcerpm = kobo.rpmlib.get_header_field(header, "sourcerpm")
         self.is_source = bool(kobo.rpmlib.get_header_field(header, "sourcepackage"))
         self.is_system_release = "system-release" in kobo.rpmlib.get_header_field(header, "providename")
+        self.checksum_type = kobo.rpmlib.get_digest_algo_from_header(header).lower()
 
     def __str__(self):
         return "%s-%s-%s.%s.rpm" % (self.name, self.version, self.release, self.arch)
