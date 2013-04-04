@@ -28,7 +28,7 @@ log:
 
 
 source: test clean
-	@python setup.py sdist
+	@./setup-sdist-wrapper.sh
 
 
 test:
