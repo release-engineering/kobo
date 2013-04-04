@@ -45,6 +45,7 @@ class LongnameUser(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['email']
 
     class Meta:
+        db_table = 'auth_user'
         verbose_name = _('user')
         verbose_name_plural = _('users')
 
@@ -67,4 +68,3 @@ class LongnameUser(AbstractBaseUser, PermissionsMixin):
         Sends an email to this User.
         """
         send_mail(subject, message, from_email, [self.email])
-
