@@ -1,3 +1,30 @@
+KOBO 0.4.0 RELEASE NOTES
+========================
+
+NEW FEATURES
+------------
+- pkgset.SimpleRpmWrapper has now checksum_type member
+- threads.run_in_threads helper function
+
+Django 1.5 update
+-----------------
+Django part of kobo was udpated to be compatible with 1.5 release. Lower
+version are no more supported. As a side-effect, only python 2.6+ is
+supported by django part.
+
+From same reason there will be no builds of kobo-django package for RHEL 5
+and lower as it lacks required python version.
+
+- RemoteUserMiddleware is now used for KrbV authentication
+- LimitedRemoreUserMiddleware can be used to authenticate only on entry
+pages.
+- LongnameUser model is used for auth backend. It allows 255 characters long
+user names (as they come from KrbV)
+- Class-based generic views ExtraListView and ExtraDetailView. object_list
+helper stays for compatibility, but it is deprecated now and will be removed
+in future.
+
+
 KOBO 0.3.0 RELEASE NOTES
 ========================
 
