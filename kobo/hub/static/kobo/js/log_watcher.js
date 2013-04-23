@@ -21,8 +21,8 @@ function GET_handler(log_watcher) {
 		document.log_watcher.task_finished = result.task_finished
 		document.log_watcher.offset = result.new_offset
 		if ((window.pageYOffset + window.innerHeight) >= document.log_watcher.page_height) {
-			window.scroll(window.pageXOffset, document.height);
-			document.log_watcher.page_height = document.height;
+			window.scroll(window.pageXOffset, document.body.clientHeight);
+			document.log_watcher.page_height = document.body.clientHeight;
 		}
 	}
 }
