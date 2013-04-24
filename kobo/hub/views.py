@@ -141,7 +141,8 @@ def task_log(request, id, log_name):
         response = HttpResponse(_stream_file(file_path, offset), mimetype=mimetype)
 
         response["Content-Length"] = content_len
-        response['Content-Disposition'] = 'attachment; filename=%s' % os.path.basename(log_name)
+        # set filename to be real filesystem name
+        response['Content-Disposition'] = 'attachment; filename=%s' % os.path.basename(file_path)
         return response
 
     if log_name.endswith(".html") or log_name.endswith(".htm"):
