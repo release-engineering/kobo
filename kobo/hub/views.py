@@ -5,8 +5,7 @@ import os
 
 import django.contrib.auth.views
 from django.conf import settings
-from django.contrib.auth import REDIRECT_FIELD_NAME
-from django.contrib.auth.models import User
+from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.db.models import Q
@@ -16,71 +15,58 @@ from django.template import RequestContext
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import RedirectView
-from django.views.generic.detail import DetailView
-from django.views.generic.list import ListView
 
 from kobo.hub.models import Arch, Channel, Task
 from kobo.hub.forms import TaskSearchForm
+from kobo.django.views.generic import ExtraDetailView, SearchView
 
-class UserDetailView(DetailView):
-    model = User
+class UserDetailView(ExtraDetailView):
+    model = get_user_model()
+    title = _("User detail")
     template_name = "user/detail.html"
     context_object_name = "usr"
 
     def get_context_data(self, **kwargs):
-        context = super(DetailView, self).get_context_data(**kwargs)
-        context['title'] = _("User detail")
+        context = super(TaskDetail, self).get_context_data(**kwargs)
         context['tasks'] = kwargs['object'].task_set.count()
-        return context
 
-class ChannelDetailView(DetailView):
+class ChannelDetailView(ExtraDetailView):
     model = Channel
     template_name = "channel/detail.html"
     context_object_name = "channel"
+    title = _("Architecture detail")
 
     def get_context_data(self, **kwargs):
-        context = super(DetailView, self).get_context_data(**kwargs)
-        context["title"] = _("Architecture detail")
+        context = super(TaskDetail, self).get_context_data(**kwargs)
         context["worker_list"] = kwargs["object"].worker_set.order_by("name")
-        return context
 
-class ArchDetailView(DetailView):
+class ArchDetailView(ExtraDetailView):
     model = Arch
     template_name = "arch/detail.html"
     context_object_name = "arch"
+    title = _("Architecture detail")
 
     def get_context_data(self, **kwargs):
-        context = super(DetailView, self).get_context_data(**kwargs)
-        context["title"] = _("Architecture detail")
-        context["worker_list"] = kwargs["object"].worker_set.order_by("name"),
-        return context
+        context = super(TaskDetail, self).get_context_data(**kwargs)
+        context["worker_list"] = kwargs["object"].worker_set.order_by("name")
 
-
-class TaskListView(ListView):
+class TaskListView(SearchView):
+    # TODO: missing kwargs custom queries for backward compatibility
+    title = _("Tasks")
+    form_class = TaskSearchForm
     template_name = "task/list.html"
     context_object_name = "task_list"
-    title = _("Tasks")
     state = None
-    order_by = None
-    paginate_by = 50
+    order_by = ['-id']
 
-    def get_queryset(self):
-        q = TaskSearchForm(self.request.GET).get_query(self.request)
-        q &= Q(parent__isnull=True)
-        if self.state is not None:
-            q &= Q(state__in=self.state)
-        if self.kwargs:
-            q &= Q(self.kwargs)
-        order_by = self.order_by or ["-id"]
-        return Task.objects.filter(q).order_by(*order_by).defer("result", "args").select_related("owner", "worker")
-
-    def get_context_data(self, **kwargs):
-        context = super(TaskListView, self).get_context_data(**kwargs)
-        context["search_form"] = TaskSearchForm(self.request.GET)
-        return context
+    def get_form_kwargs(self):
+        kwargs = super(TaskListView, self).get_form_kwargs()
+        kwargs['state'] = self.state
+        kwargs['order_by'] = self.order_by
+        return kwargs
 
 
-class TaskDetail(DetailView):
+class TaskDetail(ExtraDetailView):
     queryset = Task.objects.select_related()
     context_object_name = "task"
     template_name = "task/detail.html"

@@ -3,11 +3,17 @@
 
 import django.forms as forms
 from django.db.models import Q
+from kobo.hub.models import Task
 
 
 class TaskSearchForm(forms.Form):
     search  = forms.CharField(required=False)
     my  = forms.BooleanField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        self.state = kwargs.pop('state', None)
+        self.order_by = kwargs.pop('order_by', ['-id'])
+        return super(TaskSearchForm, self).__init__(*args, **kwargs)
 
     def get_query(self, request):
         self.is_valid()
@@ -24,4 +30,8 @@ class TaskSearchForm(forms.Form):
         if my and request.user.is_authenticated():
             query &= Q(owner=request.user)
 
-        return query
+        if self.state is not None:
+            query &= Q(state__in=self.state)
+        #if self.kwargs:
+        #    query &= Q(self.kwargs)
+        return Task.objects.filter(parent__isnull=True).filter(query).order_by(*self.order_by).defer("result", "args").select_related("owner", "worker")
