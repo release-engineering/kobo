@@ -28,7 +28,7 @@ packages = sorted(packages)
 
 setup(
     name            = "kobo",
-    version         = "0.3.8",
+    version         = "0.4.0",
     description     = "Python modules for tools development",
     url             = "https://fedorahosted.org/kobo/",
     author          = "Red Hat, Inc.",
