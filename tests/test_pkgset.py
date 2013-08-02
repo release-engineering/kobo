@@ -55,14 +55,21 @@ class TestRpmWrapperClass(unittest.TestCase):
     def setUp(self):
         self.file_path = "data/dummy-basesystem-10.0-6.noarch.rpm"
         self.source_path = "data/dummy-basesystem-10.0-6.src.rpm"
+        self.nosource_path = "data/dummy-AdobeReader_enu-9.5.1-1.nosrc.rpm"
 
     def test_is_source(self):
         wrap = RpmWrapper(self.file_path)
         self.assertEqual(wrap.sourcepackage, None)
         self.assertEqual(wrap.is_source, False)
+        self.assertEqual(wrap.nosource, [])
         wrap = RpmWrapper(self.source_path)
         self.assertEqual(wrap.sourcepackage, True)
         self.assertEqual(wrap.is_source, True)
+        self.assertEqual(wrap.nosource, [])
+        wrap = RpmWrapper(self.nosource_path)
+        self.assertEqual(wrap.sourcepackage, True)
+        self.assertEqual(wrap.is_source, True)
+        self.assertEqual(wrap.nosource, [0])
 
     def test_is_system_release(self):
         wrap = RpmWrapper(self.file_path)

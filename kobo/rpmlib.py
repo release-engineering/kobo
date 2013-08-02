@@ -99,14 +99,23 @@ def get_header_field(hdr, name):
             return "src"
 
     hdr_key = getattr(rpm, "RPMTAG_%s" % name.upper(), None)
-
     if hdr_key is None:
-        # HACK: nosource is not in exported rpm tags
+        # HACK: nosource and nopatch may not be in exported rpm tags
         if name == "nosource":
-            return hdr[1051]
-        raise AttributeError("No such rpm header field: %s" % name)
+            hdr_key = 1051
+        elif name == "nopatch":
+            hdr_key = 1052
+        else:
+            raise AttributeError("No such rpm header field: %s" % name)
 
-    return hdr[hdr_key]
+    result = hdr[hdr_key]
+    if name in ("nosource", "nopatch"):
+        # HACK: workaround for https://bugzilla.redhat.com/show_bug.cgi?id=991329
+        if result is None:
+            result = []
+        elif isinstance(result, (int, long)):
+            result = [result]
+    return result
 
 
 def get_header_fields(hdr, fields):
