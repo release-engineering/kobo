@@ -94,7 +94,7 @@ def get_header_field(hdr, name):
     if name == "arch":
         # HACK: return "src" or "nosrc" arch instead of build arch
         if get_header_field(hdr, "sourcepackage"):
-            if get_header_field(hdr, "nosource"):
+            if get_header_field(hdr, "nosource") or get_header_field(hdr, "nopatch"):
                 return "nosrc"
             return "src"
 
