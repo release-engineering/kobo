@@ -63,16 +63,6 @@ def get_exception():
 class Traceback(object):
     """Enhanced traceback with detailed output."""
 
-    __slots__ = (
-        "exc_info",
-        "show_traceback",
-        "show_code",
-        "show_locals",
-        "show_environ",
-        "show_modules",
-    )
-
-
     def __init__(self, exc_info=None, show_traceback=True, show_code=True, show_locals=True, show_environ=False, show_modules=False):
         self.exc_info = exc_info or sys.exc_info()
         self.show_traceback = show_traceback
@@ -80,7 +70,6 @@ class Traceback(object):
         self.show_locals = show_locals
         self.show_environ = show_environ
         self.show_modules = show_modules
-
 
     def _to_str(self, value, format=None):
         """Convert value to string.
@@ -190,11 +179,9 @@ class Traceback(object):
 
         return s.encode('ascii', 'replace')
 
-
     def print_traceback(self):
         """Print a traceback string to stderr."""
         print >>sys.stderr, self.get_traceback()
-
 
     def _get_lines_from_file(self, filename, lineno, context_lines):
         # this function was taken from Django and adapted for CLI

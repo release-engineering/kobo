@@ -24,25 +24,6 @@ class TaskBase(Plugin):
     """Base class for all tasks."""
     enabled = True
 
-    __slots__ = (
-        # reserved for class attributes
-        "arches",
-        "channels",
-        "exclusive",
-        "foreground",
-        "priority",
-        "weight",
-
-        "_hub",
-        "_conf",
-        "_task_id",
-        "_task_info",
-        "_task_manager",
-        "_subtask_list",
-        "_args",
-        "result",
-    )
-
     def __init__(self, hub, conf, task_id, args):
         self._hub = hub            # created by taskmanager
         self._conf = conf

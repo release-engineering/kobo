@@ -99,25 +99,8 @@ class MenuItem(object):
     """basic menu item - every menuitem can have submenu collections of
     these. Only main menu is special instance of Menu class."""
 
-    __slots__ = (
-        "title",
-        "_url",
-        "_url_is_resolved",
-        "absolute_url",
-        "acl_groups",
-        "acl_perms",
-        "main_menu",
-        "parent_menu",
-        "submenu_list",
-        "active",
-        "depth",
-        "alters_data",
-    )
-
-
     # bind include() to the class
     include = staticmethod(include)
-
 
     def __init__(self, title, url, acl_groups=None, acl_perms=None, absolute_url=False, menu=None):
         self.title = smart_unicode(title)
@@ -140,14 +123,11 @@ class MenuItem(object):
         self.active = False
         self.depth = 0
 
-
     def __repr__(self):
         return "<MenuItem>: %s (%s)" % (self.title, self.url)
 
-
     def __len__(self):
         return len(self.url)
-
 
     def __unicode__(self):
         result = ""
@@ -178,11 +158,9 @@ class MenuItem(object):
 
         return mark_safe(result)
 
-
     @property
     def items(self):
         return [i for i in self.submenu_list if i.visible]
-
 
     @property
     def first_item(self):
@@ -190,18 +168,15 @@ class MenuItem(object):
             return self.items[0]
         return None
 
-
     @property
     def last_item(self):
         if self.items:
             return self.items[-1]
         return None
 
-
     @property
     def inner_items(self):
         return self.items[1:-1]
-
 
     def setup_menu_tree(self, mainmenu_obj):
         if mainmenu_obj != self:
@@ -218,12 +193,10 @@ class MenuItem(object):
             i.setup_menu_tree(mainmenu_obj)
             mainmenu_obj.cached_menuitems.append(i)
 
-
     def set_active(self, active):
         self.active = active
         if self.parent_menu is not None:
             self.parent_menu.set_active(active)
-
 
     @property
     def visible(self):
@@ -248,13 +221,6 @@ class MenuItem(object):
 
 
 class MainMenu(MenuItem):
-    __slots__ = (
-        "user",
-        "path",
-        "cached_menuitems",
-        "css_active_class",
-    )
-
 
     def __init__(self, menu, css_active_class=None):
         MenuItem.__init__(self, "ROOT_MENU", "", absolute_url=True, menu=menu)
@@ -267,15 +233,12 @@ class MainMenu(MenuItem):
         # set main_menu references, compute menu depth
         self.setup_menu_tree(self)
 
-
     def __repr__(self):
         return "<MainMenu>: %s" % (self.path)
-
 
     def __unicode__(self):
         """Return menu as printable <ul> list."""
         return mark_safe(u"<ul>%s</ul>" % "".join([unicode(i) for i in self.items]))
-
 
     def __getattr__(self, name):
         # get specified submenu level in active menu
@@ -301,7 +264,6 @@ class MainMenu(MenuItem):
             menu = menu.parent_menu
         return menu
 
-
     def setup(self, request):
         self.user = request.user
         self.path = request.get_full_path()
@@ -309,7 +271,6 @@ class MainMenu(MenuItem):
         self.acl_perms = {}
         self.find_active_menu()
         return self
-
 
     def find_active_menu(self):
         matches = [i for i in self.cached_menuitems if i.visible and i.url and self.path.startswith(i.url)]

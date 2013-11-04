@@ -19,29 +19,18 @@ class Hardlink(object):
     to another filesystem while preserving hardlinks.
     """
 
-    __slots__ = (
-        "_inode_cache",
-        "_precache",
-        "logger",
-        "test",
-    )
-
-
     def __init__(self, test=False, logger=None):
         self._inode_cache = {}
         self._precache = {}
         self.test = test
         self.logger = logger
 
-
     def __call__(self, src, dst):
         return self.link(src, dst)
-
 
     def log(self, loglevel, msg):
         if self.logger:
             self.logger.log(loglevel, msg)
-
 
     def precache(self, path, recursive=False):
         def get_stats(item):
@@ -79,7 +68,6 @@ class Hardlink(object):
             if recursive:
                 self.precache(fn_path, recursive=True)
 
-
     def link(self, src, dst):
         """ Create hardlinks or copy files."""
 
@@ -87,7 +75,6 @@ class Hardlink(object):
             self._link_file(src, dst)
         else:
             self._link_dir(src, dst)
-
 
     def _link_dir(self, src, dst):
         # src and dst has to be directories
@@ -108,7 +95,6 @@ class Hardlink(object):
                 new_src = os.path.join(src, fn)
                 new_dst = os.path.join(dst, fn)
                 self.link(new_src, new_dst)
-
 
     def _link_file(self, src, dst):
         if self.test:
@@ -181,24 +167,17 @@ class Hardlink(object):
 
 
 class UndoHardlink(object):
-    __slots__ = (
-       "logger",
-       "test",
-    )
 
     def __init__(self, test=False, logger=None):
         self.test = test
         self.logger = logger
 
-
     def __call__(self, file_path):
         self.undo_hardlink(file_path)
-
 
     def log(self, loglevel, msg):
         if self.logger:
             self.logger.log(loglevel, msg)
-
 
     def undo_hardlink(self, file_path):
         if os.path.isdir(file_path):

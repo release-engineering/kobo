@@ -232,18 +232,11 @@ class TaskManager(models.Manager):
 
 class TaskLogs(object):
     """Task log wrapper."""
-    __slots__ = (
-        "cache",   # log cache
-        "changed", # changed logs, will be written on save()
-        "task",
-    )
-
 
     def __init__(self, task_obj):
         self.cache = {}
-        self.changed = {}
+        self.changed = {} # changed logs, will be written on save()
         self.task = task_obj
-
 
     def _get_absolute_log_path(self, name):
         task_dir = self.task.task_dir(self.task.id)
@@ -253,13 +246,11 @@ class TaskLogs(object):
             raise RuntimeError("Invalid log abspath.")
         return log_path
 
-
     def _get_relative_log_path(self, name):
         log_path = os.path.normpath(name)
         if log_path.startswith(".."):
             raise RuntimeError("Invalid log normpath.")
         return log_path
-
 
     def __getitem__(self, name):
         name = self._get_relative_log_path(name)
@@ -281,12 +272,10 @@ class TaskLogs(object):
 
         return self.cache[name]
 
-
     def __setitem__(self, name, value):
         name = self._get_relative_log_path(name)
         self.cache[name] = value
         self.changed[name] = True
-
 
     def save(self):
         for log in self.cache:
@@ -299,7 +288,6 @@ class TaskLogs(object):
                 mode = 0644
             save_to_file(log_path, self.cache[log], mode=mode)
             self.changed[log] = False
-
 
     @property
     def list(self):
@@ -379,6 +367,8 @@ class Task(models.Model):
     # override default *objects* Manager
     objects = TaskManager()
 
+    class Meta:
+        ordering = ("-id", )
 
     def __init__(self, *args, **kwargs):
         self.logs = TaskLogs(self)
@@ -392,16 +382,10 @@ class Task(models.Model):
 
         super(Task, self).__init__(*args, **kwargs)
 
-
-    class Meta:
-        ordering = ("-id", )
-
-
     def __unicode__(self):
         if self.parent:
             return u"#%s [method: %s, state: %s, worker: %s, parent: #%s]" % (self.id, self.method, self.get_state_display(), self.worker, self.parent.id)
         return u"#%s [method: %s, state: %s, worker: %s]" % (self.id, self.method, self.get_state_display(), self.worker)
-
 
     def save(self, *args, **kwargs):
         # save to db to precalculate subtask counts and obtain an ID (on insert) for stdout and traceback
@@ -410,7 +394,6 @@ class Task(models.Model):
         self.logs.save()
         if self.parent:
             self.parent.save(*args, **kwargs)
-
 
     @classmethod
     def get_task_dir(cls, task_id, create=False):
@@ -433,10 +416,8 @@ class Task(models.Model):
 
         return path
 
-
     def task_dir(self, create=False):
         return Task.get_task_dir(self.id, create)
-
 
     @classmethod
     def create_task(cls, owner_name, label, method, args=None, comment=None, parent_id=None, worker_name=None, arch_name="noarch", channel_name="default", timeout=None, priority=10, weight=1, exclusive=False, resubmitted_by=None, resubmitted_from=None, state=None):
@@ -473,7 +454,6 @@ class Task(models.Model):
         task.save()
         return task.id
 
-
     @classmethod
     def create_shutdown_task(cls, owner_name, worker_name, kill=False):
         """Create a new ShutdownWorker task."""
@@ -490,18 +470,15 @@ class Task(models.Model):
         }
         return cls.create_task(**kwargs)
 
-
     def set_args(self, **kwargs):
         """Serialize args dictionary."""
         print >> sys.stderr, "DeprecationWarning: kobo.hub.models.Task.set_args() is deprecated. Use kobo.hub.models.Task.args instead."
         self.args = kwargs
 
-
     def get_args(self):
         """Deserialize args dictionary."""
         print >> sys.stderr, "DeprecationWarning: kobo.hub.models.Task.get_args() is deprecated. Use kobo.hub.models.Task.args instead."
         return self.args.copy()
-
 
     def get_args_display(self):
         """Deserialize args dictionary to human readable form"""
@@ -510,7 +487,6 @@ class Task(models.Model):
         for key, value in sorted(self.args.items()):
             result[key] = simplejson.dumps(value)
         return result
-
 
     def export(self, flat=True):
         """Export data for xml-rpc."""
@@ -559,10 +535,8 @@ class Task(models.Model):
 
         return result
 
-
     def subtasks(self):
         return Task.objects.filter(parent=self)
-
 
     @property
     def time(self):
@@ -574,7 +548,6 @@ class Task(models.Model):
         else:
             return self.dt_finished - self.dt_started
 
-
     def get_time_display(self):
         """display time in human readable form"""
         if self.time is None:
@@ -585,7 +558,6 @@ class Task(models.Model):
             time = _("%s days, %s") % (self.time.days, time)
         return time
     get_time_display.short_description = "Time"
-
 
     def __lock(self, worker_id, new_state=TASK_STATES["ASSIGNED"], initial_states=None):
         """Critical section. Ensures that only one worker takes the task."""
@@ -654,14 +626,12 @@ WHERE
         self.state = new_state
         self.waiting = waiting
 
-
     def free_task(self):
         """Free the task."""
         try:
             self.__lock(self.worker_id, new_state=TASK_STATES["FREE"], initial_states=(TASK_STATES["FREE"], TASK_STATES["ASSIGNED"], TASK_STATES["CREATED"]))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot free task %d, state is %s" % (self.id, self.state))
-
 
     def assign_task(self, worker_id=None):
         """Assign the task to a worker identified by worker_id."""
@@ -673,7 +643,6 @@ WHERE
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot assign task %d" % (self.id))
 
-
     def open_task(self, worker_id=None):
         """Open the task on a worker identified by worker_id."""
         if worker_id is None:
@@ -683,7 +652,6 @@ WHERE
             self.__lock(worker_id, new_state=TASK_STATES["OPEN"], initial_states=(TASK_STATES["FREE"], TASK_STATES["ASSIGNED"]))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot open task %d, state is %s" % (self.id, self.state))
-
 
     @transaction.commit_on_success
     def close_task(self, task_result=""):
@@ -697,7 +665,6 @@ WHERE
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot close task %d, state is %s" % (self.id, self.state))
         self.logs.gzip_logs()
-
 
     @transaction.commit_on_success
     def cancel_task(self, user=None, recursive=True):
@@ -716,7 +683,6 @@ WHERE
                 task.cancel_task(recursive=True)
         self.logs.gzip_logs()
 
-
     def cancel_subtasks(self):
         """Cancel all subtasks of the task."""
         result = True
@@ -726,7 +692,6 @@ WHERE
             except (MultipleObjectsReturned, ObjectDoesNotExist):
                 result = False
         return result
-
 
     @transaction.commit_on_success
     def interrupt_task(self, recursive=True):
@@ -741,7 +706,6 @@ WHERE
                 task.interrupt_task(recursive=True)
         self.logs.gzip_logs()
 
-
     @transaction.commit_on_success
     def timeout_task(self, recursive=True):
         """Set the task state to timeout."""
@@ -754,7 +718,6 @@ WHERE
             for task in self.subtasks():
                 task.interrupt_task(recursive=True)
         self.logs.gzip_logs()
-
 
     @transaction.commit_on_success
     def fail_task(self, task_result=""):
@@ -769,16 +732,13 @@ WHERE
             raise Exception("Cannot fail task %i, state is %s" % (self.id, self.state))
         self.logs.gzip_logs()
 
-
     def is_finished(self):
         """Is the task finished? Task state can be one of: closed, interrupted, canceled, failed."""
         return self.state in FINISHED_STATES
 
-
     def is_failed(self):
         """Is the task successfuly finished? Task state must be closed."""
         return self.state in FAILED_STATES
-
 
     def resubmit_task(self, user):
         """Resubmit failed/canceled top-level task."""
@@ -861,7 +821,6 @@ WHERE
         self.waiting = True
         self.save()
 
-
     def check_wait(self, child_task_list=None):
         """Determine if all subtasks have finished."""
         tasks = self.subtasks()
@@ -879,6 +838,7 @@ WHERE
                 unfinished.append(task.id)
 
         return [finished, unfinished]
+
 
 def _task_delete(sender, instance, **kwargs):
     """

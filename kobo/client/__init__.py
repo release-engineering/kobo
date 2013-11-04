@@ -92,10 +92,6 @@ __all__ = (
 
 
 class ClientCommandContainer(kobo.cli.CommandContainer):
-    __slots__ = (
-        "hub",
-        "conf",
-    )
 
     def __init__(self, conf, **kwargs):
         self.conf = kobo.conf.PyConfigParser()
@@ -119,19 +115,6 @@ class ClientCommand(kobo.cli.Command):
 
 class HubProxy(object):
     """A Hub client (thin ServerProxy wrapper)."""
-
-    __slots__ = (
-        "_conf",
-        "_conf_environ_key",
-        "_client_type",
-        "_hub",
-        "_hub_url",
-        "_auth_method",
-        "_transport",
-        "_auto_logout",
-        "_logger",
-        "_logged_in",
-    )
 
     def __init__(self, conf, client_type=None, logger=None, transport=None, auto_logout=True, **kwargs):
         self._conf = kobo.conf.PyConfigParser()

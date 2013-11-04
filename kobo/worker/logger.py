@@ -16,15 +16,6 @@ __all__ = (
 
 class LoggingThread(threading.Thread):
     """Send stdout data to hub in a background thread."""
-    __slots__ = (
-        "_hub",
-        "_task_id",
-        "_queue",
-        "_event",
-        "_running",
-        "_send_time",
-        "_send_data",
-    )
 
     def __init__(self, hub, task_id, *args, **kwargs):
         threading.Thread.__init__(self, *args, **kwargs)
@@ -77,10 +68,6 @@ class LoggingThread(threading.Thread):
 
 class LoggingIO(object):
     """StringIO wrapper that also writes all data to a logging thread."""
-    __slots__ = (
-        "_io",
-        "_thread",
-    )
 
     def __init__(self, io, logging_thread):
         self._io = io

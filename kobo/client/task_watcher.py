@@ -57,18 +57,9 @@ def watch_tasks(hub, task_id_list, indentation_level=0, sleep_time=1, task_url=N
 
 
 class TaskWatcher(object):
-    __slots__ = (
-        "hub",
-        "task_id",
-        "task_info",
-        "indentation_level",
-        "subtask_dict",
-    )
-
 
     display_tasklist_status = staticmethod(display_tasklist_status)
     watch_tasks = staticmethod(watch_tasks)
-
 
     def __init__(self, hub, task_id, indentation_level=0):
         self.hub = hub
@@ -77,13 +68,11 @@ class TaskWatcher(object):
         self.indentation_level = int(indentation_level)
         self.subtask_dict = {}
 
-
     def __str__(self):
         result = "%s%s" % ("  " * self.indentation_level, self.task_id)
         if self.task_info:
             result += " %s" % self.task_info["method"]
         return result
-
 
     def is_finished(self):
         """Is the task finished?"""
@@ -95,20 +84,17 @@ class TaskWatcher(object):
             result &= subtask.is_finished()
         return result
 
-
     def is_failed(self):
         """Did the task fail?"""
         if self.task_info is None:
             return False
         return self.task_info.get("is_failed", False)
 
-
     def display_state(self, task_info):
         worker = task_info.get("worker")
         if worker is not None:
             return "%s (%s)" % (task_info["state_label"], worker["name"])
         return "%s" % task_info["state_label"]
-
 
     def update(self):
         """Update info and log if needed. Returns True on state change."""
@@ -144,7 +130,6 @@ class TaskWatcher(object):
         for key in sorted(self.subtask_dict.keys()):
             changed |= self.subtask_dict[key].update()
         return changed
-
 
     def get_state_dict(self):
         state_dict = {}

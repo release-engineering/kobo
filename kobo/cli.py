@@ -151,30 +151,21 @@ def are_you_sure_prompt(prompt=None):
 class Command(Plugin):
     """An abstract class representing a command for CommandOptionParser."""
 
-    __slots__ = (
-        "parser",
-        "admin",
-    )
-
     enabled = False
     admin = False
-
 
     username_prompt = staticmethod(username_prompt)
     password_prompt = staticmethod(password_prompt)
     yes_no_prompt = staticmethod(yes_no_prompt)
     are_you_sure_prompt = staticmethod(are_you_sure_prompt)
 
-
     def __init__(self, parser):
         Plugin.__init__(self)
         self.parser = parser
 
-
     def options(self):
         """Add options to self.parser."""
         pass
-
 
     def run(self, *args, **kwargs):
         """Run a command. Arguments contain parsed options."""

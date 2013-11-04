@@ -182,10 +182,6 @@ class TimeoutProxyHTTPS(TimeoutHTTPS):
 class CookieResponse(object):
     """Fake response class for cookie extraction."""
 
-    __slots__ = (
-        "headers",
-    )
-
     def __init__(self, headers):
         self.headers = headers
 

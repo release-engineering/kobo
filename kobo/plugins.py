@@ -31,14 +31,6 @@ __all__ = (
 class Plugin(object):
     """A plugin base class."""
 
-    __slots__ = (
-        "author",
-        "version",
-        "enabled",
-        "container",
-        "normalized_name",
-    )
-
     author = None
     version = None
     enabled = False
@@ -57,23 +49,15 @@ class PluginContainer(object):
     Usage: Inherit PluginContainer and register plugins to the new class.
     """
 
-    __slots__ = (
-        "_plugins"
-    )
-
-
     def __getitem__(self, name):
         return self._get_plugin(name)
-
 
     def __iter__(self):
         return self.plugins.iterkeys()
 
-
     @classmethod
     def normalize_name(cls, name):
         return name
-
 
     @classmethod
     def _get_plugins(cls):
@@ -85,7 +69,6 @@ class PluginContainer(object):
         for name, plugin_class in parent_plugins + class_plugins:
             result[name] = type(plugin_class.__name__, (plugin_class, ), {"__doc__": plugin_class.__doc__})
         return result
-
 
     @classmethod
     def _get_parent_plugins(cls, normalize_function):
@@ -116,13 +99,11 @@ class PluginContainer(object):
 
         return result
 
-
     @property
     def plugins(self):
         if not hasattr(self, "_plugins"):
             self._plugins = self.__class__._get_plugins()
         return self._plugins
-
 
     def _get_plugin(self, name):
         """Return a plugin or raise KeyError."""
@@ -135,7 +116,6 @@ class PluginContainer(object):
         plugin.container = self
         plugin.normalized_name = normalized_name
         return plugin
-
 
     @classmethod
     def register_plugin(cls, plugin):
@@ -153,7 +133,6 @@ class PluginContainer(object):
         normalized_name = cls.normalize_name(plugin.__name__)
         cls._class_plugins[normalized_name] = plugin
         return normalized_name
-
 
     @classmethod
     def register_module(cls, module, prefix=None, skip_broken=False):

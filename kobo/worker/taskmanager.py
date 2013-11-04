@@ -86,18 +86,6 @@ class TaskContainer(PluginContainer):
 class TaskManager(kobo.log.LoggingBase):
     """Task manager takes and executes new tasks."""
 
-    __slots__ = (
-        "hub",         	            # xml-rpc hub client
-        "conf",
-        "task_container",
-        "worker_info",              # worker information obtained from hub
-        "pid_dict",                 # { task_id: pid }
-        "task_dict",                # { task_id: { task information obtained from self.hub.get_worker_tasks() } }
-        "locked",                   # if task manager is locked, it waits until tasks finish and exits
-        # TODO: last seen attribute?
-    )
-
-
     def __init__(self, conf, logger=None, **kwargs):
         kobo.log.LoggingBase.__init__(self, logger)
         self.conf = kobo.conf.PyConfigParser()
@@ -113,28 +101,26 @@ class TaskManager(kobo.log.LoggingBase):
         # update data from kwargs
         self.conf.load_from_dict(kwargs)
 
-        self.pid_dict = {}
-        self.task_dict = {}
+        self.pid_dict = {}      # { task_id: pid }
+        self.task_dict = {}     # { task_id: { task information obtained from self.hub.get_worker_tasks() } }
 
-        self.locked = False
+        self.locked = False     # if task manager is locked, it waits until tasks finish and exits
 
         self.task_container = TaskContainer()
 
-        # self.hub is created here
+        # self.hub (xml-rpc hub client) is created here
         self.hub = HubProxy(conf, client_type="worker", logger=self._logger, **kwargs)
+        # worker information obtained from hub
         self.worker_info = self.hub.worker.get_worker_info()
         self.update_worker_info()
-
 
     def _task_str(self, task_info):
         """Return a task description."""
         return "#%s [%s]" % (task_info["id"], task_info["method"])
 
-
     def sleep(self):
         """Sleep between polls."""
         time.sleep(self.conf.get("SLEEP_TIME", 20))
-
 
     def update_worker_info(self):
         """Update worker_info dictionary."""
@@ -146,7 +132,6 @@ class TaskManager(kobo.log.LoggingBase):
             self.log_error("Cannot update worker info: %s" % ex)
             return
 
-
 #    def check_version(self):
 #        """Check if worker version matches with hub."""
 #        hub_version = self.worker_info.get("hub_version", None)
@@ -154,7 +139,6 @@ class TaskManager(kobo.log.LoggingBase):
 #            if str(self.version) != str(hub_version):
 #                self.logger.error("Invalid version detected [worker=%s, hub=%s]." % (self.version, hub_version))
 #                self.lock()
-
 
     def wakeup_task(self, task_info):
         # alert is set in hub.worker.get_worker_tasks() when the task is supposed to wake up
@@ -165,7 +149,6 @@ class TaskManager(kobo.log.LoggingBase):
                 self.log_error("Cannot wake up task %s: %s" % (self._task_str(task_info), ex))
             else:
                 self.log_info("Waking up task %s." % self._task_str(task_info))
-
 
     def update_tasks(self):
         """Read and process task statuses from hub.
@@ -273,7 +256,6 @@ class TaskManager(kobo.log.LoggingBase):
 
         self.update_worker_info()
 
-
     def get_next_task(self):
         """ """
         if not self.worker_info["enabled"]:
@@ -304,7 +286,6 @@ class TaskManager(kobo.log.LoggingBase):
         # process assigned tasks first
         for task_info in assigned_task_list:
             self.take_task(task_info)
-
 
     def take_task(self, task_info):
         """Attempt to open the specified task. Return True on success, False otherwise."""
@@ -362,7 +343,6 @@ class TaskManager(kobo.log.LoggingBase):
             pid = self.fork_task(task_info)
             self.pid_dict[task_info["id"]] = pid
 
-
     def fork_task(self, task_info):
         self.log_debug("Forking task %s" % self._task_str(task_info))
 
@@ -389,7 +369,6 @@ class TaskManager(kobo.log.LoggingBase):
         finally:
             # die
             os._exit(os.EX_OK)
-
 
     def run_task(self, task_info):
         TaskClass = self.task_container[task_info["method"]]
@@ -447,7 +426,6 @@ class TaskManager(kobo.log.LoggingBase):
         else:
             hub.worker.close_task(task.task_id, task.result)
 
-
     def finish_task(self, task_info):
         TaskClass = self.task_container[task_info["method"]]
         try:
@@ -458,7 +436,6 @@ class TaskManager(kobo.log.LoggingBase):
             TaskClass.notification(self.hub, self.conf, task_info)
         except:
             self.log_critical(kobo.tback.get_exception())
-
 
     def is_finished_task(self, task_id):
         """Determine if task has finished.
@@ -483,7 +460,6 @@ class TaskManager(kobo.log.LoggingBase):
             return True
 
         return False
-
 
     def cleanup_task(self, task_id):
         """Cleanup after the task.
@@ -516,7 +492,6 @@ class TaskManager(kobo.log.LoggingBase):
 
         return success
 
-
     def shutdown(self):
         """Terminate all tasks and exit."""
         for task_id, task_info in self.task_dict.iteritems():
@@ -533,7 +508,6 @@ class TaskManager(kobo.log.LoggingBase):
             # interrupt only if there are some tasks to interrupt
             self.hub.worker.interrupt_tasks(self.task_dict.keys())
         self.update_worker_info()
-
 
     def lock(self):
         """Lock the task manager to finish all assigned tasks and exit."""

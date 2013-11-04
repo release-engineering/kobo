@@ -23,13 +23,6 @@ class POSTTransport(object):
         t.send_to_host("somehost", "/cgi-bin/upload")
     """
 
-    __slots__ = (
-        "_variables",
-        "_files",
-        "_boundary",
-        "last_response",
-    )
-
     def __init__(self):
         self._variables = []
         self._files = []
