@@ -234,6 +234,9 @@ class FileCache(object):
     def iteritems(self):
         return self.file_cache.iteritems()
 
+    def items(self):
+        return self.file_cache.items()
+
     def add(self, file_path, file_wrapper_class=None, **kwargs):
         file_path = os.path.abspath(file_path)
         if file_path in self.file_cache:
