@@ -249,7 +249,7 @@ def find_symlinks_to(target, directory):
     return result
 
 
-def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir=None, stdin_data=None, return_stdout=True, buffer_size=4096):
+def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir=None, stdin_data=None, return_stdout=True, buffer_size=4096, executable=None):
     """Run a command in shell.
 
     @param show_cmd: show command in stdout/log
@@ -289,7 +289,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     if stdin_data is not None:
         stdin = subprocess.PIPE
 
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=stdin, cwd=workdir)
+    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=stdin, cwd=workdir, executable=executable)
 
     if stdin_data is not None:
         class StdinThread(threading.Thread):

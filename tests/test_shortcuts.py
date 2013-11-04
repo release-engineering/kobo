@@ -167,6 +167,12 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(open(log_file, "r").read(), "XXX\n")
         os.chdir(cwd)
 
+        # bashism - output redirection to subshells
+        # fails in default shell (/bin/sh)
+        self.assertRaises(RuntimeError, run, "echo foo | tee >(md5sum -b) >/dev/null")
+        # passes in bash
+        run("echo foo | tee >(md5sum -b) >/dev/null", executable="/bin/bash")
+
     def test_parse_checksum_line(self):
         line_text = "d4e64fc7f3c6849888bc456d77e511ca  shortcuts.py"
         checksum, path = parse_checksum_line(line_text)
