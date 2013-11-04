@@ -173,16 +173,35 @@ class TestUtils(unittest.TestCase):
         # passes in bash
         run("echo foo | tee >(md5sum -b) >/dev/null", executable="/bin/bash")
 
-    def test_parse_checksum_line(self):
-        line_text = "d4e64fc7f3c6849888bc456d77e511ca  shortcuts.py"
-        checksum, path = parse_checksum_line(line_text)
-        self.assertEqual(checksum, "d4e64fc7f3c6849888bc456d77e511ca")
-        self.assertEqual(path, "shortcuts.py")
+    def test_read_checksum_file(self):
+        data = r"""01186fcf04b4b447f393e552964c08c7b419c1ad7a25c342a0b631b1967d3a27 *test-data/a b
+a63d8014dba891345b30174df2b2a57efbb65b4f9f09b98f245d1b3192277ece *test-data/ab
+\911169ddaaf146aff539f58c26c489af3b892dff0fe283c1c264c65ae5aa59a2 *test-data/a\nb
+ef743c494c8ed766272eef7992607a843799149252822266adc302547587253d *test-data/a"b
+\eaba35b63f3a21c43bc4d579fa4ae0cd388ec8633c08e0a54859d07d33a0c487 *test-data/a\\b"""
+        open(self.tmp_file, "w").write(data)
 
-        line_binary = "d4e64fc7f3c6849888bc456d77e511ca *shortcuts.py"
-        checksum, path = parse_checksum_line(line_binary)
-        self.assertEqual(checksum, "d4e64fc7f3c6849888bc456d77e511ca")
-        self.assertEqual(path, "shortcuts.py")
+        checksums = read_checksum_file(self.tmp_file)
+
+        checksum, path = checksums[0]
+        self.assertEqual(checksum, "01186fcf04b4b447f393e552964c08c7b419c1ad7a25c342a0b631b1967d3a27")
+        self.assertEqual(path, "test-data/a b")
+
+        checksum, path = checksums[1]
+        self.assertEqual(checksum, "a63d8014dba891345b30174df2b2a57efbb65b4f9f09b98f245d1b3192277ece")
+        self.assertEqual(path, "test-data/ab")
+
+        checksum, path = checksums[2]
+        self.assertEqual(checksum, "911169ddaaf146aff539f58c26c489af3b892dff0fe283c1c264c65ae5aa59a2")
+        self.assertEqual(path, "test-data/a\nb")
+
+        checksum, path = checksums[3]
+        self.assertEqual(checksum, "ef743c494c8ed766272eef7992607a843799149252822266adc302547587253d")
+        self.assertEqual(path, "test-data/a\"b")
+
+        checksum, path = checksums[4]
+        self.assertEqual(checksum, "eaba35b63f3a21c43bc4d579fa4ae0cd388ec8633c08e0a54859d07d33a0c487")
+        self.assertEqual(path, "test-data/a\\b")
 
     def test_compute_file_checksums(self):
         self.assertEqual(compute_file_checksums(self.tmp_file, "md5"), dict(md5="098f6bcd4621d373cade4e832627b4f6"))

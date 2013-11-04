@@ -369,7 +369,7 @@ def compute_file_checksums(filename, checksum_types):
     return result
 
 
-CHECKSUM_FILE_RE = re.compile("^(?P<checksum>\w+) [ \*](?P<path>.*)$")
+CHECKSUM_LINE_RE = re.compile(r"^(?P<escaped>\\)?(?P<checksum>\S+) [ \*](?P<path>.*)$")
 def parse_checksum_line(line):
     """Parse a line of md5sum, sha256sum, ... file.
 
@@ -379,15 +379,16 @@ def parse_checksum_line(line):
     @rtype: (str, str)
     """
 
-    line = line.replace("\n", "").replace("\r", "")
-    if line.strip() == "":
+    if not line.strip():
+        return None
+    if line.strip().startswith("#"):
         return None
 
-    match = CHECKSUM_FILE_RE.match(line)
-    if match is None:
-        return None
-
-    return match.groups()
+    match = CHECKSUM_LINE_RE.match(line)
+    data = match.groupdict()
+    if data["escaped"]:
+        data["path"] = data["path"].decode('string-escape')
+    return (data["checksum"], data["path"])
 
 
 def read_checksum_file(file_name):
@@ -410,6 +411,7 @@ def read_checksum_file(file_name):
     fo.close()
     return result
 
+
 def split_path(path):
     """Split path to a list.
 
@@ -427,6 +429,7 @@ def split_path(path):
             return [head]
         return split_path(head[:-len(os.sep)])
     return split_path(head) + [tail]
+
 
 def relative_path(src_path, dst_path=None):
     """Determine relative path between two paths.
@@ -463,6 +466,7 @@ def relative_path(src_path, dst_path=None):
     src_path.append(src_file)
     dst_path.append(dst_file)
     return os.path.join(*src_path)
+
 
 def makedirs(path, mode=0777):
     """
