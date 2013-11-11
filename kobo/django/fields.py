@@ -1,6 +1,6 @@
 from copy import copy
 
-import django.utils.simplejson
+import json
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.core import exceptions
@@ -133,22 +133,24 @@ class JSONField(models.TextField):
             return value
 
         try:
-            return django.utils.simplejson.loads(value)
+            return json.loads(value)
         except ValueError:
             raise exceptions.ValidationError(_("Cannot deserialize JSON data. '%s'") % value)
 
-    def pre_save(self, model_instance, add):
-        value = getattr(model_instance, self.attname, None)
+    def get_db_prep_value(self, value, *args, **kwargs):
         if value is None or value == "null":
             return None
-        return django.utils.simplejson.dumps(value)
+        try:
+            return json.dumps(value)
+        except Exception, ex:
+            raise exceptions.ValidationError(_("Cannot serialize JSON data."))
 
     def value_to_string(self, obj):
         value = self._get_val_from_obj(obj)
-        try:
-            return django.utils.simplejson.dumps(value)
-        except Exception, ex:
-            raise exceptions.ValidationError(_("Cannot serialize JSON data."))
+        return self.get_db_prep_value(value)
+
+    def value_from_object(self, obj):
+        return json.dumps(super(JSONField, self).value_from_object(obj))
 
     def formfield(self, form_class=kobo.django.forms.JSONFormField, **kwargs):
         kwargs["form_class"] = form_class
