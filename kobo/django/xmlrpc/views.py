@@ -83,6 +83,9 @@ class XMLRPCHandlerFactory(object):
 
     def __init__(self, name):
         self.name = name
+        # xml-rpc must be excluded from CSRF processing
+        # instances of this class are being passed to CSRF middleware
+        self.csrf_exempt = True
         self.xmlrpc_dispatcher = DjangoXMLRPCDispatcher(allow_none=True, encoding=None)
         self.setup_dispatcher()
         self.register()
@@ -164,10 +167,6 @@ class XMLRPCHandlerFactory(object):
             context_instance = RequestContext(request)
             context_instance.update(c)
             return HttpResponse(t.render(context_instance))
-
-
-# xml-rpc must be excluded from CSRF processing
-XMLRPCHandlerFactory = csrf_exempt(XMLRPCHandlerFactory)
 
 
 for var in ("XMLRPC_METHODS", ):
