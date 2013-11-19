@@ -84,7 +84,9 @@ class TaskDetail(ExtraDetailView):
                 continue
             if not os.path.basename(i).startswith("traceback"):
                 logs.append(i)
+        logs.sort()
         context["logs"] = logs
+        context['task_list'] = kwargs['object'].subtasks()
         return context
 
 
