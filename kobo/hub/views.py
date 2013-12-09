@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-
+import mimetypes
 import os
 
 import django.contrib.auth.views
@@ -8,7 +8,6 @@ from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
-from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
@@ -29,6 +28,7 @@ class UserDetailView(ExtraDetailView):
     def get_context_data(self, **kwargs):
         context = super(TaskDetail, self).get_context_data(**kwargs)
         context['tasks'] = kwargs['object'].task_set.count()
+        return context
 
 class ChannelDetailView(ExtraDetailView):
     model = Channel
@@ -39,6 +39,7 @@ class ChannelDetailView(ExtraDetailView):
     def get_context_data(self, **kwargs):
         context = super(TaskDetail, self).get_context_data(**kwargs)
         context["worker_list"] = kwargs["object"].worker_set.order_by("name")
+        return context
 
 class ArchDetailView(ExtraDetailView):
     model = Arch
@@ -49,10 +50,12 @@ class ArchDetailView(ExtraDetailView):
     def get_context_data(self, **kwargs):
         context = super(TaskDetail, self).get_context_data(**kwargs)
         context["worker_list"] = kwargs["object"].worker_set.order_by("name")
+        return context
 
 class TaskListView(SearchView):
     # TODO: missing kwargs custom queries for backward compatibility
-    title = _("Tasks")
+    title = _("All tasks")
+    model = Task
     form_class = TaskSearchForm
     template_name = "task/list.html"
     context_object_name = "task_list"
@@ -114,7 +117,6 @@ def task_log(request, id, log_name):
     if not os.path.isfile(file_path) and not file_path.endswith(".gz"):
         file_path = task.logs._get_absolute_log_path(log_name + ".gz")
 
-    import mimetypes
     mimetype = mimetypes.guess_type(file_path)[0] or 'application/octet-stream'
     offset = int(request.GET.get("offset", 0))
     try:
