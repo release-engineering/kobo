@@ -2,9 +2,9 @@
 {% load i18n %}
 
 {% block content %}
-<h2>Worker #{{ worker.id }}: {{ worker.name }}</h2>
+<h2>{% trans 'Worker' %} #{{ worker.id }}: {{ worker.name }}</h2>
 
-<h3>Details</h3>
+<h3>{% trans 'Details' %}</h3>
 <table class="details">
   <tr>
     <th>{% trans "ID" %}</th>

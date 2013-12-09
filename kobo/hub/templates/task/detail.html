@@ -2,9 +2,9 @@
 {% load i18n %}
 
 {% block content %}
-<h2>Task #{{ task.id }}: {{ task.method }}</h2>
+<h2>{% trans 'Task' %} #{{ task.id }}: {{ task.method }}</h2>
 
-<h3>Details</h3>
+<h3>{% trans 'Details' %}</h3>
 <table class="details">
   <tr>
     <th>{% trans "ID" %}</th>
@@ -91,14 +91,14 @@
 </table>
 
 
-<h3>Result</h3>
+<h3>{% trans 'Result' %}</h3>
 <pre class="log">
 {{ task.result }}
 </pre>
 
 
 {% if logs %}
-<h3>Logs</h3>
+<h3>{% trans 'Logs' %}</h3>
 <ul>
 {% for log in logs %}
   <li><a href="{% url 'task/log' task.id log %}">{{ log }}</a> [<a href="{% url 'task/log' task.id log %}?format=raw">download</a>]</li>
@@ -108,7 +108,7 @@
 
 
 {% if task_list %}
-<h3>Subtask list</h3>
+<h3>{% trans 'Subtask list' %}</h3>
 {% include "task/list_include.html" %}
 {% endif %}
 

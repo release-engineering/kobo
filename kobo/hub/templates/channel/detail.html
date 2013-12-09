@@ -2,9 +2,9 @@
 {% load i18n %}
 
 {% block content %}
-<h2>Channel #{{ channel.id }}: {{ channel.name }}</h2>
+<h2>{% trans 'Channel' %} #{{ channel.id }}: {{ channel.name }}</h2>
 
-<h3>Details</h3>
+<h3>{% trans 'Details' %}</h3>
 <table class="details">
   <tr>
     <th>{% trans "ID" %}</th>
@@ -16,7 +16,7 @@
   </tr>
 </table>
 
-<h3>Workers</h3>
+<h3>{% trans 'Workers' %}</h3>
 {% include "worker/list_include.html" %}
 
 {% endblock %}
