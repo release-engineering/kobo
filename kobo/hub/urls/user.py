@@ -13,6 +13,7 @@ urlpatterns = patterns("",
         queryset=get_user_model().objects.order_by("username"),
         template_name="user/list.html",
         context_object_name="usr_list",
-        extra_context={"title": _('Users')}), name="user/list"),
+        title = _('Users'),
+    ), name="user/list"),
     url(r"^(?P<pk>\d+)/$", UserDetailView.as_view(), name="user/detail"),
 )

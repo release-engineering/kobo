@@ -26,18 +26,18 @@ class UserDetailView(ExtraDetailView):
     context_object_name = "usr"
 
     def get_context_data(self, **kwargs):
-        context = super(TaskDetail, self).get_context_data(**kwargs)
+        context = super(UserDetailView, self).get_context_data(**kwargs)
         context['tasks'] = kwargs['object'].task_set.count()
         return context
 
-class ChannelDetailView(ExtraDetailView):
+class DetailViewWithWorkers(ExtraDetailView):
     model = Channel
     template_name = "channel/detail.html"
     context_object_name = "channel"
     title = _("Architecture detail")
 
     def get_context_data(self, **kwargs):
-        context = super(TaskDetail, self).get_context_data(**kwargs)
+        context = super(DetailViewWithWorkers, self).get_context_data(**kwargs)
         context["worker_list"] = kwargs["object"].worker_set.order_by("name")
         return context
 
@@ -48,7 +48,7 @@ class ArchDetailView(ExtraDetailView):
     title = _("Architecture detail")
 
     def get_context_data(self, **kwargs):
-        context = super(TaskDetail, self).get_context_data(**kwargs)
+        context = super(ArchDetailView, self).get_context_data(**kwargs)
         context["worker_list"] = kwargs["object"].worker_set.order_by("name")
         return context
 

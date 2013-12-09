@@ -3,7 +3,7 @@
 
 from django.utils.translation import ugettext_lazy as _
 from django.conf.urls import url, patterns
-from kobo.hub.models import TASK_STATES, Task
+from kobo.hub.models import TASK_STATES
 from kobo.hub.views import TaskListView, TaskDetail
 
 
