@@ -89,6 +89,69 @@ class TestNVR(unittest.TestCase):
         self.assertRaises(ValueError, parse_evr, "1:5", allow_empty_release=False)
         self.assertRaises(ValueError, parse_evr, "1", allow_empty_release=False)
 
+    def test_make_nvr(self):
+        nvr = dict(name="net-snmp", version="5.3.2.2", release="5.el5")
+        self.assertEqual(make_nvr(nvr), "net-snmp-5.3.2.2-5.el5")
+
+        nvr = dict(name="net-snmp", version="5.3.2.2", release="5.el5")
+        self.assertEqual(make_nvr(nvr), "net-snmp-5.3.2.2-5.el5")
+        self.assertEqual(make_nvr(nvr, add_epoch=True), "net-snmp-5.3.2.2-5.el5")
+        self.assertEqual(make_nvr(nvr, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5")
+        self.assertEqual(make_nvr(nvr, add_epoch=True, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5")
+        # force_epoch overrides add_epoch
+        self.assertEqual(make_nvr(nvr, add_epoch=False, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5")
+
+        nvr["epoch"] = None
+        self.assertEqual(make_nvr(nvr, add_epoch=True), "net-snmp-5.3.2.2-5.el5")
+        self.assertEqual(make_nvr(nvr, add_epoch=True, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5")
+
+        nvr["epoch"] = ""
+        self.assertEqual(make_nvr(nvr, add_epoch=True), "net-snmp-5.3.2.2-5.el5")
+        self.assertEqual(make_nvr(nvr, add_epoch=True, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5")
+
+        nvr["epoch"] = "0"
+        self.assertEqual(make_nvr(nvr, add_epoch=True), "net-snmp-5.3.2.2-5.el5")
+        self.assertEqual(make_nvr(nvr, add_epoch=True, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5")
+
+        nvr["epoch"] = 0
+        self.assertEqual(make_nvr(nvr, add_epoch=True), "net-snmp-5.3.2.2-5.el5")
+        self.assertEqual(make_nvr(nvr, add_epoch=True, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5")
+
+        nvr["epoch"] = 1
+        self.assertEqual(make_nvr(nvr, add_epoch=True), "net-snmp-1:5.3.2.2-5.el5")
+        self.assertEqual(make_nvr(nvr, add_epoch=True, force_epoch=True), "net-snmp-1:5.3.2.2-5.el5")
+
+    def test_make_nvra(self):
+        nvra = dict(name="net-snmp", version="5.3.2.2", release="5.el5", arch="i386")
+        self.assertEqual(make_nvra(nvra), "net-snmp-5.3.2.2-5.el5.i386")
+        self.assertEqual(make_nvra(nvra, add_rpm=True), "net-snmp-5.3.2.2-5.el5.i386.rpm")
+        self.assertEqual(make_nvra(nvra, add_epoch=True), "net-snmp-5.3.2.2-5.el5.i386")
+        self.assertEqual(make_nvra(nvra, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5.i386")
+        self.assertEqual(make_nvra(nvra, add_epoch=True, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5.i386")
+        # force_epoch overrides add_epoch
+        self.assertEqual(make_nvra(nvra, add_epoch=False, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5.i386")
+        self.assertEqual(make_nvra(nvra, add_epoch=True, force_epoch=True, add_rpm=True), "net-snmp-0:5.3.2.2-5.el5.i386.rpm")
+
+        nvra["epoch"] = None
+        self.assertEqual(make_nvra(nvra, add_epoch=True), "net-snmp-5.3.2.2-5.el5.i386")
+        self.assertEqual(make_nvra(nvra, add_epoch=True, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5.i386")
+
+        nvra["epoch"] = ""
+        self.assertEqual(make_nvra(nvra, add_epoch=True), "net-snmp-5.3.2.2-5.el5.i386")
+        self.assertEqual(make_nvra(nvra, add_epoch=True, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5.i386")
+
+        nvra["epoch"] = "0"
+        self.assertEqual(make_nvra(nvra, add_epoch=True), "net-snmp-5.3.2.2-5.el5.i386")
+        self.assertEqual(make_nvra(nvra, add_epoch=True, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5.i386")
+
+        nvra["epoch"] = 0
+        self.assertEqual(make_nvra(nvra, add_epoch=True), "net-snmp-5.3.2.2-5.el5.i386")
+        self.assertEqual(make_nvra(nvra, add_epoch=True, force_epoch=True), "net-snmp-0:5.3.2.2-5.el5.i386")
+
+        nvra["epoch"] = 1
+        self.assertEqual(make_nvra(nvra, add_epoch=True), "net-snmp-1:5.3.2.2-5.el5.i386")
+        self.assertEqual(make_nvra(nvra, add_epoch=True, force_epoch=True), "net-snmp-1:5.3.2.2-5.el5.i386")
+
 
 if __name__ == '__main__':
     unittest.main()

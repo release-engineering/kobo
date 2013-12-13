@@ -23,6 +23,8 @@ __all__ = (
     "get_header_field",
     "get_header_fields",
     "split_nvr_epoch",
+    "make_nvr",
+    "make_nvra",
     "parse_nvr",
     "parse_nvra",
     "parse_evr",
@@ -263,29 +265,33 @@ def parse_evr(evr, allow_empty_release=False):
     return result
 
 
-def make_nvr(nvrea_dict, add_epoch=False):
+def make_nvr(nvrea_dict, add_epoch=False, force_epoch=False):
     """Make [E:]N-V-R from a nvrea dictionary.
 
     @param nvrea_dict: {name, version, release, epoch}
     @type nvrea_dict: dict
     @param add_epoch: add epoch to the result
     @type add_epoch: bool
-    @return: [E:]N-V-R string
+    @return: N-[E:]V-R string
     @rtype str
     """
 
-    if add_epoch:
-        epoch = nvrea_dict.get("epoch", "")
-        if epoch != "":
+    if add_epoch or force_epoch:
+        epoch = nvrea_dict.get("epoch", None)
+        epoch = epoch or 0
+        epoch = int(epoch)
+        if epoch or force_epoch:
             epoch = "%s:" % epoch
+        else:
+            epoch = ""
     else:
         epoch = ""
 
-    return "%s%s-%s-%s" % (epoch, nvrea_dict["name"], nvrea_dict["version"], nvrea_dict["release"])
+    return "%s-%s%s-%s" % (nvrea_dict["name"], epoch, nvrea_dict["version"], nvrea_dict["release"])
 
 
-def make_nvra(nvrea_dict, add_epoch=False, add_rpm=False):
-    """Make [E:]N-V-R.A[.rpm] from a nvrea dictionary.
+def make_nvra(nvrea_dict, add_epoch=False, force_epoch=False, add_rpm=False):
+    """Make N-[E:]V-R.A[.rpm] from a nvrea dictionary.
 
     @param nvrea_dict: {name, version, release, epoch, arch}
     @type nvrea_dict: dict
@@ -297,7 +303,7 @@ def make_nvra(nvrea_dict, add_epoch=False, add_rpm=False):
     @rtype str
     """
 
-    result = "%s.%s" % (make_nvr(nvrea_dict, add_epoch), nvrea_dict["arch"])
+    result = "%s.%s" % (make_nvr(nvrea_dict, add_epoch, force_epoch), nvrea_dict["arch"])
     if add_rpm:
         result += ".rpm"
     return result
