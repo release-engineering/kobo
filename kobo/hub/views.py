@@ -3,6 +3,11 @@
 import mimetypes
 import os
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import django.contrib.auth.views
 from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
@@ -11,7 +16,6 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
-from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import RedirectView
 
@@ -178,7 +182,7 @@ def task_log_json(request, id, log_name):
         "content": content,
     }
 
-    return HttpResponse(simplejson.dumps(result), mimetype="application/json")
+    return HttpResponse(json.dumps(result), mimetype="application/json")
 
 
 def login(request, redirect_field_name=REDIRECT_FIELD_NAME):

@@ -6,11 +6,15 @@ import datetime
 import gzip
 import shutil
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models, connection, transaction
-from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_delete
 
@@ -21,12 +25,12 @@ from kobo.shortcuts import random_string, read_from_file, save_to_file, run
 
 def dump_dict(**kwargs):
     """Serialize args dictionary to a json dump."""
-    return simplejson.dumps(kwargs)
+    return json.dumps(kwargs)
 
 
 def load_dict(dump):
     """Deserialize a json dump to dictionary."""
-    return simplejson.loads(dump)
+    return json.loads(dump)
 
 
 class Arch(models.Model):
@@ -485,7 +489,7 @@ class Task(models.Model):
         from django.utils.datastructures import SortedDict
         result = SortedDict()
         for key, value in sorted(self.args.items()):
-            result[key] = simplejson.dumps(value)
+            result[key] = json.dumps(value)
         return result
 
     def export(self, flat=True):

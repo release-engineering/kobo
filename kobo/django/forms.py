@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 import django.forms.fields
-import django.utils.simplejson
 from django.core.exceptions import ValidationError
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
@@ -42,7 +45,7 @@ class JSONWidget(django.forms.widgets.Textarea):
         final_attrs = self.build_attrs(attrs, name=name)
 
         if not isinstance(value, basestring):
-            value = django.utils.simplejson.dumps(value)
+            value = json.dumps(value)
 
         return mark_safe(u'<textarea%s>%s</textarea>' % (flatatt(final_attrs),
                 conditional_escape(force_unicode(value))))
@@ -53,7 +56,7 @@ class JSONFormField(django.forms.fields.CharField):
 
     def to_python(self, value):
         try:
-            result = django.utils.simplejson.loads(value)
+            result = json.loads(value)
         except ValueError:
             raise ValidationError(_("Cannot deserialize JSON data."))
         else:

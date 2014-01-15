@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
 
-import simplejson
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from kobo.client import ClientCommand
 
@@ -30,7 +33,7 @@ class Create_Task(ClientCommand):
 
     def _check_task_args(self, task_args):
         try:
-            arg_dict = simplejson.loads(task_args)
+            arg_dict = json.loads(task_args)
         except ValueError:
             self.parser.error("Arguments have to be specified in valid JSON.")
 
