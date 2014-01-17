@@ -4,18 +4,13 @@ from django.core import validators
 from django.utils.translation import ugettext_lazy as _
 from django.utils.http import urlquote
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
-from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.utils import timezone
 
 
 MAX_LENGTH = 255
 
-#class LongnameUserManager(UserManager):
-#    class Meta:
-#        model = get_user_model()
-
-class LongnameUser(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser, PermissionsMixin):
     """
     Copy (non-abstract) of AbstractUser with longer username. Removed profile support as it
     is deprecated in django 1.5.
