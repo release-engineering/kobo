@@ -24,6 +24,19 @@ class MyModel(models.Model):
 
 You can use such field as normal StateEnum. If model.save() is called, then
 StateEnumFields will call change_state(None, True) if new state is prepared.
+
+
+JSONField
+=========
+
+creates field which contains any JSON-codable object (via json.dumps). On
+db level it is saved as a TextField.
+
+There is boolean option "human_readable" which uses indent and sorting of
+keys when saving to db. It is better for inspection, but can take significant
+amount of space in some cases due to additional spaces and newlines. Also it
+can slow down saving process, as keys are being sorted. From these reasons is
+default value set to False.
 '''
 
 class StateEnumField(models.IntegerField):
@@ -58,7 +71,7 @@ class StateEnumField(models.IntegerField):
             value = int(value)
             if value < 0:
                 raise ValueError
-        except (TypeError, ValueError), ex:
+        except (TypeError, ValueError):
             raise exceptions.ValidationError(_("This value must be a positive integer."))
 
         state_machine = copy(self.state_machine)
@@ -125,6 +138,10 @@ class JSONField(models.TextField):
     """JSON field for storing a serialized dictionary or list."""
     __metaclass__ = models.SubfieldBase
 
+    def __init__(self, *args, **kwargs):
+        self.human_readable = kwargs.pop('human_readable', False)
+        return super(JSONField, self).__init__(*args, **kwargs)
+
     def to_python(self, value):
         if value is None:
             return None
@@ -141,8 +158,11 @@ class JSONField(models.TextField):
         if value is None or value == "null":
             return None
         try:
-            return json.dumps(value)
-        except Exception, ex:
+            if self.human_readable:
+                return json.dumps(value, indent=2, sort_keys=True)
+            else:
+                return json.dumps(value)
+        except Exception:
             raise exceptions.ValidationError(_("Cannot serialize JSON data."))
 
     def value_to_string(self, obj):
@@ -150,7 +170,10 @@ class JSONField(models.TextField):
         return self.get_db_prep_value(value)
 
     def value_from_object(self, obj):
-        return json.dumps(super(JSONField, self).value_from_object(obj))
+        if self.human_readable:
+            return json.dumps(super(JSONField, self).value_from_object(obj), indent=2, sort_keys=True)
+        else:
+            return json.dumps(super(JSONField, self).value_from_object(obj))
 
     def formfield(self, form_class=kobo.django.forms.JSONFormField, **kwargs):
         kwargs["form_class"] = form_class

@@ -11,3 +11,6 @@ class DummyModel(models.Model):
 
 class DummyDefaultModel(models.Model):
     field = JSONField(default={})
+
+class DummyNotHumanModel(models.Model):
+    field = JSONField(default={}, human_readable = True)

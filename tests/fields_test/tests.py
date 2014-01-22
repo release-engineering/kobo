@@ -5,7 +5,7 @@ import json
 import unittest
 
 from django.core.exceptions import ValidationError
-from .models import DummyDefaultModel, DummyModel
+from .models import DummyDefaultModel, DummyModel, DummyNotHumanModel
 
 
 class TestBasicJSONField(unittest.TestCase):
@@ -34,6 +34,28 @@ class TestBasicJSONField(unittest.TestCase):
         d.save()
 
         self.assertNotEqual(d.field, [])
+
+    def test_nothumanreadable(self):
+        """
+        Test human_readable parameter doesn't change anything on dict level
+        """
+        d = DummyNotHumanModel()
+        d.save()
+
+        self.assertEqual(d.field, {})
+
+    def test_nothumanreadable2(self):
+        """
+        Test human_readable parameter doesn't change anything with data
+        """
+
+        data = {'a': 1}
+        d = DummyNotHumanModel()
+        d.field = data
+        d.save()
+
+        self.assertEqual(data, d.field)
+
 
     def test_assignment(self):
         """
