@@ -85,6 +85,10 @@
     <td>{% if task.dt_finished %}{{ task.dt_finished|date:"Y-m-d H:i:s" }}{% endif %}</td>
   </tr>
   <tr>
+      <th>{% trans "Spent time" %}</th>
+      <td>{{ task.get_time_display }}</td>
+  </tr>
+  <tr>
     <th>{% trans "Comment" %}</th>
     <td>{% if task.comment %}{{ task.comment }}{% endif %}</td>
   </tr>
