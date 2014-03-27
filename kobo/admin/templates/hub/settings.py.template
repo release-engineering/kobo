@@ -78,6 +78,9 @@ ADMIN_MEDIA_PREFIX = '/{{ project_name }}/admin/media/'
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = ''
 
+# Ensure db transactions
+ATOMIC_REQUESTS = True
+
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     ('django.template.loaders.cached.Loader', (
@@ -89,7 +92,6 @@ TEMPLATE_LOADERS = (
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.transaction.TransactionMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',

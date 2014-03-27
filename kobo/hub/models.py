@@ -606,22 +606,15 @@ WHERE
 
         waiting = False
 
-        transaction.enter_transaction_management()
-        cursor = connection.cursor()
-        cursor.execute(query, (new_state, new_worker_id, dt_started, dt_finished, waiting, self.id, worker_id))
+        with transaction.atomic():
+            cursor = connection.cursor()
+            cursor.execute(query, (new_state, new_worker_id, dt_started, dt_finished, waiting, self.id, worker_id))
 
-        if cursor.rowcount == 0:
-            transaction.rollback()
-            transaction.leave_transaction_management()
-            raise ObjectDoesNotExist()
+            if cursor.rowcount == 0:
+                raise ObjectDoesNotExist()
 
-        if cursor.rowcount > 1:
-            transaction.rollback()
-            transaction.leave_transaction_management()
-            raise MultipleObjectsReturned()
-
-        transaction.commit()
-        transaction.leave_transaction_management()
+            if cursor.rowcount > 1:
+                raise MultipleObjectsReturned()
 
         self.dt_started = dt_started
         self.dt_finished = dt_finished
@@ -657,7 +650,7 @@ WHERE
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot open task %d, state is %s" % (self.id, self.get_state_display()))
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def close_task(self, task_result=""):
         """Close the task and save result."""
         if task_result:
@@ -670,7 +663,7 @@ WHERE
             raise Exception("Cannot close task %d, state is %s" % (self.id, self.get_state_display()))
         self.logs.gzip_logs()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def cancel_task(self, user=None, recursive=True):
         """Cancel the task."""
         if user is not None and not user.is_superuser:
@@ -697,7 +690,7 @@ WHERE
                 result = False
         return result
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def interrupt_task(self, recursive=True):
         """Set the task state to interrupted."""
         try:
@@ -710,7 +703,7 @@ WHERE
                 task.interrupt_task(recursive=True)
         self.logs.gzip_logs()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def timeout_task(self, recursive=True):
         """Set the task state to timeout."""
         try:
@@ -723,7 +716,7 @@ WHERE
                 task.interrupt_task(recursive=True)
         self.logs.gzip_logs()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def fail_task(self, task_result=""):
         """Fail this task and save result."""
         if task_result:
