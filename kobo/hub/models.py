@@ -737,7 +737,7 @@ WHERE
         """Is the task successfuly finished? Task state must be closed."""
         return self.state in FAILED_STATES
 
-    def resubmit_task(self, user):
+    def resubmit_task(self, user, force=False):
         """Resubmit failed/canceled top-level task."""
         if not user.is_superuser:
             if self.owner.username != user.username:
@@ -749,7 +749,7 @@ WHERE
         if self.exclusive:
             raise Exception("Cannot resubmit exclusive task: %s" % self.id)
 
-        if self.state not in FAILED_STATES:
+        if not force and self.state not in FAILED_STATES:
             states = [ TASK_STATES.get_value(i) for i in FAILED_STATES ]
             raise Exception("Task '%s' must be in: %s" % (self.id, states))
 

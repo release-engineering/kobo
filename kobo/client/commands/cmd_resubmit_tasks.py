@@ -14,6 +14,7 @@ class Resubmit_Tasks(ClientCommand):
 
     def options(self):
         self.parser.usage = "%%prog %s task_id [task_id...]" % self.normalized_name
+        self.parser.add_option("--force", action="store_true", help="Resubmit also tasks which are closed properly.")
 
 
     def run(self, *args, **kwargs):
@@ -30,7 +31,7 @@ class Resubmit_Tasks(ClientCommand):
         failed = False
         for task_id in tasks:
             try:
-                resubmitted_id = self.hub.client.resubmit_task(task_id)
+                resubmitted_id = self.hub.client.resubmit_task(task_id, kwargs.pop("force", False))
                 resubmitted_tasks.append(resubmitted_id)
             except Exception, ex:
                 failed = True
