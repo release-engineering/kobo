@@ -305,7 +305,15 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         if buffer_size == -1:
             lines = proc.stdout.readline()
         else:
-            lines = proc.stdout.read(buffer_size)
+            try:
+                lines = proc.stdout.read(buffer_size)
+            except (IOError, OSError) as ex:
+                import errno
+                if ex.errno == errno.EINTR:
+                    continue
+                else:
+                    raise
+
         if lines == "":
             break
         if stdout:
