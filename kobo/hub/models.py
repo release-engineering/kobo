@@ -126,7 +126,7 @@ class Worker(models.Model):
 
     def save(self, *args, **kwargs):
         # precompute task count, current load and ready
-        tasks = Task.objects.running().filter(worker=self)
+        tasks = Task.objects.opened().filter(worker=self)
         self.task_count = tasks.count()
         self.current_load = sum(( task.weight for task in tasks if not task.waiting ))
         self.ready = self.enabled and (self.current_load < self.max_load and self.task_count < 3*self.max_load)
