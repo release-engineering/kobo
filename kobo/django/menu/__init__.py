@@ -23,11 +23,14 @@ menu = (
     MenuItem.include("project.another_app.menu"),
 )
 
-# In this example is MenuItem-1 and it's submenu submenu tree accessible for anybody.
+# In this example is MenuItem-1 and it's submenu tree accessible for anybody.
 # MenuItem-2 is only for users in group Developers with specific permission.
 # Instead of specifying complete tree in one file, you can use include()
 # command in similar way as it is used in urls.py (see third menu item).
 # include() function is also a staticmethod of MenuItem class (see fourth menu item).
+#
+# If you leave title empty, the menu item will serve as a delimiter. In such a
+# case you can also omit the url.
 
 # can be specified only once in project-wide menu
 css_active_class = "active_menu"
@@ -58,6 +61,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 # The simplest use in template is just to display menu as {{ menu }}.
 # Default format is nested ul list.
 # Active menus/submenus will be tagged with css_active_class.
+# Delimiters will be rendered as empty list items with class `delimiter`.
 
 # If you need another approach, you can access directly to all menu items
 # and display menu parts by yourself:
@@ -66,6 +70,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 {% for m in menu.items %}
   {{ m.as_a }}
 {% endfor %}
+
+# Delimiters rendered with `as_a` return empty string, so are invisible.
 
 # menu.levelX = active menu item on Xth level
 # menu.levelX.items = all visible menu items of the ^^^ menu
@@ -130,6 +136,8 @@ class MenuItem(object):
         return len(self.url)
 
     def __unicode__(self):
+        if self.title == "":
+            return mark_safe(u"<li class='divider'></li>")
         result = ""
         if self.items:
             result = u"<ul>%s</ul>" % u"".join([unicode(i) for i in self.items])
@@ -137,7 +145,7 @@ class MenuItem(object):
 
     @property
     def url(self):
-        if not self._url_is_resolved:
+        if self._url and not self._url_is_resolved:
             self._url = reverse(self._url)
         self._url_is_resolved = True
         return self._url
