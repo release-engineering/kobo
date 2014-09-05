@@ -78,6 +78,13 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 {% for m in menu.level1.items %}
   {{ m.as_a }}
 {% endfor %}
+
+# If you are using Bootstrap and want to include the menu in a navbar, there is
+# a method to render the menu in this way. Note however that in this case you
+# can only use one level of nesting. The top level items will be rendered
+# directly in the navbar, their children will form a dropdown menu and their
+# grand children will be ignored.
+{{ m.as_bootstrap_navbar_dropdown_menu }}
 """
 
 
@@ -227,6 +234,28 @@ class MenuItem(object):
 
         return True
 
+    def as_li(self):
+        """Render menu item as a list item."""
+        if not self.title:
+            return mark_safe('<li class="divider"></li>')
+        return mark_safe('<li>%s</li>' % self.as_a())
+
+    def as_bootstrap_navbar_dropdown_menu(self):
+        """
+        Render menu item as a list with a possible dropdown. Note that any
+        items nested under children of this item are ignored.
+        """
+        cls = ''
+        sub = ''
+        link = self.as_a()
+        if self.items:
+            link = '<a href="%s" class="dropdown-toggle" data-toggle="dropdown">%s <span class="caret"></span></a>' % (self.url, self.title)
+            sub = ''.join([i.as_li() for i in self.items])
+            sub = '<ul class="dropdown-menu" role="menu">%s</ul>' % sub
+            cls = ' class="dropdown"'
+
+        return mark_safe('<li%s>%s%s</li>' % (cls, link, sub))
+
 
 class MainMenu(MenuItem):
 
@@ -247,6 +276,15 @@ class MainMenu(MenuItem):
     def __unicode__(self):
         """Return menu as printable <ul> list."""
         return mark_safe(u"<ul>%s</ul>" % "".join([unicode(i) for i in self.items]))
+
+    def as_bootstrap_navbar_dropdown_menu(self):
+        """
+        Return menu as a printable <ul> list appropriate for use in Bootstrap
+        navbar. Only one level nesting is supported and the nested items are
+        rendered as dropdown menus.
+        """
+        content = ''.join([i.as_bootstrap_navbar_dropdown_menu() for i in self.items])
+        return mark_safe('<ul class="nav navbar-nav">%s</ul>' % content)
 
     def __getattr__(self, name):
         # get specified submenu level in active menu
