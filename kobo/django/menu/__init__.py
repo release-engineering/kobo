@@ -319,16 +319,18 @@ class MainMenu(MenuItem):
         return self
 
     def find_active_menu(self):
+        if self.active:
+            # reset cached active path
+            self.active.set_active(False)
+
         matches = [i for i in self.cached_menuitems if i.visible and i.url and self.path.startswith(i.url)]
         if not matches:
+            self.active = None
             return None
 
         # find the longest menu match
         matches.sort(key=len, reverse=True)
         found = matches[0]
-        if self.active:
-            # reset cached active path
-            self.active.set_active(False)
         found.set_active(True)
         self.active = found
         return found
