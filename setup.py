@@ -53,7 +53,7 @@ for package in package_data.keys():
 
 setup(
     name            = "kobo",
-    version         = "0.4.3",
+    version         = "0.5.0",
     description     = "Python modules for tools development",
     url             = "https://fedorahosted.org/kobo/",
     author          = "Red Hat, Inc.",
