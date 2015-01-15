@@ -59,10 +59,10 @@ def cancel_task(request, task_id):
 
 
 @login_required
-def resubmit_task(request, task_id):
+def resubmit_task(request, task_id, force=False):
     """Resubmit a failed task and return new task_id."""
     task = models.Task.objects.get(id=task_id)
-    return task.resubmit_task(request.user)
+    return task.resubmit_task(request.user, force)
 
 
 def list_workers(request, enabled=True):
