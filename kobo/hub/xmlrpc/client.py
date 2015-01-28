@@ -9,6 +9,9 @@ from kobo.django.xmlrpc.decorators import admin_required, login_required
 
 
 __all__ = (
+    "enable_worker",
+    "disable_worker",
+    "get_worker_info",
     "shutdown_worker",
     "task_info",
     "get_tasks",
@@ -22,7 +25,7 @@ __all__ = (
 
 @admin_required
 def shutdown_worker(request, worker_name, kill=False):
-    """shutdown(worker_name, kill): None
+    """shutdown_worker(worker_name, kill): None
 
     Send shutdown request to a worker.
     If kill argument is set to True, kill worker immediately,
@@ -30,6 +33,26 @@ def shutdown_worker(request, worker_name, kill=False):
     """
     return models.Task.create_shutdown_task(request.user.username, worker_name, kill=kill)
 
+
+@admin_required
+def enable_worker(request, worker_name):
+    """enable_worker(worker_name): none
+    """
+    models.Worker.objects.filter(name = worker_name).update(enabled=True)
+
+
+@admin_required
+def disable_worker(request, worker_name):
+    """disable_worker(worker_name, kill): None
+    """
+    models.Worker.objects.filter(name = worker_name).update(enabled=False)
+
+@admin_required
+def get_worker_info(request, worker_name):
+    try:
+        return models.Worker.objects.get(name = worker_name).export()
+    except models.Worker.DoesNotExist:
+        return {}
 
 def task_info(request, task_id, flat=False):
     """task_info(task_id, flat=False): dict or None"""
