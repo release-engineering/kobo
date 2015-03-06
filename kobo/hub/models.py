@@ -557,7 +557,7 @@ class Task(models.Model):
         if self.time is None:
             return ""
 
-        time = "%02d:%02d:%02d" % ((self.time.seconds/60/24), (self.time.seconds/60 % 24), (self.time.seconds % 60))
+        time = "%02d:%02d:%02d" % ((self.time.seconds/60.0/60.0), (self.time.seconds/60.0 % 60), self.time.seconds % 60)
         if self.time.days:
             time = _("%s days, %s") % (self.time.days, time)
         return time
