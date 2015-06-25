@@ -71,6 +71,7 @@ class Add_User(kobo.client.ClientCommand):
 import os
 import base64
 import hashlib
+import ssl
 import urlparse
 import xmlrpclib
 
@@ -142,11 +143,20 @@ class HubProxy(object):
         if transport is not None:
             self._transport = transport
         else:
+            transport_args = {}
             if self._hub_url.startswith("https://"):
                 TransportClass = kobo.xmlrpc.retry_request_decorator(kobo.xmlrpc.SafeCookieTransport)
+                if hasattr(ssl, 'create_default_context'):
+                    ssl_context = ssl.create_default_context()
+                    if self._conf.get('CA_CERT'):
+                        ssl_context.load_verify_locations(cafile=self._conf['CA_CERT'])
+                    else:
+                        ssl_context.check_hostname = False
+                        ssl_context.verify_mode = ssl.CERT_NONE
+                    transport_args['context'] = ssl_context
             else:
                 TransportClass = kobo.xmlrpc.retry_request_decorator(kobo.xmlrpc.CookieTransport)
-            self._transport = TransportClass()
+            self._transport = TransportClass(**transport_args)
 
         # self._hub is created here
         try:

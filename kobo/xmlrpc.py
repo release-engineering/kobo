@@ -209,6 +209,7 @@ class CookieTransport(xmlrpclib.Transport):
         self.timeout = kwargs.pop("timeout", 0)
         self.proxy_config = self._get_proxy(**kwargs)
         self.no_proxy = os.environ.get("no_proxy", "").lower().split(',')
+        self.context = kwargs.pop('context', None)
 
         if hasattr(xmlrpclib.Transport, "__init__"):
             xmlrpclib.Transport.__init__(self, *args, **kwargs)
