@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import time
 import urllib2
 try:
@@ -60,7 +61,9 @@ class Watch_Log(ClientCommand):
         offset = 0
         while True:
             data = json.loads(urllib2.urlopen(url % (task_id, kwargs['type'], offset)).read())
-            print data['content'],
+            if data['content']:
+                sys.stdout.write(data['content'])
+                sys.stdout.flush()
             if data['task_finished'] == 1 or kwargs['nowait']:
                  break
             offset = data['new_offset']
