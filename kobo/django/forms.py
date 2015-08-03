@@ -9,7 +9,7 @@ import django.forms.fields
 from django.core.exceptions import ValidationError
 from django.utils.encoding import force_unicode
 from django.utils.safestring import mark_safe
-from django.forms.util import flatatt
+from django.forms.utils import flatatt
 from django.utils.html import conditional_escape
 from django.utils.translation import ugettext_lazy as _
 

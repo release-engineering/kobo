@@ -132,7 +132,7 @@ def task_log(request, id, log_name):
 
     if request.GET.get("format") == "raw":
         # use _stream_file() instad of passing file object in order to improve performance
-        response = HttpResponse(_stream_file(file_path, offset), mimetype=mimetype)
+        response = HttpResponse(_stream_file(file_path, offset), content_type=mimetype)
 
         response["Content-Length"] = content_len
         # set filename to be real filesystem name
@@ -141,7 +141,7 @@ def task_log(request, id, log_name):
 
     if log_name.endswith(".html") or log_name.endswith(".htm"):
         # use _stream_file() instad of passing file object in order to improve performance
-        response = HttpResponse(_stream_file(file_path, offset), mimetype=mimetype)
+        response = HttpResponse(_stream_file(file_path, offset), content_type=mimetype)
         response["Content-Length"] = content_len
         return response
 
@@ -170,7 +170,7 @@ def task_log(request, id, log_name):
 
 def task_log_json(request, id, log_name):
     if os.path.basename(log_name).startswith("traceback") and not request.user.is_superuser:
-        return HttpResponseForbidden(mimetype="application/json")
+        return HttpResponseForbidden(content_type="application/json")
 
     task = get_object_or_404(Task, id=id)
     offset = int(request.GET.get("offset", 0))
@@ -182,7 +182,7 @@ def task_log_json(request, id, log_name):
         "content": content,
     }
 
-    return HttpResponse(json.dumps(result), mimetype="application/json")
+    return HttpResponse(json.dumps(result), content_type="application/json")
 
 
 def login(request, redirect_field_name=REDIRECT_FIELD_NAME):

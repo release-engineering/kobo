@@ -143,7 +143,7 @@ class XMLRPCHandlerFactory(object):
             django.db.reset_queries()
 
         if request.method == "POST":
-            return HttpResponse(self.xmlrpc_dispatcher._marshaled_dispatch(request), mimetype="text/xml")
+            return HttpResponse(self.xmlrpc_dispatcher._marshaled_dispatch(request), content_type="text/xml")
         else:
             method_list = []
             for method in self.xmlrpc_dispatcher.system_listMethods():

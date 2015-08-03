@@ -7,7 +7,6 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserM
 from django.core.mail import send_mail
 from django.utils import timezone
 
-
 MAX_LENGTH = 255
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -18,11 +17,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     Username, password and email are required. Other fields are optional.
     """
     username = models.CharField(_('username'), max_length=MAX_LENGTH, unique=True,
-        help_text=_('Required. %s characters or fewer. Letters, numbers and '
-                    '@/./+/-/_ characters' % MAX_LENGTH),
+        help_text=_('Required. 30 characters or fewer. Letters, digits and '
+                    '@/./+/-/_ only.'),
         validators=[
-            validators.RegexValidator(re.compile('^[\w.@+-]+$'), _('Enter a valid username.'), 'invalid')
-        ])
+            validators.RegexValidator(r'^[\w.@+-]+$',
+                                      _('Enter a valid username. '
+                                        'This value may contain only letters, numbers '
+                                        'and @/./+/-/_ characters.'), 'invalid'),
+        ],
+        error_messages={
+            'unique': _("A user with that username already exists."),
+        })
     first_name = models.CharField(_('first name'), max_length=30, blank=True)
     last_name = models.CharField(_('last name'), max_length=30, blank=True)
     email = models.EmailField(_('email address'), blank=True)
@@ -44,9 +49,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name = _('user')
         verbose_name_plural = _('users')
 
-    def get_absolute_url(self):
-        return "/users/%s/" % urlquote(self.username)
-
     def get_full_name(self):
         """
         Returns the first_name plus the last_name, with a space in between.
@@ -58,8 +60,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         "Returns the short name for the user."
         return self.first_name
 
-    def email_user(self, subject, message, from_email=None):
+    def email_user(self, subject, message, from_email=None, **kwargs):
         """
         Sends an email to this User.
         """
-        send_mail(subject, message, from_email, [self.email])
+        send_mail(subject, message, from_email, [self.email], **kwargs)
