@@ -353,13 +353,13 @@ def compute_file_checksums(filename, checksum_types):
     @rtype: dict
     """
 
-    checksum_types = force_tuple(checksum_types)
+    checksum_types = set(force_tuple(checksum_types))
     checksums = {}
 
     for checksum_type in checksum_types:
         try:
             checksums[checksum_type] = getattr(hashlib, checksum_type)()
-        except ValueError:
+        except AttributeError:
             raise ValueError("Checksum is not supported in hashlib: %s" % checksum_type)
 
     fo = open(filename, "r")

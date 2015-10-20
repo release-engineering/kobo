@@ -206,6 +206,8 @@ ef743c494c8ed766272eef7992607a843799149252822266adc302547587253d *test-data/a"b
     def test_compute_file_checksums(self):
         self.assertEqual(compute_file_checksums(self.tmp_file, "md5"), dict(md5="098f6bcd4621d373cade4e832627b4f6"))
         self.assertEqual(compute_file_checksums(self.tmp_file, ["md5", "sha256"]), dict(md5="098f6bcd4621d373cade4e832627b4f6", sha256="9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"))
+        self.assertEqual(compute_file_checksums(self.tmp_file, ["md5", "md5"]), dict(md5="098f6bcd4621d373cade4e832627b4f6"))
+        self.assertRaises(ValueError, compute_file_checksums, self.tmp_file, "unsupported_checksum")
 
     def test_makedirs(self):
         path = os.path.join(self.tmp_dir, "dir")
