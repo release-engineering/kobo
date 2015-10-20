@@ -14,17 +14,31 @@ class Disable_Worker(ClientCommand):
 
 
     def options(self):
-        self.parser.usage = "%%prog %s worker_name [worker_name]" % self.normalized_name
+        self.parser.usage = "%%prog %s [--all] [worker_name]" % self.normalized_name
+
+        self.parser.add_option(
+            "--all",
+            default=False,
+            action="store_true",
+            help="Disable all enabled workers"
+        )
 
     def run(self, *args, **kwargs):
-        if len(args) == 0:
-            self.parser.error("No worker specified.")
+        if len(args) == 0 and not kwargs['all']:
+            self.parser.error("No worker (or --all) specified.")
+        if len(args) and kwargs['all']:
+            self.parser.error("Specify worker name or --all. From safety reasons both are not allowed.")
 
         username = kwargs.pop("username", None)
         password = kwargs.pop("password", None)
-        workers = args
 
         self.set_hub(username, password)
+        if kwargs['all']:
+            try:
+                workers = self.hub.client.list_workers(enabled=True)
+            except Fault, ex:
+                sys.stderr.write("%s\n" % ex.faultString)
+                sys.exit(1)
         for worker in workers:
             try:
                 self.hub.client.disable_worker(worker)
