@@ -60,16 +60,26 @@ def task_info(request, task_id, flat=False):
     return task.export(flat=flat)
 
 
-def get_tasks(request, task_id_list):
+def get_tasks(request, task_id_list, state_list):
     """get_tasks(task_id_list): list
 
-    @param task_id_list: list of task ids
+    @param task_id_list: list of task ids, can be empty, then all tasks are
+    retrieved
     @type task_id_list: [int]
+    @param state_list: task state ids by which task_id_list should be
+    filtered
+    @type: [int]
     @return: list of task_info dicts
     @rtype: list
     """
 
-    return [ i.export(flat=True) for i in models.Task.objects.filter(id__in=task_id_list) ]
+    if task_id_list:
+        tasks = models.Task.objects.filter(id__in=task_id_list)
+    else:
+        tasks = models.Task.objects.all()
+    if state_list:
+        tasks = tasks.filter(state__in=state_list)
+    return [ i.export(flat=True) for i in tasks ]
 
 
 @login_required
