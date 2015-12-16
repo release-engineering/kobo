@@ -2,7 +2,6 @@ import re
 from django.db import models
 from django.core import validators
 from django.utils.translation import ugettext_lazy as _
-from django.utils.http import urlquote
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, UserManager
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -17,8 +16,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     Username, password and email are required. Other fields are optional.
     """
     username = models.CharField(_('username'), max_length=MAX_LENGTH, unique=True,
-        help_text=_('Required. 30 characters or fewer. Letters, digits and '
-                    '@/./+/-/_ only.'),
+        help_text=_('Required. %s characters or fewer. Letters, digits and @/./+/-/_ only.' % MAX_LENGTH),
         validators=[
             validators.RegexValidator(r'^[\w.@+-]+$',
                                       _('Enter a valid username. '
