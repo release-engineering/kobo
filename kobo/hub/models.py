@@ -373,6 +373,9 @@ class Task(models.Model):
 
     class Meta:
         ordering = ("-id", )
+        permissions = (
+            ("can_see_traceback", _("Can see traceback")),
+        )
 
     def __init__(self, *args, **kwargs):
         self.logs = TaskLogs(self)
