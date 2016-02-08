@@ -131,25 +131,25 @@ class LoggingBase(object):
     def __init__(self, logger=None):
         self._logger = logger
 
-    def __log(self, level, msg):
+    def __log(self, level, msg, *args, **kwargs):
         if self._logger is None:
             return
-        self._logger.log(level, msg)
+        self._logger.log(level, msg, *args, **kwargs)
 
-    def log_debug(self, msg):
-        self.__log(logging.DEBUG, msg)
+    def log_debug(self, msg, *args, **kwargs):
+        self.__log(logging.DEBUG, msg, *args, **kwargs)
 
-    def log_verbose(self, msg):
-        self.__log(logging.VERBOSE, msg)
+    def log_verbose(self, msg, *args, **kwargs):
+        self.__log(logging.VERBOSE, msg, *args, **kwargs)
 
-    def log_info(self, msg):
-        self.__log(logging.INFO, msg)
+    def log_info(self, msg, *args, **kwargs):
+        self.__log(logging.INFO, msg, *args, **kwargs)
 
-    def log_warning(self, msg):
-        self.__log(logging.WARNING, msg)
+    def log_warning(self, msg, *args, **kwargs):
+        self.__log(logging.WARNING, msg, *args, **kwargs)
 
-    def log_error(self, msg):
-        self.__log(logging.ERROR, msg)
+    def log_error(self, msg, *args, **kwargs):
+        self.__log(logging.ERROR, msg, *args, **kwargs)
 
-    def log_critical(self, msg):
-        self.__log(logging.CRITICAL, msg)
+    def log_critical(self, msg, *args, **kwargs):
+        self.__log(logging.CRITICAL, msg, *args, **kwargs)
