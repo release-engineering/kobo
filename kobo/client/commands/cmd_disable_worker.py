@@ -35,10 +35,12 @@ class Disable_Worker(ClientCommand):
         self.set_hub(username, password)
         if kwargs['all']:
             try:
-                workers = self.hub.client.list_workers(enabled=True)
+                workers = self.hub.client.list_workers(True)
             except Fault, ex:
                 sys.stderr.write("%s\n" % ex.faultString)
                 sys.exit(1)
+        else:
+            workers = args
         for worker in workers:
             try:
                 self.hub.client.disable_worker(worker)
