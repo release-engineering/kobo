@@ -209,7 +209,7 @@ def get_tasks_to_assign(request):
     # free tasks for each channel relevant to the worker
     tasks = []
     for channel in request.worker.channels.all():
-        for task in Task.objects.free().filter(awaited=False, channel=channel).order_by("-priority", "id")[:max_tasks]:
+        for task in Task.objects.free().filter(awaited=False, channel=channel, priority__gte=request.worker.min_priority).order_by("-priority", "id")[:max_tasks]:
             task_info = task.export(flat=False)
             tasks.append(task_info)
 

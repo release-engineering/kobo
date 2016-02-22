@@ -83,7 +83,7 @@ class TaskDetail(ExtraDetailView):
         context = super(TaskDetail, self).get_context_data(**kwargs)
         logs = []
         for i in kwargs['object'].logs.list:
-            if self.request.user.is_superuser:
+            if self.request.user.has_perm('hub.can_see_traceback'):
                 logs.append(i)
                 continue
             if not os.path.basename(i).startswith("traceback"):
@@ -114,8 +114,8 @@ def task_log(request, id, log_name):
     """
     IMPORTANT: reverse to 'task/log-json' *must* exist
     """
-    if os.path.basename(log_name).startswith("traceback") and not request.user.is_superuser:
-        return HttpResponseForbidden("Traceback is available only for superusers.")
+    if os.path.basename(log_name).startswith("traceback") and not request.user.has_perm('hub.can_see_traceback'):
+        return HttpResponseForbidden("You don't have permission to see the traceback.")
 
     task = get_object_or_404(Task, id=id)
 

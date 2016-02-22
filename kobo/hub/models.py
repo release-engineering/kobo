@@ -110,6 +110,7 @@ class Worker(models.Model):
     enabled             = models.BooleanField(default=True, help_text=_("Enabled workers are allowed to process tasks."))
     max_load            = models.PositiveIntegerField(blank=True, default=1, help_text=_("Maximum allowed load (sum of task weights)."))
     max_tasks           = models.PositiveIntegerField(blank=True, default=0, help_text=_("Maximum assigned tasks. (0 = no limit)"))
+    min_priority        = models.PositiveIntegerField(default=0, help_text=_("Worker will take only tasks of this or higher priority."))
 
     # redundant fields to improve performance
     ready               = models.BooleanField(default=True, help_text=_("Is the worker ready to take new tasks?<br />This is a generated field."))
@@ -373,6 +374,9 @@ class Task(models.Model):
 
     class Meta:
         ordering = ("-id", )
+        permissions = (
+            ("can_see_traceback", _("Can see traceback")),
+        )
 
     def __init__(self, *args, **kwargs):
         self.logs = TaskLogs(self)

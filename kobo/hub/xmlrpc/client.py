@@ -60,7 +60,7 @@ def task_info(request, task_id, flat=False):
     return task.export(flat=flat)
 
 
-def get_tasks(request, task_id_list, state_list):
+def get_tasks(request, task_id_list, state_list=None):
     """get_tasks(task_id_list): list
 
     @param task_id_list: list of task ids, can be empty, then all tasks are
