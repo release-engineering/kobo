@@ -50,16 +50,16 @@ class TimeoutHTTPProxyConnection(TimeoutHTTPConnection):
     def __init__(self, host, proxy, port=None, proxy_user=None, proxy_password=None, **kwargs):
         TimeoutHTTPConnection.__init__(self, proxy, **kwargs)
         self.proxy, self.proxy_port = self.host, self.port
-        self._set_hostport(host, port)
+        self.set_host_and_port(host, port)
         self.real_host, self.real_port = self.host, self.port
         self.proxy_user = proxy_user
         self.proxy_password = proxy_password
 
     def connect(self):
         # Connect to the proxy
-        self._set_hostport(self.proxy, self.proxy_port)
+        self.set_host_and_port(self.proxy, self.proxy_port)
         httplib.HTTPConnection.connect(self)
-        self._set_hostport(self.real_host, self.real_port)
+        self.set_host_and_port(self.real_host, self.real_port)
         timeout = getattr(self, "_timeout", 0)
         if timeout:
             self.sock.settimeout(timeout)
@@ -78,6 +78,14 @@ class TimeoutHTTPProxyConnection(TimeoutHTTPConnection):
         userpass = "%s:%s" % (self.proxy_user, self.proxy_password)
         enc_userpass = base64.encodestring(userpass).strip()
         self.putheader("Proxy-Authorization", "Basic %s" % enc_userpass)
+
+
+    def set_host_and_port(self, host, port):
+        """Due to httplib.py changes using set host & port method depends on python version"""
+        if sys.version_info[:2] < (2, 7):
+            self._set_hostport(host, port)
+        else:
+            (self.proxy, self.proxy_port) = self._get_hostport(self.proxy, self.proxy_port)
 
 
 class TimeoutHTTP(httplib.HTTP):
@@ -279,20 +287,6 @@ class CookieTransport(xmlrpclib.Transport):
             host_ = host.split(':')[0]
         else:
             host_ = "%s:%s" % (host, TimeoutHTTPProxyConnection.default_port)
-
-        if self.proxy_config["proxy"] and host not in self.no_proxy and host_ not in self.no_proxy:
-            if sys.version_info[:2] < (2, 7):
-                host, extra_headers, x509 = self.get_host_info(host)
-                conn = TimeoutProxyHTTP(host, **self.proxy_config)
-                conn.set_timeout(self.timeout)
-                return conn
-            else:
-                CONNECTION_LOCK.acquire()
-                host, extra_headers, x509 = self.get_host_info(host)
-                conn = TimeoutProxyHTTPS(host, **self.proxy_config)
-                conn.set_timeout(self.timeout)
-                CONNECTION_LOCK.release()
-                return conn
 
         if sys.version_info[:2] < (2, 7):
             host, extra_headers, x509 = self.get_host_info(host)
@@ -575,7 +569,7 @@ def retry_request_decorator(transport_class):
                         raise
                     retries_left = self.retry_count - i
                     retries = "%d %s left" % (retries_left, retries_left == 1 and "retry" or "retries") # 1 retry left / X retries left
-                    print >> sys.stderr, "XML-RPC connection to %s failed: %s, %s" % (args[0], " ".join(ex.args[1:]), retries)
+                    print >> sys.stderr, "XML-RPC connection to %s failed: %s, %s" % (args[0], ex.args[1:], retries)
                     time.sleep(self.retry_timeout)
 
     RetryTransportClass.__name__ = transport_class.__name__
