@@ -80,8 +80,8 @@ class TimeoutHTTPProxyConnection(TimeoutHTTPConnection):
         self.putheader("Proxy-Authorization", "Basic %s" % enc_userpass)
 
     def set_host_and_port(self, host, port):
-        """Due to httplib.py changes using set host & port method depends on python version"""
-        if sys.version_info[:2] < (2, 7):
+        """Due to httplib.py changes using set host & port method depends on package version"""
+        if hasattr(self, "_set_hostport"):
             self._set_hostport(host, port)
         else:
             (self.host, self.port) = self._get_hostport(host, port)
