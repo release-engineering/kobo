@@ -20,7 +20,7 @@ class TaskAdmin(admin.ModelAdmin):
     raw_id_fields = ("parent", "owner", "resubmitted_by", "resubmitted_from")
 
 class WorkerAdmin(admin.ModelAdmin):
-    list_display = ("name", "enabled", "ready", "max_load", "current_load", "task_count")
+    list_display = ("name", "enabled", "ready", "max_load", "current_load", "task_count","min_priority")
     list_filter = ("enabled", "ready")
     search_fields = ("name",)
 
