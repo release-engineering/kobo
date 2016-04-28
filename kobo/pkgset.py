@@ -225,6 +225,9 @@ class FileCache(object):
     def __getitem__(self, name):
         return self.file_cache[os.path.abspath(name)]
 
+    def __setitem__(self, name, value):
+        self.file_cache[os.path.abspath(name)] = value
+
     def __iter__(self):
         return self.file_cache.iterkeys()
 
