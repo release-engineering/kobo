@@ -5,6 +5,9 @@ import sys
 import datetime
 import gzip
 import shutil
+import logging
+
+logger =  logging.getLogger("kobo")
 
 try:
     import json
@@ -615,7 +618,11 @@ WHERE
             cursor.execute(query, (new_state, new_worker_id, dt_started, dt_finished, waiting, self.id, worker_id))
 
             if cursor.rowcount == 0:
-                raise ObjectDoesNotExist()
+                if self.state in FINISHED_STATES:
+                    logger.debug("Trying to interrupt closed task %s, ignoring.", self.id)
+                    return
+                else:
+                    raise ObjectDoesNotExist()
 
             if cursor.rowcount > 1:
                 raise MultipleObjectsReturned()
