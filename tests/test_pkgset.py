@@ -153,6 +153,18 @@ class TestFileCacheClass(unittest.TestCase):
         self.assertEqual(id(self.cache[self.file1]), id(wrap1))
         self.assertEqual(id(self.cache[self.file2]), id(wrap2))
 
+    def test_setitem(self):
+        open(self.file1, "w").write("hello\n")
+
+        self.cache1 = FileCache()
+        self.cache2 = FileCache()
+        wrap = self.cache1.add(self.file1)
+
+        self.cache2[self.file1] = wrap
+
+        self.assertEqual(len(self.cache2.file_cache), 1)
+        self.assertEqual(id(self.cache2[self.file1]), id(wrap))
+
     def test_iteritems(self):
         open(self.file1, "w").write("hello\n")
         open(self.file2, "w").write("hello\n")
