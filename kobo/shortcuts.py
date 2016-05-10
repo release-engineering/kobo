@@ -307,7 +307,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         else:
             try:
                 lines = proc.stdout.read(buffer_size)
-            except (IOError, OSError) as ex:
+            except (IOError, OSError), ex:
                 import errno
                 if ex.errno == errno.EINTR:
                     continue
