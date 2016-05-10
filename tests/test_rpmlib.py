@@ -21,6 +21,9 @@ class TestNVR(unittest.TestCase):
         self.assertEqual(parse_nvr("/foo/bar/net-snmp-5.3.2.2-5.el5:1"), dict(name="net-snmp", version="5.3.2.2", release="5.el5", epoch="1"))
         self.assertEqual(parse_nvr("/foo/bar/1:net-snmp-5.3.2.2-5.el5"), dict(name="net-snmp", version="5.3.2.2", release="5.el5", epoch="1"))
 
+        # test for name which contains the version number and a dash
+        self.assertEqual(parse_nvr("openmpi-1.10-1.10.2-2.el6"), dict(name="openmpi-1.10", version="1.10.2", release="2.el6", epoch=""))
+
     def test_invalid_nvr(self):
         self.assertRaises(ValueError, parse_nvr, "net-snmp")
         self.assertRaises(ValueError, parse_nvr, "net-snmp-5.3.2.2-1:5.el5")
@@ -152,6 +155,8 @@ class TestNVR(unittest.TestCase):
         self.assertEqual(make_nvra(nvra, add_epoch=True), "net-snmp-1:5.3.2.2-5.el5.i386")
         self.assertEqual(make_nvra(nvra, add_epoch=True, force_epoch=True), "net-snmp-1:5.3.2.2-5.el5.i386")
 
+        nvra = dict(name="openmpi-1.10", version="1.10.2", release="2.el6", arch="i386")
+        self.assertEqual(make_nvra(nvra), "openmpi-1.10-1.10.2-2.el6.i386")
 
 if __name__ == '__main__':
     unittest.main()
