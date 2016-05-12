@@ -26,6 +26,7 @@ import os
 import fnmatch
 import itertools
 import keyword
+import sys
 import token
 import tokenize
 from cStringIO import StringIO
@@ -333,5 +334,6 @@ if "PROJECT_CONFIG_FILE" in os.environ:
     try:
         settings = PyConfigParser()
         settings.load_from_file(os.environ.get("PROJECT_CONFIG_FILE"))
-    except Exception, ex:
+    except Exception:
+        ex = sys.exc_info()[1]
         raise ImproperlyConfigured("Could not load config file: %s" % ex)
