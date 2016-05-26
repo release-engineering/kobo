@@ -53,9 +53,9 @@ for package in package_data.keys():
 
 setup(
     name            = "kobo",
-    version         = "0.5.1",
-    description     = "Python modules for tools development",
-    url             = "https://fedorahosted.org/kobo/",
+    version         = "0.5.2",
+    description     = "A pile of python modules used by Red Hat release engineering to build their tools",
+    url             = "https://github.com/release-engineering/kobo/",
     author          = "Red Hat, Inc.",
     author_email    = "dmach@redhat.com",
     license         = "LGPLv2.1",
