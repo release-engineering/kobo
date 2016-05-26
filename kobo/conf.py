@@ -22,6 +22,7 @@ PyConfigParser accepts following python-like syntax:
 """
 
 
+from __future__ import print_function
 import os
 import fnmatch
 import itertools
@@ -160,7 +161,7 @@ class PyConfigParser(dict):
         self._tok_name = token.tok_name.get(self._tok_number, None)
 
         if self._debug:
-            print "%2s %16s %s" % (self._tok_number, self._tok_name, self._tok_value.strip())
+            print("%2s %16s %s" % (self._tok_number, self._tok_name, self._tok_value.strip()))
 
         # skip some tokens
         if self._tok_name in ["COMMENT", "INDENT", "DEDENT"]:
