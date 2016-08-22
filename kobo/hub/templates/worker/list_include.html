@@ -6,7 +6,6 @@
     <th>{% trans "Arches" %}</th>
     <th>{% trans "Enabled" %}</th>
     <th>{% trans "Ready" %}</th>
-    <th>{% trans "Last update" %}</th>
   </tr>
 {% for worker in worker_list %}
   <tr>
@@ -14,7 +13,6 @@
     <td>{{ worker.arches.all|join:" " }}</td>
     <td>{% if worker.enabled %}<span class="FREE">{% trans 'YES' %}</span>{% else %}<span class="FAILED">{% trans 'NO' %}</span>{% endif %}</td>
     <td>{% if worker.ready %}<span class="FREE">{% trans 'YES' %}</span>{% else %}<span class="FAILED">{% trans 'NO' %}</span>{% endif %}</td>
-    <td>{{ worker.dt_last_update|date:"Y-m-d H:i:s" }}</td>
   </tr>
 {% endfor %}
 </table>
