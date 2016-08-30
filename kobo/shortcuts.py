@@ -328,6 +328,9 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         stdin_thread.join()
 
     err_msg = "ERROR running command: %s" % cmd
+    if logfile:
+        err_msg += "\nFor more details see %s" % logfile
+
     if proc.returncode != 0 and show_cmd:
         print >> sys.stderr, err_msg
 
