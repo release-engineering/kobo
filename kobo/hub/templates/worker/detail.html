@@ -25,6 +25,7 @@
   <tr>
     <th>{% trans "Tasks" %}</th>
     <td>{{ worker.task_count }} / {{ worker.max_tasks }}</td>
+    <td><span class="{% ifnotequal worker.task_count worker.max_tasks %}FREE{% else %}FAILED{% endifnotequal %}">{{ worker.task_count }}</span> / {{ worker.max_tasks }}</td>
   </tr>
   <tr>
     <th>{% trans "Enabled" %}</th>
@@ -33,10 +34,6 @@
   <tr>
     <th>{% trans "Ready" %}</th>
     <td>{% if worker.ready %}<span class="FREE">YES</span>{% else %}<span class="FAILED">NO</span>{% endif %}</td>
-  </tr>
-  <tr>
-    <th>{% trans "Last update" %}</th>
-    <td>{{ worker.dt_last_update|date:"Y-m-d H:i:s" }}</td>
   </tr>
   <tr>
     <th>{% trans "Channels" %}</th>
