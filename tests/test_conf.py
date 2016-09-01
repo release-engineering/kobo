@@ -1,11 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 
 import unittest
+import tempfile
+import shutil
+import os
 import run_tests # set sys.path
 
 from kobo.conf import *
+from kobo.conf import PyConfigParser
 
 
 CONFIG = """
@@ -92,6 +97,27 @@ class TestConf(unittest.TestCase):
         self.assertEqual(self.conf["list1"], [])
         self.assertEqual(self.conf["list2"], [1])
         self.assertEqual(self.conf["list3"], [1, "a"])
+
+
+class TestImport(unittest.TestCase):
+    def setUp(self):
+        self.conf = PyConfigParser()
+        self.dir = tempfile.mkdtemp()
+        self.file = os.path.join(self.dir, 'extend.conf')
+
+    def tearDown(self):
+        shutil.rmtree(self.dir)
+
+    def test_import_empty_file_with_inline_comment(self):
+        with open(os.path.join(self.dir, 'base.conf'), 'w') as f:
+            print('a = 1', file=f)
+
+        with open(self.file, 'w') as f:
+            print('from base import * # really', file=f)
+            print('b = 1', file=f)
+
+        self.conf.load_from_file(self.file)
+        self.assertEqual(self.conf, dict(a=1, b=1))
 
 
 if __name__ == '__main__':

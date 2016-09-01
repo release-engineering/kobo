@@ -166,7 +166,7 @@ class PyConfigParser(dict):
 
         # skip some tokens
         if self._tok_name in ["COMMENT", "INDENT", "DEDENT"]:
-            self._get_token()
+            self._get_token(skip_newline=skip_newline)
 
         if skip_newline and self._tok_name in ["NL", "NEWLINE"]:
             self._get_token()
