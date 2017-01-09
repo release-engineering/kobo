@@ -85,6 +85,8 @@ class PyConfigParser(dict):
         self._config_file_suffix = config_file_suffix
         self._debug = debug
         self._open_file = None
+        # list of config files in abspath, includes all imported config files
+        self.opened_files = []
 
     def __getitem__(self, name):
         if name.startswith("_"):
@@ -102,6 +104,7 @@ class PyConfigParser(dict):
         data = fo.read()
         fo.close()
         self._open_file = file_name
+        self.opened_files.append(os.path.abspath(file_name))
         self.load_from_string(data)
 
     def load_from_string(self, input_string):
@@ -264,6 +267,7 @@ class PyConfigParser(dict):
 
         imported_config = self.__class__(config_file_suffix=self._config_file_suffix, debug=self._debug)
         imported_config.load_from_file(file_name)
+        self.opened_files.extend(imported_config.opened_files)
 
         if "*" in imports:
             self.load_from_dict(imported_config)
