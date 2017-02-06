@@ -119,6 +119,18 @@ class TestImport(unittest.TestCase):
         self.conf.load_from_file(self.file)
         self.assertEqual(self.conf, dict(a=1, b=1))
 
+    def test_opened_files(self):
+        with open(os.path.join(self.dir, 'base.conf'), 'w') as f:
+            print('a = 1', file=f)
+
+        with open(self.file, 'w') as f:
+            print('from base import * # really', file=f)
+            print('b = 1', file=f)
+
+        self.conf.load_from_file(self.file)
+        self.assertTrue(self.file in self.conf.opened_files)
+        self.assertTrue(os.path.join(self.dir, 'base.conf') in self.conf.opened_files)
+
 
 if __name__ == '__main__':
     unittest.main()
