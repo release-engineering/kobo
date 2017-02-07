@@ -638,8 +638,8 @@ WHERE
         """Free the task."""
         try:
             self.__lock(self.worker_id, new_state=TASK_STATES["FREE"], initial_states=(TASK_STATES["FREE"], TASK_STATES["ASSIGNED"], TASK_STATES["CREATED"]))
-        except (MultipleObjectsReturned, ObjectDoesNotExist):
-            raise Exception("Cannot free task %d, state is %s" % (self.id, self.get_state_display()))
+        except (MultipleObjectsReturned, ObjectDoesNotExist) as e:
+            raise Exception("Cannot free task %d, state is %s" % (self.id, self.get_state_display()), e)
 
     def assign_task(self, worker_id=None):
         """Assign the task to a worker identified by worker_id."""
@@ -648,8 +648,8 @@ WHERE
 
         try:
             self.__lock(worker_id, new_state=TASK_STATES["ASSIGNED"], initial_states=(TASK_STATES["FREE"], TASK_STATES["CREATED"]))
-        except (MultipleObjectsReturned, ObjectDoesNotExist):
-            raise Exception("Cannot assign task %d" % (self.id))
+        except (MultipleObjectsReturned, ObjectDoesNotExist) as e:
+            raise Exception("Cannot assign task %d" % (self.id), e)
 
     def open_task(self, worker_id=None):
         """Open the task on a worker identified by worker_id."""
@@ -658,8 +658,8 @@ WHERE
 
         try:
             self.__lock(worker_id, new_state=TASK_STATES["OPEN"], initial_states=(TASK_STATES["FREE"], TASK_STATES["ASSIGNED"]))
-        except (MultipleObjectsReturned, ObjectDoesNotExist):
-            raise Exception("Cannot open task %d, state is %s" % (self.id, self.get_state_display()))
+        except (MultipleObjectsReturned, ObjectDoesNotExist) as e:
+            raise Exception("Cannot open task %d, state is %s" % (self.id, self.get_state_display()), e)
 
     @transaction.atomic
     def close_task(self, task_result=""):
@@ -670,8 +670,8 @@ WHERE
 
         try:
             self.__lock(self.worker_id, new_state=TASK_STATES["CLOSED"], initial_states=(TASK_STATES["OPEN"], ))
-        except (MultipleObjectsReturned, ObjectDoesNotExist):
-            raise Exception("Cannot close task %d, state is %s" % (self.id, self.get_state_display()))
+        except (MultipleObjectsReturned, ObjectDoesNotExist) as e:
+            raise Exception("Cannot close task %d, state is %s" % (self.id, self.get_state_display()), e)
         self.logs.gzip_logs()
 
     @transaction.atomic
@@ -683,8 +683,8 @@ WHERE
 
         try:
             self.__lock(self.worker_id, new_state=TASK_STATES["CANCELED"], initial_states=(TASK_STATES["FREE"], TASK_STATES["ASSIGNED"], TASK_STATES["OPEN"], TASK_STATES["CREATED"]))
-        except (MultipleObjectsReturned, ObjectDoesNotExist):
-            raise Exception("Cannot cancel task %d, state is %s" % (self.id, self.get_state_display()))
+        except (MultipleObjectsReturned, ObjectDoesNotExist) as e:
+            raise Exception("Cannot cancel task %d, state is %s" % (self.id, self.get_state_display()), e)
 
         if recursive:
             for task in self.subtasks():
@@ -706,8 +706,8 @@ WHERE
         """Set the task state to interrupted."""
         try:
             self.__lock(self.worker_id, new_state=TASK_STATES["INTERRUPTED"], initial_states=(TASK_STATES["OPEN"], ))
-        except (MultipleObjectsReturned, ObjectDoesNotExist):
-            raise Exception("Cannot interrupt task %d, state is %s" % (self.id, self.get_state_display()))
+        except (MultipleObjectsReturned, ObjectDoesNotExist) as e:
+            raise Exception("Cannot interrupt task %d, state is %s" % (self.id, self.get_state_display()), e)
 
         if recursive:
             for task in self.subtasks():
@@ -719,8 +719,8 @@ WHERE
         """Set the task state to timeout."""
         try:
             self.__lock(self.worker_id, new_state=TASK_STATES["TIMEOUT"], initial_states=(TASK_STATES["OPEN"], ))
-        except (MultipleObjectsReturned, ObjectDoesNotExist):
-            raise Exception("Cannot interrupt task %d, state is %s" % (self.id, self.get_state_display()))
+        except (MultipleObjectsReturned, ObjectDoesNotExist) as e:
+            raise Exception("Cannot interrupt task %d, state is %s" % (self.id, self.get_state_display()), e)
 
         if recursive:
             for task in self.subtasks():
@@ -736,8 +736,8 @@ WHERE
 
         try:
             self.__lock(self.worker_id, new_state=TASK_STATES["FAILED"], initial_states=(TASK_STATES["OPEN"], ))
-        except (MultipleObjectsReturned, ObjectDoesNotExist):
-            raise Exception("Cannot fail task %i, state is %s" % (self.id, self.get_state_display()))
+        except (MultipleObjectsReturned, ObjectDoesNotExist) as e:
+            raise Exception("Cannot fail task %i, state is %s" % (self.id, self.get_state_display()), e)
         self.logs.gzip_logs()
 
     def is_finished(self):
