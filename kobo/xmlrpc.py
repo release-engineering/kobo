@@ -548,6 +548,7 @@ class SafeCookieTransport(xmlrpclib.SafeTransport, CookieTransport):
         request = CookieTransport._request
 
     def __init__(self, *args, **kwargs):
+        self.context = kwargs.pop('context', None)
         xmlrpclib.SafeTransport.__init__(self, *args, **kwargs)
         CookieTransport.__init__(self, *args, **kwargs)
 
