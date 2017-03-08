@@ -332,7 +332,9 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         err_msg += "\nFor more details see %s" % logfile
 
     if proc.returncode != 0 and not can_fail:
-        raise RuntimeError(err_msg)
+        exc = RuntimeError(err_msg)
+        exc.output = output
+        raise exc
 
     if proc.returncode != 0 and show_cmd:
         print >> sys.stderr, err_msg
