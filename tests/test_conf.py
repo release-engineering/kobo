@@ -132,5 +132,20 @@ class TestImport(unittest.TestCase):
         self.assertTrue(os.path.join(self.dir, 'base.conf') in self.conf.opened_files)
 
 
+class TestDuplicateKeys(unittest.TestCase):
+    def test_duplicate_keys(self):
+        cfg = """foo = {
+            "bar": 1,
+            "bar": 2,
+        }
+        """
+        conf = PyConfigParser()
+        with self.assertRaises(SyntaxError) as ctx:
+            conf.load_from_string(cfg)
+
+        self.assertEqual(str(ctx.exception),
+                         "Duplicate dict key 'bar' in file None on line 3")
+
+
 if __name__ == '__main__':
     unittest.main()
