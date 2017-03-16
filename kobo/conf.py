@@ -186,7 +186,11 @@ class PyConfigParser(dict):
             return None
 
         # return already defined variable
-        return self[self._tok_value]
+        try:
+            return self[self._tok_value]
+        except KeyError:
+            raise SyntaxError("Undefined variable %r: file: %s, begin: %s, end: %s, text: %s"
+                              % (self._tok_value, self._open_file, self._tok_begin, self._tok_end, self._tok_line))
 
     def _get_STRING(self):
         """Return a STRING token value."""
