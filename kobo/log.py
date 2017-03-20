@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+import errno
 import os
 import logging
 import logging.handlers
@@ -87,6 +88,13 @@ def add_file_logger(logger, logfile, log_level=None, format=None, mode="a"):
     """Add a file logger to the logger."""
     log_level = log_level or logging.DEBUG
     format = format or BRIEF_LOG_FORMAT
+
+    # Create parent directory if needed.
+    try:
+        os.makedirs(os.path.dirname(logfile))
+    except OSError as exc:
+        if exc.errno != errno.EEXIST:
+            raise
 
     # touch the logfile
     if not os.path.exists(logfile):
