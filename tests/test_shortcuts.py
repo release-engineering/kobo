@@ -91,7 +91,7 @@ class TestShortcuts(unittest.TestCase):
         self.assertEqual(list(iter_chunks("01234", 2)), ["01", "23", "4"])
         self.assertEqual(list(iter_chunks("012345", 2)), ["01", "23", "45"])
 
-        file_obj = open("chunks_file", "r")
+        file_obj = open(os.path.dirname(os.path.abspath(__file__)) + "/chunks_file", "r")
         self.assertEqual(list(iter_chunks(file_obj, 11)), (10 * ["1234567890\n"]) + ["\n"])
 
         string_io = StringIO((10 * "1234567890\n") + "\n")
