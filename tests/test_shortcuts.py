@@ -173,6 +173,15 @@ class TestUtils(unittest.TestCase):
         # passes in bash
         run("echo foo | tee >(md5sum -b) >/dev/null", executable="/bin/bash")
 
+    def test_run_move_dir_with_logfile(self):
+        # Write log into a directory that gets renamed by the called command.
+        # The file should be opened just once at the start.
+        tmpdir = tempfile.mkdtemp(prefix='kobo-bug-')
+        logfile = os.path.join(tmpdir, 'file.log')
+        destdir = tmpdir + '.moved'
+        run(['mv', '-v', tmpdir, destdir], logfile=logfile, show_cmd=True)
+        self.assertTrue(os.path.isfile(os.path.join(destdir, 'file.log')))
+
     def test_read_checksum_file(self):
         data = r"""01186fcf04b4b447f393e552964c08c7b419c1ad7a25c342a0b631b1967d3a27 *test-data/a b
 a63d8014dba891345b30174df2b2a57efbb65b4f9f09b98f245d1b3192277ece *test-data/ab

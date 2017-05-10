@@ -271,58 +271,72 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     @return: (command return code, merged stdout+stderr)
     @rtype: (int, str) or (int, None)
     """
-    if logfile:
-        logfile = os.path.join(workdir or "", logfile)
-
     if type(cmd) in (list, tuple):
         import pipes
-        cmd = " ".join(( pipes.quote(i) for i in cmd ))
+        cmd = " ".join((pipes.quote(i) for i in cmd))
 
-    if show_cmd:
-        command = "COMMAND: %s\n%s\n" % (cmd, "-" * (len(cmd) + 9))
-        if stdout:
-            print command,
+    log = None
+    if logfile:
+        logfile = os.path.join(workdir or "", logfile)
+        # What happens to log file if it exists already? If show_cmd is True,
+        # it will be overwritten. Otherwise the command output will just be
+        # appended to the existing file.
+        mode = 'a' if not show_cmd and os.path.exists(logfile) else 'w'
+        log = open(logfile, mode)
+
+    try:
+
+        if show_cmd:
+            command = "COMMAND: %s\n%s\n" % (cmd, "-" * (len(cmd) + 9))
+            if stdout:
+                print command,
+            if logfile:
+                log.write(command)
+
+        stdin = None
+        if stdin_data is not None:
+            stdin = subprocess.PIPE
+
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, stdin=stdin,
+                                cwd=workdir, **kwargs)
+
+        if stdin_data is not None:
+            class StdinThread(threading.Thread):
+                def run(self):
+                    proc.stdin.write(stdin_data)
+                    proc.stdin.close()
+            stdin_thread = StdinThread()
+            stdin_thread.daemon = True
+            stdin_thread.start()
+
+        output = ""
+        while True:
+            if buffer_size == -1:
+                lines = proc.stdout.readline()
+            else:
+                try:
+                    lines = proc.stdout.read(buffer_size)
+                except (IOError, OSError), ex:
+                    import errno
+                    if ex.errno == errno.EINTR:
+                        continue
+                    else:
+                        raise
+
+            if lines == "":
+                break
+            if stdout:
+                print lines,
+            if logfile:
+                log.write(lines)
+            if return_stdout:
+                output += lines
+        proc.wait()
+
+    finally:
         if logfile:
-            save_to_file(logfile, command)
-
-    stdin = None
-    if stdin_data is not None:
-        stdin = subprocess.PIPE
-
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=stdin, cwd=workdir, **kwargs)
-
-    if stdin_data is not None:
-        class StdinThread(threading.Thread):
-            def run(self):
-                proc.stdin.write(stdin_data)
-                proc.stdin.close()
-        stdin_thread = StdinThread()
-        stdin_thread.daemon = True
-        stdin_thread.start()
-
-    output = ""
-    while True:
-        if buffer_size == -1:
-            lines = proc.stdout.readline()
-        else:
-            try:
-                lines = proc.stdout.read(buffer_size)
-            except (IOError, OSError), ex:
-                import errno
-                if ex.errno == errno.EINTR:
-                    continue
-                else:
-                    raise
-
-        if lines == "":
-            break
-        if stdout:
-            print lines,
-        if logfile:
-            save_to_file(logfile, lines, append=True)
-        if return_stdout:
-            output += lines
-    proc.wait()
+            log.close()
 
     if stdin_data is not None:
         stdin_thread.join()
