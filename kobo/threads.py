@@ -94,12 +94,21 @@ class ThreadPool(kobo.log.LoggingBase):
         self.threads.append(thread)
 
     def start(self):
+        """Start all worker threads and immediatelly return."""
         for i in self.threads:
             i.running = True
             i.kill = False
             i.start()
 
     def stop(self):
+        """Wait for the worker threads to process all items in queue.
+
+        This method blocks until there is no more work left.
+
+        It is essential to call this method. If you do any work in between
+        ``start`` and ``stop``, make sure the ``stop`` method will always be
+        called, otherwise the program will never exit.
+        """
         for i in self.threads:
             i.running = False
         for i in self.threads:
