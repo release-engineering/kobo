@@ -10,6 +10,8 @@ import tempfile
 import shutil
 import hashlib
 import cPickle as pickle
+import rpm
+import warnings
 
 from kobo.pkgset import *
 
@@ -76,6 +78,10 @@ class TestRpmWrapperClass(unittest.TestCase):
         self.assertEqual(wrap.is_system_release, False)
 
     def test_pickle(self):
+        rpm_version = [int(v) for v in getattr(rpm, '__version__', '0.0').split('.')]
+        if rpm_version[0:2] < [4, 10]:
+            warnings.warn('RPM header pickling unsupported in rpm %s' % rpm_version)
+            return
         wrap = RpmWrapper(self.file_path)
         pickled_data = pickle.dumps(wrap)
         wrap2 = pickle.loads(pickled_data)
