@@ -13,7 +13,7 @@ from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, StreamingHttpResponse, HttpResponseForbidden
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
@@ -132,7 +132,7 @@ def task_log(request, id, log_name):
 
     if request.GET.get("format") == "raw":
         # use _stream_file() instad of passing file object in order to improve performance
-        response = HttpResponse(_stream_file(file_path, offset), content_type=mimetype)
+        response = StreamingHttpResponse(_stream_file(file_path, offset), content_type=mimetype)
 
         response["Content-Length"] = content_len
         # set filename to be real filesystem name
@@ -141,7 +141,7 @@ def task_log(request, id, log_name):
 
     if log_name.endswith(".html") or log_name.endswith(".htm"):
         # use _stream_file() instad of passing file object in order to improve performance
-        response = HttpResponse(_stream_file(file_path, offset), content_type=mimetype)
+        response = StreamingHttpResponse(_stream_file(file_path, offset), content_type=mimetype)
         response["Content-Length"] = content_len
         return response
 
