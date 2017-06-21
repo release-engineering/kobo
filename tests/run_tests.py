@@ -33,7 +33,7 @@ def run_test(test_with_args):
 
 def run_discovered_tests():
     ok = True
-    for test in sorted(os.listdir(os.path.dirname(__file__))):
+    for test in sorted(os.listdir('.')):
         # run all tests that match the 'test_*.py" pattern
         if not test.startswith("test_"):
             continue
@@ -47,6 +47,7 @@ def run_discovered_tests():
 
 
 if __name__ == '__main__':
+    os.chdir(os.path.dirname(__file__))
     if sys.argv[1:]:
         # arguments passed; assume it's a test, just run it
         ok = run_test(sys.argv[1:])
