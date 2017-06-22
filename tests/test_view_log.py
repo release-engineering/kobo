@@ -1,7 +1,9 @@
 import sys
 import os
 import json
+import gc
 
+from tempfile import TemporaryFile
 from gzip import GzipFile
 from StringIO import StringIO
 from shutil import rmtree
@@ -21,6 +23,21 @@ from kobo.hub.models import Task, Arch, Channel
 from kobo.hub import views
 from django.contrib.auth.models import User
 
+# Run test with KOBO_MEMORY_PROFILER=1 to generate memory usage reports from
+# tests annotated with @profile.
+#
+# The point of the memory profiler with this test is to prove that requesting
+# a log doesn't require loading the entire log into memory.  When using the
+# profiler, you'll want to verify that the peak memory usage shows no significant
+# increase in the tests dealing with big logs.
+if os.environ.get('KOBO_MEMORY_PROFILER', '0') == '1':
+    from memory_profiler import profile
+else:
+    # If memory_profiler is disabled, this is a no-op decorator
+    def profile(fn):
+        return fn
+
+
 TASK_ID = 123
 
 def small_log_content():
@@ -30,6 +47,16 @@ def small_log_content():
         'Line 1 of test log',
         'Line 2 of test log',
     ])
+
+
+def big_log_content():
+    """Returns content for a big log likely to span multiple chunks."""
+    out = 'some log content'
+    i = 1
+    while len(out) < (1024**2) * 20:
+        out = ('\njoin %d\n' % i).join([out, out])
+        i = i + 1
+    return out
 
 
 def html_content():
@@ -55,6 +82,11 @@ def gzip_decompress(data):
 
 
 class TestViewLog(django.test.TestCase):
+    def __init__(self, *args, **kwargs):
+        super(TestViewLog, self).__init__(*args, **kwargs)
+        # This is cached since it is a bit slow to build
+        self.big_log_content = big_log_content()
+
     def cleanDataDirs(self):
         """Delete the log directory for the test task."""
         log_dir = os.path.join(django.conf.settings.TASK_DIR, '0', '0', str(TASK_ID))
@@ -82,14 +114,19 @@ class TestViewLog(django.test.TestCase):
         # associate some compressed and decompressed logs with the task.
         # (the save and gzip_logs methods here are writing files to disk)
         test_task.logs['zipped_small.log'] = small_log_content()
+        test_task.logs['zipped_big.log'] = self.big_log_content
         test_task.logs.save()
         test_task.logs.gzip_logs()
 
         test_task.logs['small.log'] = small_log_content()
+        test_task.logs['big.log'] = self.big_log_content
         test_task.logs['log.html'] = html_content()
         test_task.logs.save()
 
         self.client = django.test.Client()
+
+        # for more accurate memory_profiler tests
+        gc.collect()
 
     def test_view_zipped_small_raw(self):
         """Fetching a small compressed log with raw format should yield
@@ -137,6 +174,54 @@ class TestViewLog(django.test.TestCase):
         # We are only doing a very basic verification of the view here
         self.assertTrue(content.startswith('<!DOCTYPE html'))
         self.assertTrue((small_log_content() + "\n</pre>") in content, content)
+
+    @profile
+    def test_view_big_html_wrapped(self):
+        response = self.get_log('big.log')
+        self.assertEqual(response.status_code, 200, response)
+
+        content = response.content
+        self.assertTrue(content.startswith('<!DOCTYPE html'))
+        # TODO: when log trimming is added, verify it here
+
+    @profile
+    def test_view_big_raw(self):
+        big_content = self.big_log_content
+        offset = 0
+        response = self.get_log('big.log', data={'format': 'raw'})
+        self.assertEqual(response.status_code, 200, response)
+
+        # Response should be streamed in chunks
+        self.assertTrue(response.streaming)
+        count = 0
+        for chunk in response.streaming_content:
+            chunklen = len(chunk)
+            self.assertEqual(chunk, big_content[offset:offset + chunklen])
+            offset = offset + chunklen
+            count = count + 1
+
+        self.assertTrue(count > 1)
+
+    @profile
+    def test_view_zipped_big_raw(self):
+        big_content = self.big_log_content
+
+        response = self.get_log('zipped_big.log', data={'format': 'raw'})
+        self.assertEqual(response.status_code, 200, response)
+
+        # Response should be streamed in chunks, and once decompressed,
+        # should be the expected content
+        self.assertTrue(response.streaming)
+
+        tempfile = TemporaryFile()
+
+        for chunk in response.streaming_content:
+            tempfile.write(chunk)
+
+        tempfile.seek(0)
+        gz_file = GzipFile(mode='rb', fileobj=tempfile)
+        all_data = gz_file.read()
+        self.assertEqual(all_data, big_content)
 
     def test_view_zipped_small_json(self):
         """Fetching compressed small log via JSON gives expected document."""
@@ -191,14 +276,52 @@ class TestViewLog(django.test.TestCase):
             'task_finished': 0,
         })
 
+    @profile
+    def test_view_big_json(self):
+        response, content = self.assertGetLog(
+            'big.log',
+            view_type='log-json',
+            test_content_length=False,
+        )
+        expected_content = self.big_log_content
+        doc = json.loads(content)
+        self.assertEqual(doc['content'], expected_content)
+        self.assertEqual(doc['new_offset'], len(self.big_log_content)),
+        self.assertEqual(doc['task_finished'], 0)
+
+    @profile
+    def test_view_zipped_big_json(self):
+        response, content = self.assertGetLog(
+            'zipped_big.log',
+            view_type='log-json',
+            test_content_length=False,
+        )
+        expected_content = self.big_log_content
+        doc = json.loads(content)
+        self.assertEqual(doc['content'], expected_content)
+        self.assertEqual(doc['new_offset'], len(self.big_log_content)),
+        self.assertEqual(doc['task_finished'], 0)
+
+    @profile
+    def test_view_zipped_big_json_offset(self):
+        response, content = self.assertGetLog(
+            'zipped_big.log',
+            view_type='log-json',
+            test_content_length=False,
+            data={'offset': 20000}
+        )
+        expected_content = self.big_log_content[20000:]
+        doc = json.loads(content)
+        self.assertEqual(doc['content'], expected_content)
+        self.assertEqual(doc['new_offset'], len(self.big_log_content)),
+        self.assertEqual(doc['task_finished'], 0)
 
     def assertGetLog(self, log_name, view_type='log', test_content_length=True,
                      expected_content=None, data={}):
         """Verify log can be successfully retrieved and response has certain properties.
         The HttpResponse and its content are returned so that tests may do further
         assertions."""
-        url = '/task/{0}/{1}/{2}'.format(TASK_ID, view_type, log_name)
-        response = self.client.get(url, data)
+        response = self.get_log(log_name, view_type=view_type, data=data)
         content = response_content(response)
 
         # Should always succeed
@@ -215,6 +338,9 @@ class TestViewLog(django.test.TestCase):
 
         return response, content
 
+    def get_log(self, log_name, view_type='log', data={}):
+        url = '/task/{0}/{1}/{2}'.format(TASK_ID, view_type, log_name)
+        return self.client.get(url, data)
 
 if __name__ == '__main__':
     TestRunner = get_runner(django.conf.settings)
