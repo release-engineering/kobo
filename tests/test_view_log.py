@@ -185,6 +185,16 @@ class TestViewLog(django.test.TestCase):
         # TODO: when log trimming is added, verify it here
 
     @profile
+    def test_view_big_html_wrapped_with_offset(self):
+        # Just get the last 2000 chars - this should not trigger log trimming
+        offset = len(big_log_content()) - 2000
+        response = self.get_log('big.log', data={'offset': offset})
+
+        content = response.content
+        self.assertTrue(content.startswith('<!DOCTYPE html'))
+        self.assertTrue(big_log_content()[-2000:] in content)
+
+    @profile
     def test_view_big_raw(self):
         big_content = self.big_log_content
         offset = 0

@@ -153,7 +153,7 @@ def task_log(request, id, log_name):
     if not found:
         return HttpResponseForbidden("Can display only specific file types: %s" % ", ".join(exts))
 
-    content = task.logs[log_name][offset:]
+    content = task.logs.get_chunk(log_name, offset)
     content = content.decode("utf-8", "replace")
     context = {
         "title": "Task log",
@@ -174,7 +174,7 @@ def task_log_json(request, id, log_name):
 
     task = get_object_or_404(Task, id=id)
     offset = int(request.GET.get("offset", 0))
-    content = task.logs[log_name][offset:]
+    content = task.logs.get_chunk(log_name, offset)
 
     result = {
         "new_offset": offset + len(content),
