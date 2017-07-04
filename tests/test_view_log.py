@@ -254,6 +254,7 @@ class TestViewLog(django.test.TestCase):
             'content': expected_content,
             'new_offset': len(expected_content),
             'task_finished': 0,
+            'next_poll': 5000,
         })
 
     def test_view_small_json(self):
@@ -271,6 +272,7 @@ class TestViewLog(django.test.TestCase):
             'content': expected_content,
             'new_offset': len(expected_content),
             'task_finished': 0,
+            'next_poll': 5000,
         })
 
     def test_view_small_json_offset(self):
@@ -292,6 +294,7 @@ class TestViewLog(django.test.TestCase):
             'content': expected_content,
             'new_offset': offset + len(expected_content),
             'task_finished': 0,
+            'next_poll': 5000,
         })
 
     @profile

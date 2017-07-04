@@ -26,6 +26,9 @@ from kobo.django.views.generic import ExtraDetailView, SearchView
 # max log size returned in HTML-embedded view
 HTML_LOG_MAX_SIZE = getattr(settings, "HTML_LOG_MAX_SIZE", (1024 ** 2) * 2)
 
+# default LogWatcher JS poll interval
+LOG_WATCHER_INTERVAL = getattr(settings, "LOG_WATCHER_INTERVAL", 5000)
+
 
 class UserDetailView(ExtraDetailView):
     model = get_user_model()
@@ -177,6 +180,7 @@ def task_log(request, id, log_name):
         "title": "Task log",
         "offset": offset + content_len + 1,
         "task_finished": task.is_finished() and 1 or 0,
+        "next_poll": None if task.is_finished() else LOG_WATCHER_INTERVAL,
         "content": content,
         "log_name": log_name,
         "task": task,
@@ -197,6 +201,7 @@ def task_log_json(request, id, log_name):
     result = {
         "new_offset": offset + len(content),
         "task_finished": task.is_finished() and 1 or 0,
+        "next_poll": None if task.is_finished() else LOG_WATCHER_INTERVAL,
         "content": content,
     }
 
