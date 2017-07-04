@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import gc
+import itertools
 
 from tempfile import TemporaryFile
 from gzip import GzipFile
@@ -19,7 +20,7 @@ if 'setup' in dir(django):
     # on settings being loaded before import.
     django.setup()
 
-from kobo.hub.models import Task, Arch, Channel
+from kobo.hub.models import Task, Arch, Channel, TASK_STATES
 from kobo.hub import views
 from django.contrib.auth.models import User
 
@@ -304,11 +305,14 @@ class TestViewLog(django.test.TestCase):
             view_type='log-json',
             test_content_length=False,
         )
-        expected_content = self.big_log_content
         doc = json.loads(content)
-        self.assertEqual(doc['content'], expected_content)
-        self.assertEqual(doc['new_offset'], len(self.big_log_content)),
+
+        # Should have given us a subset of the content and told us to poll
+        # again soon
+        self.assertTrue(doc['content'] in self.big_log_content)
+        self.assertEqual(doc['new_offset'], len(doc['content'])),
         self.assertEqual(doc['task_finished'], 0)
+        self.assertEqual(doc['next_poll'], 0)
 
     @profile
     def test_view_zipped_big_json(self):
@@ -317,25 +321,62 @@ class TestViewLog(django.test.TestCase):
             view_type='log-json',
             test_content_length=False,
         )
-        expected_content = self.big_log_content
         doc = json.loads(content)
-        self.assertEqual(doc['content'], expected_content)
-        self.assertEqual(doc['new_offset'], len(self.big_log_content)),
+
+        self.assertTrue(doc['content'] in self.big_log_content)
+        self.assertEqual(doc['new_offset'], len(doc['content'])),
         self.assertEqual(doc['task_finished'], 0)
+        self.assertEqual(doc['next_poll'], 0)
 
     @profile
     def test_view_zipped_big_json_offset(self):
+        offset = 20000
         response, content = self.assertGetLog(
             'zipped_big.log',
             view_type='log-json',
             test_content_length=False,
-            data={'offset': 20000}
+            data={'offset': offset}
         )
-        expected_content = self.big_log_content[20000:]
         doc = json.loads(content)
-        self.assertEqual(doc['content'], expected_content)
-        self.assertEqual(doc['new_offset'], len(self.big_log_content)),
+
+        # We're not verifying exactly how much we expect to be given, but we do expect it's
+        # a subset of the available content
+        content_len = len(doc['content'])
+        self.assertTrue(content_len < len(self.big_log_content) - offset)
+        self.assertEqual(doc['content'], self.big_log_content[offset:offset + content_len])
+        self.assertEqual(doc['new_offset'], offset + content_len),
         self.assertEqual(doc['task_finished'], 0)
+        self.assertEqual(doc['next_poll'], 0)
+
+    @profile
+    def test_view_big_json_iterate(self):
+        """Iterates over log chunks based on next_poll and new_offset in responses,
+        simulating the LogWatcher JS behavior. Verifies that the full log can be assembled."""
+
+        # The task has to be finished for this test, otherwise it'll loop forever
+        task = Task.objects.get(id=TASK_ID)
+        task.state = TASK_STATES["CLOSED"]
+        task.save()
+
+        all_content = ''
+        offset = 0
+
+        for i in itertools.count():
+            self.assertTrue(i < 10000, 'infinite loop reading log?')
+
+            response, content = self.assertGetLog(
+                'big.log',
+                view_type='log-json',
+                test_content_length=False,
+                data={'offset': offset},
+            )
+            doc = json.loads(content)
+            all_content = all_content + doc['content']
+            offset = doc['new_offset']
+            if doc['next_poll'] is None:
+                break
+
+        self.assertEqual(all_content, self.big_log_content)
 
     def assertGetLog(self, log_name, view_type='log', test_content_length=True,
                      expected_content=None, data={}):
