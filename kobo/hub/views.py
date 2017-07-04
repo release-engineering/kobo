@@ -23,6 +23,10 @@ from kobo.hub.models import Arch, Channel, Task
 from kobo.hub.forms import TaskSearchForm
 from kobo.django.views.generic import ExtraDetailView, SearchView
 
+# max log size returned in HTML-embedded view
+HTML_LOG_MAX_SIZE = getattr(settings, "HTML_LOG_MAX_SIZE", (1024 ** 2) * 2)
+
+
 class UserDetailView(ExtraDetailView):
     model = get_user_model()
     title = _("User detail")
@@ -110,6 +114,16 @@ def _stream_file(file_path, offset=0):
     f.close()
 
 
+def _trim_log(text):
+    # break at first line if possible
+    nl = text.find('\n')
+    if nl > 0:
+        subtext = text[nl:]
+    else:
+        subtext = '\n' + text
+    return '<...trimmed, download required for full log>' + subtext
+
+
 def task_log(request, id, log_name):
     """
     IMPORTANT: reverse to 'task/log-json' *must* exist
@@ -153,8 +167,12 @@ def task_log(request, id, log_name):
     if not found:
         return HttpResponseForbidden("Can display only specific file types: %s" % ", ".join(exts))
 
-    content = task.logs.get_chunk(log_name, offset)
+    content = task.logs.get_chunk(log_name, offset, HTML_LOG_MAX_SIZE)
+    needs_trim = content_len != 0 and len(content) < content_len
     content = content.decode("utf-8", "replace")
+    if needs_trim:
+        content = _trim_log(content)
+
     context = {
         "title": "Task log",
         "offset": offset + content_len + 1,

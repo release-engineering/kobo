@@ -182,7 +182,13 @@ class TestViewLog(django.test.TestCase):
 
         content = response.content
         self.assertTrue(content.startswith('<!DOCTYPE html'))
-        # TODO: when log trimming is added, verify it here
+
+        # Should not have returned whole content
+        self.assertTrue(len(content) < len(self.big_log_content))
+
+        # Should tell the user that the response was trimmed, and should have trimmed
+        # at a line boundary
+        self.assertTrue('&lt;...trimmed, download required for full log&gt;\njoin' in content)
 
     @profile
     def test_view_big_html_wrapped_with_offset(self):
@@ -193,6 +199,8 @@ class TestViewLog(django.test.TestCase):
         content = response.content
         self.assertTrue(content.startswith('<!DOCTYPE html'))
         self.assertTrue(big_log_content()[-2000:] in content)
+
+        self.assertTrue('...trimmed, download required for full log' not in content)
 
     @profile
     def test_view_big_raw(self):
