@@ -9,3 +9,6 @@ To prepare the local environment execute the commands
     $ mkvirtualenv --system-site-packages kobo
     (kobo)$ pip install Django==1.5.12
     (kobo)$ make test
+
+Additionally, the tox command may be used to run tests against a selection
+of supported Python and Django versions.

@@ -19,25 +19,40 @@ sys.path.insert(0, PROJECT_DIR)
 from kobo.shortcuts import run
 
 
-if __name__ == '__main__':
-    failed = False
-    for test in sorted(os.listdir(os.path.dirname(__file__))):
+def run_test(test_with_args):
+    print "Executing tests in %-40s" % test_with_args[0]
+    retcode, output = run(['python'] + test_with_args, can_fail=True)
+    if retcode == 0:
+        print "[   OK   ]"
+        return True
+    else:
+        print "[ FAILED ]"
+        print output
+        return False
+
+
+def run_discovered_tests():
+    ok = True
+    for test in sorted(os.listdir('.')):
         # run all tests that match the 'test_*.py" pattern
         if not test.startswith("test_"):
             continue
         if not test.endswith(".py"):
             continue
 
-        print "Executing tests in %-40s" % test,
-        retcode, output = run("python %s" % test, can_fail=True)
+        if not run_test([test]):
+            ok = False
 
-        if retcode == 0:
-            print "[   OK   ]"
-        else:
-            failed = True
-            print "[ FAILED ]"
-            print output
+    return ok
 
-    if failed:
-        sys.exit(1)
-    sys.exit(0)
+
+if __name__ == '__main__':
+    os.chdir(os.path.dirname(__file__))
+    if sys.argv[1:]:
+        # arguments passed; assume it's a test, just run it
+        ok = run_test(sys.argv[1:])
+    else:
+        # run all the tests in the directory
+        ok = run_discovered_tests()
+
+    sys.exit(0 if ok else 1)
