@@ -94,7 +94,7 @@ class ThreadPool(kobo.log.LoggingBase):
         self.threads.append(thread)
 
     def start(self):
-        """Start all worker threads and immediatelly return."""
+        """Start all worker threads and immediately return."""
         for i in self.threads:
             i.running = True
             i.kill = False
