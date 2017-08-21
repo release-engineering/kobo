@@ -9,6 +9,7 @@ import logging.handlers
 __all__ = (
     "BRIEF_LOG_FORMAT",
     "VERBOSE_LOG_FORMAT",
+    "add_stream_handler",
     "add_stderr_logger",
     "add_file_logger",
     "add_rotating_file_logger",
@@ -61,12 +62,23 @@ del verbose
 
 
 def add_stderr_logger(logger, log_level=None, format=None):
-    """Add a stderr logger to the logger."""
+    """Add a stderr logger to the logger.
+
+    Deprecated, use ``add_stream_handler`` instead.
+    """
+    add_stream_handler(logger, log_level=log_level, format=format)
+
+
+def add_stream_handler(logger, log_level=None, format=None, stream=None):
+    """Add a handler that prints values to the given stream. Defaults to
+    sys.stderr.
+    """
     log_level = log_level or logging.DEBUG
     format = format or BRIEF_LOG_FORMAT
 
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter(format, datefmt="%Y-%m-%d %H:%M:%S"))
+    handler = logging.StreamHandler(stream)
+    handler.setFormatter(
+        logging.Formatter(format, datefmt="%Y-%m-%d %H:%M:%S"))
     handler.setLevel(log_level)
     logger.addHandler(handler)
 
