@@ -36,6 +36,50 @@ def load_dict(dump):
     return json.loads(dump)
 
 
+def _utf8_chunk(bytestr):
+    """If bytestr is a valid UTF-8 sequence, returns bytestr.
+    If bytestr can be made a valid UTF-8 sequence by removing a few bytes
+    from the end, returns a modified copy of bytestr.
+    Otherwise, returns bytestr.
+
+    The purpose of this method is to provide a safe way of reading chunks
+    from the middle of a UTF-8 log file given an offset and length.
+    Consider a caller reading a log file in 1MB chunks.  It's possible that
+    a chunk would end in the middle of a UTF-8 encoded character, resulting
+    in a broken string.  This method fixes up any such broken chunks."""
+    try:
+        bytestr.decode('utf-8')
+        # It's already fully valid
+        return bytestr
+    except UnicodeDecodeError:
+        pass
+
+    # bytestr is not valid.
+    # Can we make it valid by chopping a few bytes from the end?
+    idx = len(bytestr)
+    while idx > 0:
+        last_char = ord(bytestr[idx - 1])
+        if last_char < 0x80:
+            # ascii - safe
+            break
+        idx = idx - 1
+        if last_char >= 0xC0:
+            # first byte of multi-byte character - not safe,
+            # but previous byte is safe
+            break
+
+    out = bytestr[:idx]
+    try:
+        out.decode('utf-8')
+        # We could fix up the string
+        return out
+    except UnicodeDecodeError:
+        # We could not fix it up - might be broken for other reasons.
+        # Just return unmodified bytes, so any decoding error is raised
+        # from the caller
+        return bytestr
+
+
 class Arch(models.Model):
     """Model for hub_arch table."""
     name        = models.CharField(max_length=16, unique=True, help_text=_("i386, ia64, ..."))
@@ -260,7 +304,49 @@ class TaskLogs(object):
             raise RuntimeError("Invalid log normpath.")
         return log_path
 
+    def get_chunk(self, name, offset=0, length=-1):
+        """Returns a sequence of bytes from the named log.
+
+        offset -- optional start index of read
+        length -- optional length; if omitted, read to end of file
+
+        Will try to avoid returning a chunk ending in the middle of
+        a single UTF-8 character, therefore the returned length may
+        be less than requested."""
+
+        name = self._get_relative_log_path(name)
+
+        if name in self.cache:
+            # already loaded so no point in reading again
+            end = None if length < 0 else offset + length
+            return self.cache[name][offset:end]
+
+        # not loaded; read just this part
+        log_path = self._get_absolute_log_path(name)
+        log_file = None
+        try:
+            if os.path.isfile(log_path):
+                log_file = open(log_path, 'rb')
+            elif os.path.isfile(log_path + ".gz"):
+                log_file = gzip.open(log_path + ".gz", "rb")
+            else:
+                raise Exception('Cannot find log %s' % name)
+
+            log_file.seek(offset)
+            return _utf8_chunk(log_file.read(length))
+        finally:
+            if log_file is not None:
+                log_file.close()
+
+
     def __getitem__(self, name):
+        """Get full content of named log, as a byte string.
+
+        This method reads (and caches) the entire uncompressed content of the
+        log file, thus may cause memory issues if log files are expected to
+        be large.  To limit the amount of memory used at once, use the
+        get_chunk method instead."""
+
         name = self._get_relative_log_path(name)
         if name not in self.cache:
             # task.id is still not set. Return empty string.

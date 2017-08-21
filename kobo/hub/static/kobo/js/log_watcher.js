@@ -28,21 +28,22 @@ function GET_handler(log_watcher) {
 }
 
 function doWatch() {
-	if (!document.log_watcher.task_finished) {
-		client = getAjax();
-		client.onreadystatechange = GET_handler;
-		client.open('GET', document.log_watcher.json_url + '?offset=' + document.log_watcher.offset);
-		client.send();
+	var need_poll = (!document.log_watcher.task_finished || document.log_watcher.next_poll != null);
+	if (!need_poll) {
+		return;
 	}
-	if (!document.log_watcher.task_finished) {
-		setTimeout(doWatch, 5000);
-	}
+	client = getAjax();
+	client.onreadystatechange = GET_handler;
+	client.open('GET', document.log_watcher.json_url + '?offset=' + document.log_watcher.offset);
+	client.send();
+	setTimeout(doWatch, document.log_watcher.next_poll || 5000);
 }
 
-function LogWatcher(json_url, offset, task_finished) {
+function LogWatcher(json_url, offset, task_finished, next_poll) {
 	this.json_url = json_url;
 	this.offset = offset;
 	this.task_finished = task_finished;
+	this.next_poll = next_poll;
 	this.page_height = 0;
 	return this;
 }
