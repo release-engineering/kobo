@@ -23,7 +23,13 @@ def run_test(test_with_args):
     print "Executing tests in %-40s" % test_with_args[0]
     retcode, output = run(['python'] + test_with_args, can_fail=True)
     if retcode == 0:
-        print "[   OK   ]"
+        # If tests were skipped, give caller a hint that this happened.
+        # Summary line example:
+        # "OK (skipped=9)"
+        if 'skipped=' in output.splitlines()[-1]:
+            print "[  SKIP  ]"
+        else:
+            print "[   OK   ]"
         return True
     else:
         print "[ FAILED ]"

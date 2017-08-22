@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import unittest
+import unittest2 as unittest
 from kobo.hub.models import _utf8_chunk as utf8_chunk
 
 class TestUtf8Chunk(unittest.TestCase):

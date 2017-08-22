@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 
-import unittest
+import unittest2 as unittest
 import tempfile
 import shutil
 import os
