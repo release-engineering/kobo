@@ -132,6 +132,26 @@ class TestImport(unittest.TestCase):
         self.assertTrue(os.path.join(self.dir, 'base.conf') in self.conf.opened_files)
 
 
+class TestUndefinedVariable(unittest.TestCase):
+    def setUp(self):
+        self.conf = PyConfigParser()
+
+    def test_import_empty_file_with_inline_comment(self):
+        cfg = '''
+        a = [
+            'b',
+            missing start of comment
+            'c',
+        ]
+        '''
+
+        with self.assertRaises(SyntaxError) as ctx:
+            self.conf.load_from_string(cfg)
+
+        self.assertRegexpMatches(str(ctx.exception),
+                                 "Undefined variable 'missing': .+")
+
+
 class TestDuplicateKeys(unittest.TestCase):
     def test_duplicate_keys(self):
         cfg = """foo = {
