@@ -91,7 +91,7 @@ class TestShortcuts(unittest.TestCase):
         self.assertEqual(list(iter_chunks("01234", 2)), ["01", "23", "4"])
         self.assertEqual(list(iter_chunks("012345", 2)), ["01", "23", "45"])
 
-        file_obj = open("chunks_file", "r")
+        file_obj = open(os.path.dirname(os.path.abspath(__file__)) + "/chunks_file", "r")
         self.assertEqual(list(iter_chunks(file_obj, 11)), (10 * ["1234567890\n"]) + ["\n"])
 
         string_io = StringIO((10 * "1234567890\n") + "\n")
@@ -172,6 +172,15 @@ class TestUtils(unittest.TestCase):
         self.assertRaises(RuntimeError, run, "echo foo | tee >(md5sum -b) >/dev/null")
         # passes in bash
         run("echo foo | tee >(md5sum -b) >/dev/null", executable="/bin/bash")
+
+    def test_run_move_dir_with_logfile(self):
+        # Write log into a directory that gets renamed by the called command.
+        # The file should be opened just once at the start.
+        tmpdir = tempfile.mkdtemp(prefix='kobo-bug-')
+        logfile = os.path.join(tmpdir, 'file.log')
+        destdir = tmpdir + '.moved'
+        run(['mv', '-v', tmpdir, destdir], logfile=logfile, show_cmd=True)
+        self.assertTrue(os.path.isfile(os.path.join(destdir, 'file.log')))
 
     def test_read_checksum_file(self):
         data = r"""01186fcf04b4b447f393e552964c08c7b419c1ad7a25c342a0b631b1967d3a27 *test-data/a b
