@@ -64,7 +64,14 @@ class Watch_Log(ClientCommand):
             if data['content']:
                 sys.stdout.write(data['content'])
                 sys.stdout.flush()
-            if data['task_finished'] == 1 or kwargs['nowait']:
-                 break
+            if kwargs['nowait']:
+                break
+            next_poll = data.get('next_poll')
+            if data['task_finished'] == 1 and next_poll is None:
+                break
             offset = data['new_offset']
-            time.sleep(kwargs['poll'])
+
+            # If next_poll is 0, that means there's immediately more content, so fetch
+            # it now. Otherwise, stick with the user's requested poll interval
+            if next_poll != 0:
+                time.sleep(kwargs['poll'])

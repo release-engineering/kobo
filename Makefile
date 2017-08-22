@@ -32,4 +32,4 @@ source: test clean
 
 
 test:
-	cd tests; ./run_tests.py
+	tests/run_tests.py

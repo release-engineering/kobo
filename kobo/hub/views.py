@@ -13,7 +13,7 @@ from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, StreamingHttpResponse, HttpResponseForbidden
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
@@ -22,6 +22,16 @@ from django.views.generic import RedirectView
 from kobo.hub.models import Arch, Channel, Task
 from kobo.hub.forms import TaskSearchForm
 from kobo.django.views.generic import ExtraDetailView, SearchView
+
+# max log size returned in HTML-embedded view
+HTML_LOG_MAX_SIZE = getattr(settings, "HTML_LOG_MAX_SIZE", (1024 ** 2) * 2)
+
+# max log size returned in a JSON request
+JSON_LOG_MAX_SIZE = getattr(settings, "JSON_LOG_MAX_SIZE", (1024 ** 2) * 8)
+
+# default LogWatcher JS poll interval
+LOG_WATCHER_INTERVAL = getattr(settings, "LOG_WATCHER_INTERVAL", 5000)
+
 
 class UserDetailView(ExtraDetailView):
     model = get_user_model()
@@ -110,6 +120,16 @@ def _stream_file(file_path, offset=0):
     f.close()
 
 
+def _trim_log(text):
+    # break at first line if possible
+    nl = text.find('\n')
+    if nl > 0:
+        subtext = text[nl:]
+    else:
+        subtext = '\n' + text
+    return '<...trimmed, download required for full log>' + subtext
+
+
 def task_log(request, id, log_name):
     """
     IMPORTANT: reverse to 'task/log-json' *must* exist
@@ -132,7 +152,7 @@ def task_log(request, id, log_name):
 
     if request.GET.get("format") == "raw":
         # use _stream_file() instad of passing file object in order to improve performance
-        response = HttpResponse(_stream_file(file_path, offset), content_type=mimetype)
+        response = StreamingHttpResponse(_stream_file(file_path, offset), content_type=mimetype)
 
         response["Content-Length"] = content_len
         # set filename to be real filesystem name
@@ -141,7 +161,7 @@ def task_log(request, id, log_name):
 
     if log_name.endswith(".html") or log_name.endswith(".htm"):
         # use _stream_file() instad of passing file object in order to improve performance
-        response = HttpResponse(_stream_file(file_path, offset), content_type=mimetype)
+        response = StreamingHttpResponse(_stream_file(file_path, offset), content_type=mimetype)
         response["Content-Length"] = content_len
         return response
 
@@ -153,12 +173,17 @@ def task_log(request, id, log_name):
     if not found:
         return HttpResponseForbidden("Can display only specific file types: %s" % ", ".join(exts))
 
-    content = task.logs[log_name][offset:]
+    content = task.logs.get_chunk(log_name, offset, HTML_LOG_MAX_SIZE)
+    needs_trim = content_len != 0 and len(content) < content_len
     content = content.decode("utf-8", "replace")
+    if needs_trim:
+        content = _trim_log(content)
+
     context = {
         "title": "Task log",
         "offset": offset + content_len + 1,
         "task_finished": task.is_finished() and 1 or 0,
+        "next_poll": None if task.is_finished() else LOG_WATCHER_INTERVAL,
         "content": content,
         "log_name": log_name,
         "task": task,
@@ -174,11 +199,24 @@ def task_log_json(request, id, log_name):
 
     task = get_object_or_404(Task, id=id)
     offset = int(request.GET.get("offset", 0))
-    content = task.logs[log_name][offset:]
+    content = task.logs.get_chunk(log_name, offset, JSON_LOG_MAX_SIZE + 5)
+
+    if len(content) > JSON_LOG_MAX_SIZE:
+        # We immediately have more log content to read
+        next_poll = 0
+        content = content[:JSON_LOG_MAX_SIZE]
+    elif task.is_finished():
+        # There is certainly nothing more to read
+        next_poll = None
+    else:
+        # Task is not finished, so there might be more to read,
+        # check back soon
+        next_poll = LOG_WATCHER_INTERVAL
 
     result = {
         "new_offset": offset + len(content),
         "task_finished": task.is_finished() and 1 or 0,
+        "next_poll": next_poll,
         "content": content,
     }
 

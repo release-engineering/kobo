@@ -4,7 +4,7 @@
 {% block head %}
 <script type="text/javascript" src="{{ STATIC_URL }}kobo/js/log_watcher.js"></script>
 <script type="text/javascript" language="javascript">
-document.log_watcher = new LogWatcher('{{ json_url }}', {{ offset }}, {{ task_finished }});
+document.log_watcher = new LogWatcher('{{ json_url }}', {{ offset }}, {{ task_finished }}, {{ next_poll }});
 document.log_watcher.watch();
 </script>
 {% endblock %}

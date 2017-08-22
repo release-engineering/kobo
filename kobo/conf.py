@@ -70,6 +70,11 @@ def get_dict_value(dictionary, key):
         raise
 
 
+def _type_equal(a, b):
+    """Check if two values have the same type and are equal."""
+    return type(a) == type(b) and a == b
+
+
 class PyConfigParser(dict):
     """Python-like syntax config parser."""
 
@@ -298,6 +303,16 @@ class PyConfigParser(dict):
                 break
 
             key = self._get_value(get_next=False, basic_types_only=True)
+
+            # Check for an already present key. This would silently overwrite
+            # the previous value, but most likely this is a user error in the
+            # configuration that should be reported.
+            if any(_type_equal(key, k) for k in result):
+                # The condition can not use `key in result` as that would
+                # report a problem with {1: 1, True: True} because True == 1.
+                line, _ = self._tok_begin
+                raise SyntaxError('Duplicate dict key %r in file %s on line %s'
+                                  % (key, self._open_file, line))
 
             self._get_token()
             self._assert_token(("OP", ":"))
