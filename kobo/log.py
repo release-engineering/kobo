@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 
+import errno
 import os
 import logging
 import logging.handlers
+import warnings
 
 
 __all__ = (
@@ -83,25 +85,54 @@ def add_stream_handler(logger, log_level=None, format=None, stream=None):
     logger.addHandler(handler)
 
 
+class KoboLogWarning(UserWarning):
+    """Just like a UserWarning, but with a custom name for better filtering."""
+    pass
+
+
+def _warn(msg, *args):
+    """Report a warning pointing to a line that called whatever function called
+    _warn.
+    """
+    warnings.warn(msg % args, KoboLogWarning, stacklevel=3)
+
+
 def add_file_logger(logger, logfile, log_level=None, format=None, mode="a"):
-    """Add a file logger to the logger."""
+    """Add a file logger to the logger.
+
+    When there is a problem with the log file, a warning is logged. It can be
+    turned into an exception by running:
+
+    > warnings.simplefilter('error', kobo.log.KoboLogWarning)
+    """
     log_level = log_level or logging.DEBUG
     format = format or BRIEF_LOG_FORMAT
+
+    # Create parent directory if needed.
+    try:
+        os.makedirs(os.path.dirname(logfile))
+    except OSError as exc:
+        if exc.errno != errno.EEXIST:
+            _warn('Could not create %s: %s', os.path.dirname(logfile), exc)
+            return
 
     # touch the logfile
     if not os.path.exists(logfile):
         try:
             fo = open(logfile, "w")
             fo.close()
-        except (ValueError, IOError):
+        except IOError as exc:
+            _warn('Could not touch %s: %s', logfile, exc)
             return
 
     # is the logfile really a file?
     if not os.path.isfile(logfile):
+        _warn('Can not log into %s: not a file', logfile)
         return
 
     # check if the logfile is writable
     if not os.access(logfile, os.W_OK):
+        _warn('Can not log into %s: not writable', logfile)
         return
 
     handler = logging.FileHandler(logfile, mode=mode)
