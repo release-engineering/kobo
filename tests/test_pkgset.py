@@ -2,20 +2,27 @@
 # -*- coding: utf-8 -*-
 
 
-import unittest
+import unittest2 as unittest
 import run_tests # set sys.path
 
 import os
+import warnings
 import tempfile
 import shutil
 import hashlib
 import cPickle as pickle
-import rpm
-import warnings
 
-from kobo.pkgset import *
+# tolerate and skip in absence of rpm since it's not installable to virtualenv
+try:
+    import rpm
+except ImportError:
+    HAVE_RPM = False
+else:
+    from kobo.pkgset import *
+    HAVE_RPM = True
 
 
+@unittest.skipUnless(HAVE_RPM, "rpm python module is not installed")
 class TestFileWrapperClass(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
@@ -53,6 +60,7 @@ class TestFileWrapperClass(unittest.TestCase):
         print wrap2.file_path
 
 
+@unittest.skipUnless(HAVE_RPM, "rpm python module is not installed")
 class TestRpmWrapperClass(unittest.TestCase):
     def setUp(self):
         self.file_path = "data/dummy-basesystem-10.0-6.noarch.rpm"
@@ -88,6 +96,7 @@ class TestRpmWrapperClass(unittest.TestCase):
         self.assertEqual(wrap.name, wrap2.name)
 
 
+@unittest.skipUnless(HAVE_RPM, "rpm python module is not installed")
 class TestSimpleRpmWrapperClass(unittest.TestCase):
     def setUp(self):
         self.file_path = "data/dummy-basesystem-10.0-6.noarch.rpm"
@@ -110,6 +119,7 @@ class TestSimpleRpmWrapperClass(unittest.TestCase):
         self.assertEqual(wrap.name, wrap2.name)
 
 
+@unittest.skipUnless(HAVE_RPM, "rpm python module is not installed")
 class TestFileCacheClass(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()

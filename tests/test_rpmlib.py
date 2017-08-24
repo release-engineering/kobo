@@ -2,12 +2,20 @@
 # -*- coding: utf-8 -*-
 
 
-import unittest
+import unittest2 as unittest
 import run_tests # set sys.path
 
-from kobo.rpmlib import *
+# tolerate and skip in absence of rpm since it's not installable to virtualenv
+try:
+    import rpm
+except ImportError:
+    HAVE_RPM = False
+else:
+    HAVE_RPM = True
+    from kobo.rpmlib import *
 
 
+@unittest.skipUnless(HAVE_RPM, "rpm python module is not installed")
 class TestNVR(unittest.TestCase):
     def test_valid_nvr(self):
         self.assertEqual(parse_nvr("net-snmp-5.3.2.2-5.el5"), dict(name="net-snmp", version="5.3.2.2", release="5.el5", epoch=""))
