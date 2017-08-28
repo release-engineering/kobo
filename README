@@ -1,3 +1,19 @@
+KOBO 0.5.0 RELEASE NOTES
+========================
+
+FEATURES & IMPROVEMENTS
+-----------------------
+- kobo.shortcuts.run now supports all Popen keyword arguments
+- resubmit-tasks has a --force argument to resubmit successful tasks
+- new watch-log command for watching a log from CLI
+- admin UI now covers user model
+
+BUG FIXES
+---------
+- kobo.shortcuts.run now resumes on interrupted system calls
+- worker load no longer includes assigned but unstarted tasks
+
+
 KOBO 0.4.0 RELEASE NOTES
 ========================
 
