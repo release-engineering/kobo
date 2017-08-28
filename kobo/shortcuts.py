@@ -327,7 +327,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             if lines == "":
                 break
             if stdout:
-                print lines,
+                sys.stdout.write(lines)
             if logfile:
                 log.write(lines)
             if return_stdout:
