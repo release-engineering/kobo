@@ -24,7 +24,7 @@ class Start_Client(kobo.cli.Command):
 
         try:
             kobo.admin.copy_helper(name, directory, "client")
-        except kobo.admin.TemplateError, ex:
+        except kobo.admin.TemplateError as ex:
             self.parser.error(ex)
 
         print("Edit config file to finish setup.")

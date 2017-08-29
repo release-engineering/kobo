@@ -69,7 +69,7 @@ class FileUpload(models.Model):
         if self.state == UPLOAD_STATES['FINISHED']:
             try:
                 os.unlink(self.get_full_path())
-            except OSError, ex:
+            except OSError as ex:
                 if ex.errno != 2:
                     raise
 
@@ -84,6 +84,6 @@ class FileUpload(models.Model):
                         break
                     try:
                         os.rmdir(file_dir)
-                    except OSError, ex:
+                    except OSError as ex:
                         break
                     file_dir = os.path.split(file_dir)[0]

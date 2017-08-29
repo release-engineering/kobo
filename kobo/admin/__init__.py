@@ -104,7 +104,7 @@ def copy_helper(name, directory, template_name):
     top_dir = os.path.join(directory, name)
     try:
         os.mkdir(top_dir)
-    except OSError, ex:
+    except OSError as ex:
         raise TemplateError(ex)
 
     for dirname, subdirs, files in os.walk(template_path):

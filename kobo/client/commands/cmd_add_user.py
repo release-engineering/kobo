@@ -37,6 +37,6 @@ class Add_User(ClientCommand):
         self.set_hub(username, password)
         try:
             self.hub.admin.add_user(user, admin)
-        except Exception, ex:
+        except Exception as ex:
             print(str(ex))
             sys.exit(1)

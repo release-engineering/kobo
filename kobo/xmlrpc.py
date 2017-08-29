@@ -382,7 +382,7 @@ class CookieTransport(xmlrpclib.Transport):
             if rc == -1:
                 errcode = 401
                 raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
-        except kerberos.GSSError, ex:
+        except kerberos.GSSError as ex:
             errcode = 401
             errmsg += ": %s/%s" % (ex[0][0], ex[1][0])
             raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
@@ -579,7 +579,7 @@ def retry_request_decorator(transport_class):
                     return result
                 except KeyboardInterrupt:
                     raise
-                except (socket.error, socket.herror, socket.gaierror, socket.timeout), ex:
+                except (socket.error, socket.herror, socket.gaierror, socket.timeout) as ex:
                     if i >= self.retry_count:
                         raise
                     retries_left = self.retry_count - i
@@ -662,7 +662,7 @@ def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, w
     if not os.path.isdir(target_dir):
         try:
             os.makedirs(target_dir, mode=0o755)
-        except OSError, ex:
+        except OSError as ex:
             if ex.errno != 17:
                 raise
 

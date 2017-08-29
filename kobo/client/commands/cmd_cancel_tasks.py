@@ -32,7 +32,7 @@ class Cancel_Tasks(ClientCommand):
                 result = self.hub.client.cancel_task(task_id)
                 if result and isinstance(result, basestring):
                     print(result)
-            except Exception, ex:
+            except Exception as ex:
                 failed = True
                 print(ex)
 

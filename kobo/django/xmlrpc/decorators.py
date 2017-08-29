@@ -101,7 +101,7 @@ def log_traceback(function, logdir):
     def _new_function(request, *args, **kwargs):
         try:
             result = function(request, *args, **kwargs)
-        except Exception, ex:
+        except Exception as ex:
             # logdir must be absolute path
             if os.path.abspath(logdir) != logdir:
                 raise

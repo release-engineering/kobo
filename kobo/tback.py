@@ -149,7 +149,7 @@ class Traceback(object):
                         if key == "self":
                             try:
                                 variables = sorted(dir(value))
-                            except Exception, ex:
+                            except Exception as ex:
                                 # this exception may be thrown on xmlrpc proxy object
                                 # e.g. <ServerProxy>.__dir__ will be handled as xmlrpc call,
                                 # expected behaviour is that the call returns list of strings for the scope

@@ -25,7 +25,7 @@ class Start_Hub(kobo.cli.Command):
 
         try:
             kobo.admin.copy_helper(name, directory, "hub")
-        except kobo.admin.TemplateError, ex:
+        except kobo.admin.TemplateError as ex:
             self.parser.error(ex)
 
         # code from django/core/management/commands/startproject.py

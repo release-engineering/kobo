@@ -26,5 +26,5 @@ class Start_CLI_Command(kobo.cli.Command):
 
         try:
             kobo.admin.copy_helper(name, directory, "cli@cmd___project_name__.py.template")
-        except kobo.admin.TemplateError, ex:
+        except kobo.admin.TemplateError as ex:
             self.parser.error(ex)

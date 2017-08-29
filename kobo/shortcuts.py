@@ -318,7 +318,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             else:
                 try:
                     lines = proc.stdout.read(buffer_size)
-                except (IOError, OSError), ex:
+                except (IOError, OSError) as ex:
                     import errno
                     if ex.errno == errno.EINTR:
                         continue
@@ -503,7 +503,7 @@ def makedirs(path, mode=0o777):
     """
     try:
         os.makedirs(path, mode)
-    except OSError, ex:
+    except OSError as ex:
         if ex.errno != 17:
             raise
         if not os.path.isdir(path):

@@ -26,5 +26,5 @@ class Start_Worker_Task(kobo.cli.Command):
 
         try:
             kobo.admin.copy_helper(name, directory, "task___project_name__.py.template")
-        except kobo.admin.TemplateError, ex:
+        except kobo.admin.TemplateError as ex:
             self.parser.error(ex)

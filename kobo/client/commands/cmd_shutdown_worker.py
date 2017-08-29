@@ -38,5 +38,5 @@ class Shutdown_Worker(ClientCommand):
         for worker in workers:
             try:
                 self.hub.client.shutdown_worker(worker, kill)
-            except Fault, ex:
+            except Fault as ex:
                 sys.stderr.write("%s\n" % ex.faultString)

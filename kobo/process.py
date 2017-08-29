@@ -47,7 +47,7 @@ def daemonize(daemon_func, daemon_pid_file=None, daemon_start_dir="/", daemon_ou
         if os.fork() > 0:
             # exit from first parent
             sys.exit(0)
-    except OSError, ex:
+    except OSError as ex:
         sys.stderr.write("fork #1 failed: (%d) %s\n" % (ex.errno, ex.strerror))
         sys.exit(1)
 
@@ -71,7 +71,7 @@ def daemonize(daemon_func, daemon_pid_file=None, daemon_start_dir="/", daemon_ou
                 os.close(fd)
             # exit from second parent
             sys.exit(0)
-    except OSError, ex:
+    except OSError as ex:
         sys.stderr.write("fork #2 failed: (%d) %s\n" % (ex.errno, ex.strerror))
         sys.exit(1)
 
@@ -186,7 +186,7 @@ def kill_group(pgid, msg=None, sig=signal.SIGTERM, timeout=5, logger=None):
                 if logger:
                     logger.info(get_process_status(retval, "kill_group: process %i" % pid))
                 pid, retval = os.waitpid(-pgid, os.WNOHANG)
-        except OSError, ex:
+        except OSError as ex:
             # means there are no processes in that process group
             if t == 0.0:
                 logger and logger.info("kill_group: Process (pgrp %i) exited" % (pgid))
@@ -198,7 +198,7 @@ def kill_group(pgid, msg=None, sig=signal.SIGTERM, timeout=5, logger=None):
 
         try:
             os.killpg(pgid, sig)
-        except OSError, ex:
+        except OSError as ex:
             # shouldn't happen
             logger and logger.error("kill_group: Process (pgrp %i): %s" % (pgid, ex))
             continue

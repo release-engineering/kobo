@@ -20,7 +20,7 @@ def catch_exceptions(old_view):
     def new_view(*args, **kwargs):
         try:
             return old_view(*args, **kwargs)
-        except Exception, ex:
+        except Exception as ex:
             return HttpResponseServerError(str(ex))
     return new_view
 
