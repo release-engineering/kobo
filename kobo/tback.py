@@ -32,6 +32,7 @@
 
 
 from __future__ import print_function
+from io import open
 import os
 import sys
 import traceback
@@ -192,26 +193,24 @@ class Traceback(object):
         """
         source = None
         try:
-            f = open(filename)
-            try:
+            with open(filename) as f:
                 source = f.readlines()
-            finally:
-                f.close()
         except (OSError, IOError):
             pass
 
         if source is None:
             return None, [], None, []
 
-        encoding = "ascii"
         for line in source[:2]:
             # File coding may be specified. Match pattern from PEP-263
             # (http://www.python.org/dev/peps/pep-0263/)
             match = re.search(r"coding[:=]\s*([-\w.]+)", line)
             if match:
                 encoding = match.group(1)
+                # Read file content once more with specified encoding
+                with open(filename, encoding=encoding) as f:
+                    source = f.readlines()
                 break
-        source = [ unicode(sline, encoding, "replace") for sline in source ]
 
         lower_bound = max(0, lineno - context_lines)
         upper_bound = lineno + context_lines
