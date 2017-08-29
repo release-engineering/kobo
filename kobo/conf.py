@@ -55,7 +55,7 @@ def get_dict_value(dictionary, key):
     except KeyError:
         if isinstance(key, str):
             matches = []
-            for pattern in dictionary.iterkeys():
+            for pattern in dictionary:
                 if pattern == '*' or not isinstance(pattern, str):
                     # exclude '*', because it would match every time
                     continue
