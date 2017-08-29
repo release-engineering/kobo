@@ -621,7 +621,7 @@ def encode_xmlrpc_chunks_iterator(file_obj):
     yield (str(chunk_start), -1, checksum.hexdigest().lower(), "")
 
 
-def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, write_to=None, mode=0644):
+def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, write_to=None, mode=0o644):
     """
     Decode a data chunk and optionally write it to a file.
 
@@ -661,7 +661,7 @@ def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, w
     target_dir = os.path.dirname(write_to)
     if not os.path.isdir(target_dir):
         try:
-            os.makedirs(target_dir, mode=0755)
+            os.makedirs(target_dir, mode=0o755)
         except OSError, ex:
             if ex.errno != 17:
                 raise

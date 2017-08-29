@@ -417,7 +417,7 @@ class TaskManager(kobo.log.LoggingBase):
             message = "ERROR: %s\n" % kobo.tback.get_exception()
             message += "See traceback.log for details (admin only).\n"
             hub.upload_task_log(StringIO(message), task.task_id, "error.log")
-            hub.upload_task_log(StringIO(kobo.tback.Traceback().get_traceback()), task.task_id, "traceback.log", mode=0600)
+            hub.upload_task_log(StringIO(kobo.tback.Traceback().get_traceback()), task.task_id, "traceback.log", mode=0o600)
             failed = True
 
         thread.stop()

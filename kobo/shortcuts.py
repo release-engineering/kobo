@@ -184,7 +184,7 @@ def hex_string(string):
     return "".join(( "%02x" % ord(i) for i in string ))
 
 
-def touch(filename, mode=0644):
+def touch(filename, mode=0o644):
     """Touch a file."""
     save_to_file(filename, "", append=True, mode=mode)
 
@@ -209,7 +209,7 @@ def read_from_file(filename, lines=None, re_filter=None):
     return result
 
 
-def save_to_file(filename, text, append=False, mode=0644):
+def save_to_file(filename, text, append=False, mode=0o644):
     """Save text to a file."""
     if append and os.path.exists(filename):
         fd = os.open(filename, os.O_RDWR | os.O_APPEND, mode)
@@ -496,7 +496,7 @@ def relative_path(src_path, dst_path=None):
     return os.path.join(*src_path)
 
 
-def makedirs(path, mode=0777):
+def makedirs(path, mode=0o777):
     """
     Wrapper to os.makedirs which does not
     throw an exception on existing directory.

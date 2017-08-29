@@ -436,9 +436,9 @@ class TaskLogs(object):
                 continue
             log_path = self._get_absolute_log_path(log)
             if os.path.basename(log).startswith("traceback"):
-                mode = 0600
+                mode = 0o600
             else:
-                mode = 0644
+                mode = 0o644
             save_to_file(log_path, self.cache[log], mode=mode)
             self.changed[log] = False
 
@@ -568,7 +568,7 @@ class Task(models.Model):
             raise Exception('Possible hack, trying to read path "%s"' % path)
 
         if create and not os.path.isdir(path):
-            os.makedirs(path, mode=0755)
+            os.makedirs(path, mode=0o755)
 
         return path
 

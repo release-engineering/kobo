@@ -329,7 +329,7 @@ class HubProxy(object):
         err_code, err_msg = upload.send_to_host(host, path, port, secure)
         return upload_id, err_code, err_msg
 
-    def upload_task_log(self, file_obj, task_id, remote_file_name, append=True, mode=0644):
+    def upload_task_log(self, file_obj, task_id, remote_file_name, append=True, mode=0o644):
         """
         Upload a task log to the hub.
 

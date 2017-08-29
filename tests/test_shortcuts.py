@@ -115,11 +115,11 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("\n".join(read_from_file(self.tmp_file)), "foo\nbar")
 
         # append doesn't modify existing perms
-        self.assertEqual(os.stat(self.tmp_file).st_mode & 0777, 0644)
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o644)
 
         os.unlink(self.tmp_file)
-        save_to_file(self.tmp_file, "foo", append=True, mode=0600)
-        self.assertEqual(os.stat(self.tmp_file).st_mode & 0777, 0600)
+        save_to_file(self.tmp_file, "foo", append=True, mode=0o600)
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o600)
 
     def test_run(self):
         ret, out = run("echo hello")

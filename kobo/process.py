@@ -66,7 +66,7 @@ def daemonize(daemon_func, daemon_pid_file=None, daemon_start_dir="/", daemon_ou
         if pid > 0:
             # write pid to pid_file
             if daemon_pid_file is not None:
-                fd = os.open(daemon_pid_file, os.O_WRONLY | os.O_CREAT, 0644)
+                fd = os.open(daemon_pid_file, os.O_WRONLY | os.O_CREAT, 0o644)
                 os.write(fd, "%s" % pid)
                 os.close(fd)
             # exit from second parent
