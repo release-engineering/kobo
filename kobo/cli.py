@@ -66,6 +66,7 @@ parser.run()
 """
 
 
+from __future__ import print_function
 import sys
 import optparse
 import datetime
@@ -94,7 +95,7 @@ def username_prompt(prompt=None, default_value=None):
         return default_value
 
     prompt = prompt or "Enter your username: "
-    print >>sys.stderr, prompt,
+    print(prompt, end=' ', file=sys.stderr)
     return sys.stdin.readline()
 
 
@@ -123,7 +124,7 @@ def yes_no_prompt(prompt, default_value=None):
         default_value = default_value.upper()
 
     prompt = "%s [%s/%s]: " % (prompt, ("y", "Y")[default_value == "Y"], ("n", "N")[default_value == "N"])
-    print >>sys.stderr, prompt,
+    print(prompt, end=' ', file=sys.stderr)
 
     while True:
         user_input = sys.stdin.readline().strip().upper()
@@ -139,7 +140,7 @@ def yes_no_prompt(prompt, default_value=None):
 def are_you_sure_prompt(prompt=None):
     """Give a yes/no (y/n) question."""
     prompt = prompt or "Are you sure? Enter 'YES' to continue: "
-    print >>sys.stderr, prompt,
+    print(prompt, end=' ', file=sys.stderr)
     user_input = sys.stdin.readline().strip()
 
     if user_input == "YES":
@@ -307,31 +308,27 @@ class Help_RST(Command):
 
     def run(self, *args, **kwargs):
         prog = self.parser.get_prog_name()
-        print ".. -*- coding: utf-8 -*-"
-        print
-        print "=" * len(prog)
-        print prog
-        print "=" * len(prog)
-        print
+        print(".. -*- coding: utf-8 -*-\n")
+        print("=" * len(prog))
+        print(prog)
+        print("=" * len(prog), "\n")
 
         # add subtitle (command description)
         description = getattr(self.parser.container, "_description", None)
         if description:
-            print ":Subtitle: %s" % description
-            print
+            print(":Subtitle: %s\n" % description)
 
         # add copyright
         copyright = getattr(self.parser.container, "_copyright", None)
         if copyright:
-            print ":Copyright: %s" % copyright
+            print(":Copyright: %s" % copyright)
 
         # add date
-        print ":Date: $Date: %s $" % datetime.datetime.strftime(datetime.datetime.utcnow(), format="%F %X")
-        print
+        print(":Date: $Date: %s $\n" % datetime.datetime.strftime(datetime.datetime.utcnow(), format="%F %X"))
 
-        print "--------"
-        print "COMMANDS"
-        print "--------"
+        print("--------")
+        print("COMMANDS")
+        print("--------")
 
         for command_name, CommandClass in sorted(self.parser.container.plugins.items()):
             parser = optparse.OptionParser(usage=self.parser.usage)
@@ -341,18 +338,16 @@ class Help_RST(Command):
             cmd.container = self.parser.container
             cmd_opts, cmd_args = parser.parse_args()
 
-            print command_name
-            print "-" * len(command_name)
+            print(command_name)
+            print("-" * len(command_name))
 
             if cmd.admin:
-                print "[ADMIN ONLY]",
+                print("[ADMIN ONLY]", end=' ')
 
-            print cmd.__doc__.strip()
-            print
+            print(cmd.__doc__.strip(), end="\n\n")
             usage = parser.get_usage().strip().replace("Usage: ", "**Usage:** ", 1)
             if usage:
-                print usage
-                print 
+                print(usage, end="\n\n")
 
             for opt in sorted(parser.option_list, lambda x, y: cmp(str(x), str(y))):
                 if "-h/--help" in str(opt):
@@ -365,29 +360,26 @@ class Help_RST(Command):
                         opt_list.append("%s=%s" % (opt_str, metavar))
                     else:
                         opt_list.append(opt_str)
-                print "/".join(opt_list)
-                print "  %s" % opt.help
+                print("/".join(opt_list))
+                print("  %s" % opt.help)
                 if opt.action == "append":
-                    print
-                    print "  This option can be specified multiple times"
-                print
-            print
+                    print("\n  This option can be specified multiple times")
+                print()
+            print()
 
         # handle :Contact: and :Author: ourselves
         authors = force_list(getattr(self.parser.container, "_authors", []))
         contact = getattr(self.parser.container, "_contact", None)
         if authors or contact:
-            print "-------"
-            print "AUTHORS"
-            print "-------"
+            print("-------")
+            print("AUTHORS")
+            print("-------")
 
             for author in sorted(authors):
-                print "- %s" % author
-            print
+                print("- %s\n" % author)
 
             if contact:
-                print "**Contact:** %s" % contact
-                print
+                print("**Contact:** %s\n" % contact)
 
 
 CommandContainer.register_plugin(Help)

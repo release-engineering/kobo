@@ -5,6 +5,7 @@
 Run tests in current directory.
 """
 
+from __future__ import print_function
 import os
 import sys
 
@@ -20,20 +21,20 @@ from kobo.shortcuts import run
 
 
 def run_test(test_with_args):
-    print "Executing tests in %-40s" % test_with_args[0]
+    print("Executing tests in %-40s" % test_with_args[0])
     retcode, output = run(['python'] + test_with_args, can_fail=True)
     if retcode == 0:
         # If tests were skipped, give caller a hint that this happened.
         # Summary line example:
         # "OK (skipped=9)"
         if 'skipped=' in output.splitlines()[-1]:
-            print "[  SKIP  ]"
+            print("[  SKIP  ]")
         else:
-            print "[   OK   ]"
+            print("[   OK   ]")
         return True
     else:
-        print "[ FAILED ]"
-        print output
+        print("[ FAILED ]")
+        print(output)
         return False
 
 

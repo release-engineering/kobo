@@ -31,6 +31,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+from __future__ import print_function
 import os
 import sys
 import traceback
@@ -181,7 +182,7 @@ class Traceback(object):
 
     def print_traceback(self):
         """Print a traceback string to stderr."""
-        print >>sys.stderr, self.get_traceback()
+        print(self.get_traceback(), file=sys.stderr)
 
     def _get_lines_from_file(self, filename, lineno, context_lines):
         # this function was taken from Django and adapted for CLI
@@ -269,7 +270,7 @@ def set_except_hook(logger=None):
         tback.show_locals = True
         logger and logger.error(tback.get_traceback())
         tback.print_traceback()
-        print
+        print()
 
     _hook.__doc__ = sys.excepthook.__doc__
     _hook.__name__ = sys.excepthook.__name__

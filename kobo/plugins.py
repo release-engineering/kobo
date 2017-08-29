@@ -19,6 +19,7 @@ Always make sure all trees inherit from PluginContainer:
 """
 
 
+from __future__ import print_function
 import os
 
 
@@ -165,7 +166,7 @@ class PluginContainer(object):
                     __import__(module.__name__, {}, {}, [mod])
                 except:
                     import sys
-                    print >> sys.stderr, "WARNING: Skipping broken plugin module: %s.%s" % (module.__name__, mod)
+                    print("WARNING: Skipping broken plugin module: %s.%s" % (module.__name__, mod), file=sys.stderr)
                     module_list.remove(mod)
         else:
             __import__(module.__name__, {}, {}, module_list)

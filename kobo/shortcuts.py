@@ -6,6 +6,7 @@ Various useful shortcuts.
 """
 
 
+from __future__ import print_function
 import os
 import sys
 import subprocess
@@ -219,7 +220,7 @@ def save_to_file(filename, text, append=False, mode=0644):
 
 
 def save(*args, **kwargs):
-    print >> sys.stderr, "DeprecationWarning: kobo.shortcuts.save() is deprecated, use kobo.shortcuts.save_to_file() instead."
+    print("DeprecationWarning: kobo.shortcuts.save() is deprecated, use kobo.shortcuts.save_to_file() instead.", file=sys.stderr)
     return save_to_file(*args, **kwargs)
 
 
@@ -289,7 +290,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         if show_cmd:
             command = "COMMAND: %s\n%s\n" % (cmd, "-" * (len(cmd) + 9))
             if stdout:
-                print command,
+                print(command, end=' ')
             if logfile:
                 log.write(command)
 
@@ -351,7 +352,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         raise exc
 
     if proc.returncode != 0 and show_cmd:
-        print >> sys.stderr, err_msg
+        print(err_msg, file=sys.stderr)
 
     if not return_stdout:
         output = None

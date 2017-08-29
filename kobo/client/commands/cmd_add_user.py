@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import print_function
 import sys
 from xmlrpclib import Fault
 
@@ -37,5 +38,5 @@ class Add_User(ClientCommand):
         try:
             self.hub.admin.add_user(user, admin)
         except Exception, ex:
-            print str(ex)
+            print(str(ex))
             sys.exit(1)

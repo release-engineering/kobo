@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import print_function
 import os
 
 import kobo.cli
@@ -26,5 +27,5 @@ class Start_Client(kobo.cli.Command):
         except kobo.admin.TemplateError, ex:
             self.parser.error(ex)
 
-        print "Edit config file to finish setup."
-        print "Use `kobo-admin start-client-command` to add additional commands."
+        print("Edit config file to finish setup.")
+        print("Use `kobo-admin start-client-command` to add additional commands.")

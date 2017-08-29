@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import os
 import sys
 import datetime
@@ -627,12 +628,12 @@ class Task(models.Model):
 
     def set_args(self, **kwargs):
         """Serialize args dictionary."""
-        print >> sys.stderr, "DeprecationWarning: kobo.hub.models.Task.set_args() is deprecated. Use kobo.hub.models.Task.args instead."
+        print("DeprecationWarning: kobo.hub.models.Task.set_args() is deprecated. Use kobo.hub.models.Task.args instead.", file=sys.stderr)
         self.args = kwargs
 
     def get_args(self):
         """Deserialize args dictionary."""
-        print >> sys.stderr, "DeprecationWarning: kobo.hub.models.Task.get_args() is deprecated. Use kobo.hub.models.Task.args instead."
+        print("DeprecationWarning: kobo.hub.models.Task.get_args() is deprecated. Use kobo.hub.models.Task.args instead.", file=sys.stderr)
         return self.args.copy()
 
     def get_args_display(self):

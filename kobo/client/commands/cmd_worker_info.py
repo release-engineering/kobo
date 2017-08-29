@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 from pprint import pprint
 from kobo.client import ClientCommand
 
@@ -32,6 +33,6 @@ class Worker_Info(ClientCommand):
         self.set_hub(username, password)
         result = self.hub.client.get_worker_info(worker_name)
         if kwargs.pop("oneline"):
-            print result
+            print(result)
         else:
             pprint(result)

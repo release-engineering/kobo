@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import print_function
 import base64
 import cookielib
 import fcntl
@@ -583,7 +584,7 @@ def retry_request_decorator(transport_class):
                         raise
                     retries_left = self.retry_count - i
                     retries = "%d %s left" % (retries_left, retries_left == 1 and "retry" or "retries") # 1 retry left / X retries left
-                    print >> sys.stderr, "XML-RPC connection to %s failed: %s, %s" % (args[0], ex.args[1:], retries)
+                    print("XML-RPC connection to %s failed: %s, %s" % (args[0], ex.args[1:], retries), file=sys.stderr)
                     raise
                     time.sleep(self.retry_timeout)
 

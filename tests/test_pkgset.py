@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import print_function
 import unittest2 as unittest
 import run_tests # set sys.path
 
@@ -57,7 +58,7 @@ class TestFileWrapperClass(unittest.TestCase):
         wrap = FileWrapper(file1)
         pickled_data = pickle.dumps(wrap)
         wrap2 = pickle.loads(pickled_data)
-        print wrap2.file_path
+        print(wrap2.file_path)
 
 
 @unittest.skipUnless(HAVE_RPM, "rpm python module is not installed")

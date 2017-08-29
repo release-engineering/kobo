@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import print_function
 import os
 
 import kobo.cli
@@ -26,4 +27,4 @@ class Start_CLI(kobo.cli.Command):
         except kobo.admin.TemplateError, ex:
             self.parser.error(ex)
 
-        print "Use `kobo-admin start-cli-command` to add additional commands."
+        print("Use `kobo-admin start-cli-command` to add additional commands.")
