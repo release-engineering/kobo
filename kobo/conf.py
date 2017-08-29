@@ -30,7 +30,7 @@ import keyword
 import sys
 import token
 import tokenize
-from cStringIO import StringIO
+from six.moves import StringIO
 
 from kobo.exceptions import ImproperlyConfigured
 

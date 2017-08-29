@@ -4,7 +4,8 @@
 # Some code comes from koji: https://fedorahosted.org/koji/
 
 
-from itertools import izip
+from six.moves import zip as izip
+from six.moves import xrange
 import datetime
 import time
 try:

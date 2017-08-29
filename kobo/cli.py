@@ -71,7 +71,7 @@ import sys
 import optparse
 import datetime
 from optparse import Option
-from xmlrpclib import Fault
+from six.moves.xmlrpc_client import Fault
 
 from kobo.plugins import Plugin, PluginContainer
 from kobo.shortcuts import force_list

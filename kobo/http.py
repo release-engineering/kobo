@@ -4,7 +4,7 @@
 # based on: http://code.activestate.com/recipes/146306/
 
 
-import httplib
+from six.moves import http_client as httplib
 import mimetypes
 import os
 

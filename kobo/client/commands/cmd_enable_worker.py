@@ -2,7 +2,7 @@
 
 
 import sys
-from xmlrpclib import Fault
+from six.moves.xmlrpc_client import Fault
 
 from kobo.client import ClientCommand
 

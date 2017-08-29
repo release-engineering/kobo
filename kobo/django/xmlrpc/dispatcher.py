@@ -8,7 +8,7 @@
 
 
 import sys
-import xmlrpclib
+import six.moves.xmlrpc_client as xmlrpclib
 from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
 
 from django.conf import settings

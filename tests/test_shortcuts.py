@@ -8,7 +8,7 @@ import run_tests # set sys.path
 import os
 import shutil
 import tempfile
-from cStringIO import StringIO
+from six.moves import StringIO
 
 from kobo.shortcuts import *
 

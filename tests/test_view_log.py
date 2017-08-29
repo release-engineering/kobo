@@ -6,7 +6,7 @@ import itertools
 
 from tempfile import TemporaryFile
 from gzip import GzipFile
-from StringIO import StringIO
+from six.moves import StringIO
 from shutil import rmtree
 import mock
 

@@ -14,13 +14,13 @@ Example:
     pool = ThreadPool(logger=logger)
 
     # initialize threads
-    for i in xrange(10):
+    for i in range(10):
         pool.add(MyThread(pool))
 
     pool.start()
 
     # populate the queue
-    for i in xrange(100):
+    for i in range(100):
         pool.queue_put("item %s" % i)
 
     pool.stop()

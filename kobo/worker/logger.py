@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-
+import six
 import threading
 import time
 import Queue
-from cStringIO import StringIO
-from xmlrpclib import Fault
+from six.moves import StringIO
+from six.moves.xmlrpc_client import Fault
 
 
 __all__ = (

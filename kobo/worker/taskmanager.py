@@ -44,15 +44,14 @@ Struct: task_info
     }
 """
 
-
 import errno
 import os
 import sys
 import signal
 import time
 import datetime
-from xmlrpclib import Fault, ProtocolError
-from cStringIO import StringIO
+from six.moves.xmlrpc_client import Fault, ProtocolError
+from six.moves import StringIO
 
 import kobo.conf
 import kobo.worker.logger

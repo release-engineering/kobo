@@ -72,8 +72,8 @@ import os
 import base64
 import hashlib
 import ssl
-import urlparse
-import xmlrpclib
+import six.moves.urllib.parse as urlparse
+from six.moves import xmlrpc_client as xmlrpclib
 
 import kobo.conf
 import kobo.cli
@@ -354,7 +354,7 @@ class HubProxy(object):
             self._hub.worker.upload_task_log(task_id, remote_file_name, mode, chunk_start, chunk_len, chunk_checksum, encoded_chunk)
 
 
-from xmlrpclib import Fault
+from six.moves.xmlrpc_client import Fault
 
 
 # default implementation of Fault.__repr__ is:

@@ -14,7 +14,7 @@ import random
 import re
 import hashlib
 import threading
-
+from six.moves import xrange
 
 __all__ = (
     "force_list",

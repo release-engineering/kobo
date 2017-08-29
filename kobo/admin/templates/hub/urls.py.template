@@ -37,7 +37,7 @@ urlpatterns = patterns('',
 if settings.DEBUG:
     import os
     import kobo
-    import urlparse
+    import six.moves.urllib.parse as urlparse
 
     scheme, netloc, path, params, query, fragment = urlparse.urlparse(settings.STATIC_URL)
     if not netloc:

@@ -3,19 +3,20 @@
 
 from __future__ import print_function
 import base64
-import cookielib
+import six.moves.http_cookiejar as cookielib
 import fcntl
 import hashlib
-import httplib
+import six.moves.http_client as httplib
 import os
 import socket
 import ssl
 import sys
 import threading
 import time
-import urllib2
-import xmlrpclib
-import urlparse
+import six.moves.urllib.request as urllib2
+import six.moves.xmlrpc_client as xmlrpclib
+import six.moves.urllib.parse as urlparse
+from six.moves import xrange
 
 import kobo.shortcuts
 
@@ -87,7 +88,7 @@ class TimeoutHTTPProxyConnection(TimeoutHTTPConnection):
         else:
             (self.host, self.port) = self._get_hostport(host, port)
 
-class TimeoutHTTP(httplib.HTTP):
+class TimeoutHTTP(httplib.HTTPConnection):
     _connection_class = TimeoutHTTPConnection
 
     def set_timeout(self, timeout):
@@ -159,7 +160,7 @@ class TimeoutHTTPSProxyConnection(TimeoutHTTPProxyConnection):
         return TimeoutHTTPConnection.putrequest(self, method, url)
 
 
-class TimeoutHTTPS(httplib.HTTPS):
+class TimeoutHTTPS(httplib.HTTPSConnection):
     _connection_class = TimeoutHTTPSConnection
 
     def set_timeout(self, timeout):
