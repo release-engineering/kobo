@@ -174,14 +174,23 @@ def task_log(request, id, log_name):
         return HttpResponseForbidden("Can display only specific file types: %s" % ", ".join(exts))
 
     content = task.logs.get_chunk(log_name, offset, HTML_LOG_MAX_SIZE)
-    needs_trim = content_len != 0 and len(content) < content_len
+
+    # Add "trimmed" message if there is likely more content to read.
+    # -3 offset is because get_chunk may return up to 3 bytes less than requested
+    needs_trim = len(content) >= (HTML_LOG_MAX_SIZE - 3)
+
+    # Next read should start at this offset.
+    # It's intentional that this calculation happens before decoding, i.e. is based on
+    # bytes, because the offset parameter works byte-wise in various APIs.
+    offset = offset + len(content)
+
     content = content.decode("utf-8", "replace")
     if needs_trim:
         content = _trim_log(content)
 
     context = {
         "title": "Task log",
-        "offset": offset + content_len + 1,
+        "offset": offset,
         "task_finished": task.is_finished() and 1 or 0,
         "next_poll": None if task.is_finished() else LOG_WATCHER_INTERVAL,
         "content": content,
