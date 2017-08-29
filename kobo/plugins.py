@@ -54,7 +54,7 @@ class PluginContainer(object):
         return self._get_plugin(name)
 
     def __iter__(self):
-        return self.plugins
+        return iter(self.plugins)
 
     @classmethod
     def normalize_name(cls, name):

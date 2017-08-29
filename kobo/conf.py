@@ -166,7 +166,7 @@ class PyConfigParser(dict):
 
     def _get_token(self, skip_newline=True):
         """Get a new token from token generator."""
-        self._tok_number, self._tok_value, self._tok_begin, self._tok_end, self._tok_line = self._tokens.next()
+        self._tok_number, self._tok_value, self._tok_begin, self._tok_end, self._tok_line = next(self._tokens)
         self._tok_name = token.tok_name.get(self._tok_number, None)
 
         if self._debug:
@@ -204,7 +204,7 @@ class PyConfigParser(dict):
 
         # look at next token if "%s" follows the string
         self._tokens, tmp = itertools.tee(self._tokens)
-        if tmp.next()[1:2] != ("%", ):
+        if next(tmp)[1:2] != ("%", ):
             # just a regular string
             return result
 

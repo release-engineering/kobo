@@ -229,7 +229,7 @@ class FileCache(object):
         self.file_cache[os.path.abspath(name)] = value
 
     def __iter__(self):
-        return self.file_cache
+        return iter(self.file_cache)
 
     def __len__(self):
         return len(self.file_cache)
