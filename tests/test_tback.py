@@ -3,32 +3,13 @@
 
 
 import re
-import unittest
+import unittest2 as unittest
 import run_tests # set sys.path
 
 from kobo.tback import *
-import six
 
 
 class TestTraceback(unittest.TestCase):
-
-    # hack for python < 2.7
-    if not hasattr(unittest.TestCase, "assertRegexpMatches"):
-        def assertRegexpMatches(self, text, expected_regexp, msg=None):
-            """Fail the test unless the text matches the regular expression."""
-            if isinstance(expected_regexp, six.string_types):
-                expected_regexp = re.compile(expected_regexp)
-            if not expected_regexp.search(text):
-                msg = msg or "Regexp didn't match"
-                msg = '%s: %r not found in %r' % (msg, expected_regexp.pattern, text)
-                raise self.failureException(msg)
-
-    # hack for python < 2.7
-    if not hasattr(unittest.TestCase, "assertIsInstance"):
-        def assertIsInstance(self, obj, cls, msg=None):
-            """Same as self.assertTrue(isinstance(obj, cls)), with a nicer default message."""
-            if not isinstance(obj, cls):
-                standardMsg = '%s is not an instance of %r' % (safe_repr(obj), cls)
 
     def test_empty(self):
         self.assertEqual('', get_traceback())
