@@ -2,6 +2,8 @@
 
 import mimetypes
 import os
+import six
+import locale
 
 try:
     import json
@@ -107,7 +109,7 @@ class TaskDetail(ExtraDetailView):
 def _stream_file(file_path, offset=0):
     """Generator that returns 1M file chunks."""
     try:
-        f = open(file_path, "r")
+        f = open(file_path, "rb")
     except IOError:
         return
 
@@ -222,6 +224,9 @@ def task_log_json(request, id, log_name):
         # Task is not finished, so there might be more to read,
         # check back soon
         next_poll = LOG_WATCHER_INTERVAL
+
+    if six.PY3:
+        content = str(content, encoding=locale.getpreferredencoding())
 
     result = {
         "new_offset": offset + len(content),

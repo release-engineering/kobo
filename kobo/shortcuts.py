@@ -15,6 +15,7 @@ import re
 import hashlib
 import threading
 from six.moves import xrange
+import locale
 
 __all__ = (
     "force_list",
@@ -215,6 +216,8 @@ def save_to_file(filename, text, append=False, mode=0o644):
         fd = os.open(filename, os.O_RDWR | os.O_APPEND, mode)
     else:
         fd = os.open(filename, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
+    if not isinstance(text, bytes):
+        text = bytes(text, encoding=locale.getpreferredencoding())
     os.write(fd, text)
     os.close(fd)
 
@@ -311,7 +314,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             stdin_thread.daemon = True
             stdin_thread.start()
 
-        output = ""
+        output = b""
         while True:
             if buffer_size == -1:
                 lines = proc.stdout.readline()
@@ -325,7 +328,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
                     else:
                         raise
 
-            if lines == "":
+            if lines == b"":
                 break
             if stdout:
                 sys.stdout.write(lines)
