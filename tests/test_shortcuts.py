@@ -124,20 +124,20 @@ class TestUtils(unittest.TestCase):
     def test_run(self):
         ret, out = run("echo hello")
         self.assertEqual(ret, 0)
-        self.assertEqual(out, "hello\n")
+        self.assertEqual(out, b"hello\n")
 
         ret, out = run(["echo", "'hello'"])
         self.assertEqual(ret, 0)
-        self.assertEqual(out, "'hello'\n")
+        self.assertEqual(out, b"'hello'\n")
 
         ret, out = run(["echo", "\" ' "])
         self.assertEqual(ret, 0)
-        self.assertEqual(out, "\" ' \n")
+        self.assertEqual(out, b"\" ' \n")
 
         # test a longer output that needs to be read in several chunks
         ret, out = run("echo -n '%s'; sleep 0.2; echo -n '%s'" % (10000 * "x", 10 * "a"), logfile=self.tmp_file, can_fail=True)
         self.assertEqual(ret, 0)
-        self.assertEqual(out, 10000 * "x" + 10 * "a")
+        self.assertEqual(out, 10000 * b"x" + 10 * b"a")
         # check if log file is written properly; it is supposed to append data to existing content
         self.assertEqual("\n".join(read_from_file(self.tmp_file)), "test" + 10000 * "x" + 10 * "a")
 
