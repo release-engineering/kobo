@@ -3,6 +3,7 @@
 
 
 import re
+import six
 import unittest2 as unittest
 import run_tests # set sys.path
 
@@ -53,7 +54,7 @@ class TestTraceback(unittest.TestCase):
         except:
             tb = Traceback(show_code = False, show_traceback = False)
         output = tb.get_traceback()
-        self.assertIsInstance(output, str)
+        self.assertIsInstance(output, six.binary_type)
 
     def test_uninitialized_variables(self):
         class Foo(object):
