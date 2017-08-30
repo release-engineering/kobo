@@ -290,7 +290,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         # What happens to log file if it exists already? If show_cmd is True,
         # it will be overwritten. Otherwise the command output will just be
         # appended to the existing file.
-        mode = 'a' if not show_cmd and os.path.exists(logfile) else 'w'
+        mode = 'ab' if not show_cmd and os.path.exists(logfile) else 'wb'
         log = open(logfile, mode)
 
     try:
