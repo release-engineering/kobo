@@ -49,7 +49,7 @@ class TestTaskLogs(django.test.TestCase):
         test_task = Task.objects.create(
             pk=TASK_ID, arch=arch, channel=channel, owner=user)
 
-        self.log_content = log_content = 'Line 1 ☺\nLine 2 ☺\nLine 3'
+        self.log_content = log_content = b'Line 1 \xe2\x98\xba\nLine 2 \xe2\x98\xba\nLine 3'
 
         test_task.logs['test_compressed.log'] = log_content
         test_task.logs.save()
@@ -86,8 +86,8 @@ class TestTaskLogs(django.test.TestCase):
         self.assertEqual(self.task_logs().get_chunk('test.log'), self.log_content)
 
     def test_get_chunk_offset(self):
-        chunk = self.task_logs().get_chunk('test.log', offset=len(b'Line 1 ☺\n'))
-        self.assertEqual(chunk, b'Line 2 ☺\nLine 3')
+        chunk = self.task_logs().get_chunk('test.log', offset=len(b'Line 1 \xe2\x98\xba\n'))
+        self.assertEqual(chunk, b'Line 2 \xe2\x98\xba\nLine 3')
 
     def test_get_chunk_offset_len(self):
         self.do_chunk_offset_len_test('test.log')
@@ -117,8 +117,8 @@ class TestTaskLogs(django.test.TestCase):
 
     def do_chunk_offset_within_char_test(self, log_name):
         task_logs = self.task_logs()
-        offset = self.log_content.index('\n') + 1
-        expected_chunk = b'Line 2 ☺'
+        offset = self.log_content.index(b'\n') + 1
+        expected_chunk = b'Line 2 \xe2\x98\xba'
         byteslen = len(expected_chunk)
 
         # ☺ character requires three bytes to encode; see what happens if we try to read
