@@ -63,7 +63,7 @@ def _utf8_chunk(bytestr):
     # Can we make it valid by chopping a few bytes from the end?
     idx = len(bytestr)
     while idx > 0:
-        last_char = ord(bytestr[idx - 1])
+        last_char = ord(bytestr[idx - 1:idx])
         if last_char < 0x80:
             # ascii - safe
             break
