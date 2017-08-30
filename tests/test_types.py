@@ -31,10 +31,10 @@ class TestEnum(unittest.TestCase):
         self.assertRaises(ValueError, Enum, EnumItem("A"), "A")
 
     def test_in_enum(self):
-        self.assert_("A" in self.enum)
-        self.assert_("B" in self.enum)
-        self.assert_("C" in self.enum)
-        self.assert_("X" not in self.enum)
+        self.assertTrue("A" in self.enum)
+        self.assertTrue("B" in self.enum)
+        self.assertTrue("C" in self.enum)
+        self.assertTrue("X" not in self.enum)
 
     def test_iter(self):
         self.assertEqual(list(self.enum), ["A", "B", "C"])
