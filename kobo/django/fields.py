@@ -1,6 +1,7 @@
 from copy import copy
 
 import json
+import six
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.core import exceptions
@@ -64,7 +65,7 @@ class StateEnumField(models.IntegerField):
         if isinstance(value, StateEnum):
             return value
 
-        if isinstance(value, (str, unicode)) and not value.isdigit():
+        if isinstance(value, six.text_type) and not value.isdigit():
             value = self.state_machine.get_num(value)
 
         try:
