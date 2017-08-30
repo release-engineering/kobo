@@ -147,7 +147,7 @@ class JSONField(models.TextField):
         if value is None:
             return None
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             return value
 
         try:

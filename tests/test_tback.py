@@ -7,6 +7,7 @@ import unittest
 import run_tests # set sys.path
 
 from kobo.tback import *
+import six
 
 
 class TestTraceback(unittest.TestCase):
@@ -15,7 +16,7 @@ class TestTraceback(unittest.TestCase):
     if not hasattr(unittest.TestCase, "assertRegexpMatches"):
         def assertRegexpMatches(self, text, expected_regexp, msg=None):
             """Fail the test unless the text matches the regular expression."""
-            if isinstance(expected_regexp, basestring):
+            if isinstance(expected_regexp, six.string_types):
                 expected_regexp = re.compile(expected_regexp)
             if not expected_regexp.search(text):
                 msg = msg or "Regexp didn't match"

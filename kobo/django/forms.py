@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import six
 try:
     import json
 except ImportError:
@@ -47,7 +48,7 @@ class JSONWidget(django.forms.widgets.Textarea):
         if value is None: value = ''
         final_attrs = self.build_attrs(attrs, name=name)
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             value = json.dumps(value)
 
         return mark_safe(u'<textarea%s>%s</textarea>' % (flatatt(final_attrs),
