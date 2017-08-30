@@ -8,6 +8,7 @@ from six.moves import zip as izip
 from six.moves import xrange
 import datetime
 import time
+import six
 try:
     import email.utils as email_utils
 except ImportError:
@@ -70,7 +71,7 @@ def get_rpm_header(file_name, ts=None):
             ts.setKeyring(rpm.keyring())
         ts.setVSFlags(rpm._RPMVSF_NOSIGNATURES|rpm._RPMVSF_NODIGESTS)
 
-    if type(file_name) in (str, unicode):
+    if type(file_name) in (str, six.string_types):
         fo = open(file_name, "r")
     else:
         fo = file_name

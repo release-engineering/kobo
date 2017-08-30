@@ -65,7 +65,7 @@ class StateEnumField(models.IntegerField):
         if isinstance(value, StateEnum):
             return value
 
-        if isinstance(value, six.text_type) and not value.isdigit():
+        if isinstance(value, (str, six.text_type)) and not value.isdigit():
             value = self.state_machine.get_num(value)
 
         try:

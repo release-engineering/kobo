@@ -1,6 +1,7 @@
 from kobo.django.fields import StateEnumField
 from django.db import models
 from workflow import workflow
+import six
 
 
 class SimpleState(models.Model):
@@ -13,4 +14,4 @@ class SimpleState(models.Model):
             self.state.change_state(None, commit=True)
 
     def __unicode__(self):
-        return unicode(self.state._current_state)
+        return six.text_type(self.state._current_state)

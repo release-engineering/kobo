@@ -5,6 +5,7 @@ import os
 
 import kobo.rpmlib
 from kobo.shortcuts import compute_file_checksums, force_list
+import six
 
 
 __all__ = (
@@ -257,7 +258,7 @@ class FileCache(object):
         return value
 
     def remove(self, file_path):
-        if type(file_path) not in (str, unicode):
+        if type(file_path) not in (str, six.text_type):
             file_obj = file_path
             file_path = file_obj.file_path
         else:

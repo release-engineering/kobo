@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 
 from kobo.shortcuts import random_string
 from kobo.types import Enum
+import six
 
 
 UPLOAD_STATES = Enum(
@@ -51,7 +52,7 @@ class FileUpload(models.Model):
         return os.path.abspath(os.path.join(self.target_dir, self.name))
 
     def __unicode__(self):
-        return unicode(os.path.join(self.target_dir, self.name))
+        return six.text_type(os.path.join(self.target_dir, self.name))
 
     def save(self, *args, **kwargs):
         if not self.upload_key:

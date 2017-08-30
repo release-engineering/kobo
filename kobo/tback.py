@@ -37,6 +37,7 @@ import os
 import sys
 import traceback
 import re
+import six
 
 
 __all__ = (
@@ -173,10 +174,10 @@ class Traceback(object):
         for i in result:
             line = i.replace(r'\\n', '\n').replace(r'\n', '\n')
 
-            if type(i) == unicode:
+            if type(i) == six.text_type:
                 s += i
             else:
-                s += unicode(str(i), errors='replace')
+                s += six.text_type(str(i), errors='replace')
             s += '\n'
 
         return s.encode('ascii', 'replace')

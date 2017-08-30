@@ -47,7 +47,7 @@ class LoggingThread(threading.Thread):
             if self._running and len(self._send_data) < 1200 and now - self._send_time < 5:
                 continue
 
-            if isinstance(self._send_data, unicode):
+            if isinstance(self._send_data, six.text_type):
                 self._send_data = self._send_data.encode('utf-8')
 
             try:
