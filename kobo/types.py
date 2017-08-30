@@ -149,7 +149,7 @@ class StateEnum(Enum):
                  all_next_states.add(next_state)
         for state in all_next_states:
             if state not in self._items:
-                 raise ValueError("State '%s' is not defined. Available states: %s" % (state, sorted(self._items)))
+                 raise ValueError("State '%s' is not defined. Available states: %s" % (state, self._items))
 
     def __str__(self):
         if self._current_state is None:
