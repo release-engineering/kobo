@@ -132,9 +132,7 @@ def is_empty(value):
 def iter_chunks(input_list, chunk_size):
     """Iterate through input_list and yield chunk_size-d chunks."""
 
-    # TODO: any idea how to detect files better? This works for StringIO at least...
-    is_file = type(input_list) is file
-    is_file |= hasattr(input_list, "read") and hasattr(input_list, "close") and hasattr(input_list, "seek")
+    is_file = hasattr(input_list, "read") and hasattr(input_list, "close") and hasattr(input_list, "seek")
     if is_file:
         while 1:
             chunk = input_list.read(chunk_size)
