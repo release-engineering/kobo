@@ -414,7 +414,7 @@ class TaskLogs(object):
 
             log_path = self._get_absolute_log_path(name)
             if os.path.isfile(log_path):
-                self.cache[name] = "\n".join(read_from_file(log_path))
+                self.cache[name] = b"\n".join(read_from_file(log_path, mode='rb'))
             elif os.path.isfile(log_path + ".gz"):
                 fo = gzip.open(log_path + ".gz", "rb")
                 self.cache[name] = fo.read()

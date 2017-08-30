@@ -191,10 +191,16 @@ def touch(filename, mode=0o644):
     save_to_file(filename, "", append=True, mode=mode)
 
 
-def read_from_file(filename, lines=None, re_filter=None):
+def read_from_file(filename, lines=None, re_filter=None, mode='rt'):
     """Read a text file."""
+    # Use bytes for stipping when using binary mode
+    if 'b' in mode:
+        strip = b"\r\n"
+    else:
+        strip = "\r\n"
+
     result = []
-    fo = open(filename, "rt")
+    fo = open(filename, mode)
 
     if re_filter is not None:
         re_filter_compiled = re.compile(re_filter)
@@ -202,7 +208,7 @@ def read_from_file(filename, lines=None, re_filter=None):
     for i, line in enumerate(fo):
         if lines is not None and i+1 not in lines:
             continue
-        line = line.rstrip("\r\n")
+        line = line.rstrip(strip)
         if re_filter is not None and not re_filter_compiled.match(line):
             continue
         result.append(line)
