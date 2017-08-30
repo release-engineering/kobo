@@ -12,6 +12,7 @@ import tempfile
 import shutil
 import hashlib
 import cPickle as pickle
+import six
 
 # tolerate and skip in absence of rpm since it's not installable to virtualenv
 try:
@@ -190,7 +191,7 @@ class TestFileCacheClass(unittest.TestCase):
         wrap1 = self.cache.add(self.file1)
         wrap2 = self.cache.add(self.file2)
 
-        items = [path for path, _ in self.cache.iteritems()]
+        items = [path for path, _ in six.iteritems(self.cache)]
 
         self.assertEqual(len(self.cache.inode_cache), 2)
         self.assertEqual(len(self.cache.file_cache), 2)

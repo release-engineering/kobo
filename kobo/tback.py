@@ -102,19 +102,19 @@ class Traceback(object):
 
         if self.show_environ:
             result.append("<ENVIRON>")
-            for key, value in sorted(os.environ.iteritems()):
+            for key, value in sorted(six.iteritems(os.environ)):
                 result.append("%s = %s" % (self._to_str(key, "%20s"), self._to_str(value)))
             result.append("</ENVIRON>")
 
         if self.show_environ:
             result.append("<GLOBALS>")
-            for key, value in sorted(os.environ.iteritems()):
+            for key, value in sorted(six.iteritems(os.environ)):
                 result.append("%s = %s" % (self._to_str(key, "%20s"), self._to_str(value)))
             result.append("</GLOBALS>")
 
         if self.show_modules:
             result.append("<MODULES>")
-            for key, value in sorted(sys.modules.iteritems()):
+            for key, value in sorted(six.iteritems(sys.modules)):
                 result.append("%s = %s" % (self._to_str(key, "%20"), self._to_str(value)))
             result.append("</MODULES>")
 
@@ -245,7 +245,7 @@ class Traceback(object):
                     "filename": filename,
                     "function": function,
                     "lineno": lineno + 1,
-                    "vars": tb.tb_frame.f_locals.items(),
+                    "vars": list(tb.tb_frame.f_locals.items()),
                     "id": id(tb),
                     "pre_context": pre_context,
                     "context_line": context_line,

@@ -75,6 +75,7 @@ from six.moves.xmlrpc_client import Fault
 
 from kobo.plugins import Plugin, PluginContainer
 from kobo.shortcuts import force_list
+import six
 
 
 __all__ = (
@@ -225,7 +226,7 @@ class CommandOptionParser(optparse.OptionParser):
         commands = []
         admin_commands = []
 
-        for name, plugin in sorted(self.container.plugins.iteritems()):
+        for name, plugin in sorted(six.iteritems(self.container.plugins)):
             is_admin = getattr(plugin, "admin", False)
             text = "  %-30s %s" % (name, plugin.__doc__ or "")
             if is_admin:

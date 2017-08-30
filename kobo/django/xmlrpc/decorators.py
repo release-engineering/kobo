@@ -10,6 +10,7 @@ from kobo.shortcuts import random_string
 from kobo.tback import Traceback
 
 from models import XmlRpcLog
+import six
 
 
 __all__ = (
@@ -79,7 +80,7 @@ def log_call(function):
             arg_names = argspec[0][1:]
             known_args = zip(arg_names, args)
             unknown_args = list(enumerate(args[len(arg_names):]))
-            keyword_args = [ (key, value) for key, value in kwargs.iteritems() if (key, value) not in known_args ]
+            keyword_args = [ (key, value) for key, value in six.iteritems(kwargs) if (key, value) not in known_args ]
 
             log = XmlRpcLog()
             log.user = request.user

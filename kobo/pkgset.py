@@ -54,7 +54,7 @@ class FileWrapper(object):
         return result
 
     def __setstate__(self, value_dict):
-        for key, value in value_dict.iteritems():
+        for key, value in six.iteritems(value_dict):
             setattr(self, key, value)
 
     @property
@@ -236,10 +236,10 @@ class FileCache(object):
         return len(self.file_cache)
 
     def iteritems(self):
-        return self.file_cache.iteritems()
+        return six.iteritems(self.file_cache)
 
     def items(self):
-        return self.file_cache.items()
+        return list(self.file_cache.items())
 
     def add(self, file_path, file_wrapper_class=None, **kwargs):
         file_path = os.path.abspath(file_path)

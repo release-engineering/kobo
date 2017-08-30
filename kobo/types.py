@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+import six
 __all__ = (
     "Enum",
     "EnumItem",
@@ -274,7 +275,7 @@ class DictSet(dict):
 
     def __sub__(self, other):
         result = DictSet()
-        for key, value in self.iteritems():
+        for key, value in six.iteritems(self):
             if key not in other:
                 result[key] = value
         return result
@@ -286,7 +287,7 @@ class DictSet(dict):
 
     def __and__(self, other):
         result = DictSet()
-        for key, value in self.iteritems():
+        for key, value in six.iteritems(self):
             if key in other:
                 result[key] = value
         return result

@@ -16,6 +16,7 @@ import hashlib
 import threading
 from six.moves import xrange
 import locale
+import six
 
 __all__ = (
     "force_list",
@@ -72,7 +73,7 @@ def allof(*args, **kwargs):
 
     @rtype: bool
     """
-    for i in list(args) + kwargs.values():
+    for i in list(args) + list(kwargs.values()):
         if not i:
             return False
     return True
@@ -83,7 +84,7 @@ def anyof(*args, **kwargs):
 
     @rtype: bool
     """
-    for i in list(args) + kwargs.values():
+    for i in list(args) + list(kwargs.values()):
         if i:
             return True
     return False
@@ -94,7 +95,7 @@ def noneof(*args, **kwargs):
 
     @rtype: bool
     """
-    for i in list(args) + kwargs.values():
+    for i in list(args) + list(kwargs.values()):
         if i:
             return False
     return True
@@ -106,7 +107,7 @@ def oneof(*args, **kwargs):
     @rtype: bool
     """
     found = False
-    for i in list(args) + kwargs.values():
+    for i in list(args) + list(kwargs.values()):
         if i:
             if found:
                 return False
@@ -395,7 +396,7 @@ def compute_file_checksums(filename, checksum_types):
     fo.close()
 
     result = {}
-    for checksum_type, checksum in checksums.iteritems():
+    for checksum_type, checksum in six.iteritems(checksums):
         result[checksum_type] = checksum.hexdigest().lower()
     return result
 

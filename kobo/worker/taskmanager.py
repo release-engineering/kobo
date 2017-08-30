@@ -65,6 +65,7 @@ from kobo.plugins import PluginContainer
 
 from task import FailTaskException
 from kobo.client.constants import TASK_STATES
+import six
 
 
 __all__ = (
@@ -184,7 +185,7 @@ class TaskManager(kobo.log.LoggingBase):
             self.wakeup_task(task_info)
 
         self.task_dict = task_list
-        self.log_debug("Current tasks: %r" % self.task_dict.keys())
+        self.log_debug("Current tasks: %r" % list(self.task_dict.keys()))
 
         if interrupted_list:
             self.log_warning("Closing interrupted tasks: %r" % sorted(interrupted_list))
@@ -204,7 +205,7 @@ class TaskManager(kobo.log.LoggingBase):
             except Exception as ex:
                 self.log_error("%s" % ex)
 
-        self.log_debug("pids: %s" % self.pid_dict.values())
+        self.log_debug("pids: %s" % list(self.pid_dict.values()))
         for task_id in self.pid_dict.keys():
             if self.is_finished_task(task_id):
                 self.log_info("Task has finished: %s" % task_id)
@@ -493,7 +494,7 @@ class TaskManager(kobo.log.LoggingBase):
 
     def shutdown(self):
         """Terminate all tasks and exit."""
-        for task_id, task_info in self.task_dict.iteritems():
+        for task_id, task_info in six.iteritems(self.task_dict):
             try:
                 TaskClass = self.task_container[task_info["method"]]
             except (AttributeError, ValueError):
@@ -505,7 +506,7 @@ class TaskManager(kobo.log.LoggingBase):
 
         if self.task_dict:
             # interrupt only if there are some tasks to interrupt
-            self.hub.worker.interrupt_tasks(self.task_dict.keys())
+            self.hub.worker.interrupt_tasks(list(self.task_dict.keys()))
         self.update_worker_info()
 
     def lock(self):

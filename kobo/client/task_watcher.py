@@ -4,6 +4,7 @@
 from __future__ import print_function
 import sys
 import time
+import six
 
 
 __all__ = (
@@ -15,7 +16,7 @@ __all__ = (
 def display_tasklist_status(task_list):
     state_dict = {}
     for task in task_list:
-        for state, value in task.get_state_dict().iteritems():
+        for state, value in six.iteritems(task.get_state_dict()):
             state_dict.setdefault(state, 0)
             state_dict[state] += value
     print("--> " + " ".join(( "%s: %s" % (key, state_dict[key]) for key in sorted(state_dict) )) + " [total: %s]" % sum(state_dict.values()))
@@ -81,7 +82,7 @@ class TaskWatcher(object):
             return False
 
         result = self.task_info.get("is_finished", False)
-        for subtask in self.subtask_dict.itervalues():
+        for subtask in six.itervalues(self.subtask_dict):
             result &= subtask.is_finished()
         return result
 
@@ -139,8 +140,8 @@ class TaskWatcher(object):
             state_dict.setdefault(state, 0)
             state_dict[state] += 1
 
-        for subtask in self.subtask_dict.itervalues():
-            for state, value in subtask.get_state_dict().iteritems():
+        for subtask in six.itervalues(self.subtask_dict):
+            for state, value in six.iteritems(subtask.get_state_dict()):
                 state_dict.setdefault(state, 0)
                 state_dict[state] += value
 
