@@ -181,7 +181,7 @@ def task_log(request, id, log_name):
 
     context = {
         "title": "Task log",
-        "offset": offset + content_len + 1,
+        "offset": offset + content_len,
         "task_finished": task.is_finished() and 1 or 0,
         "next_poll": None if task.is_finished() else LOG_WATCHER_INTERVAL,
         "content": content,
