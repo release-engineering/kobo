@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-import unittest
+import unittest2 as unittest
 import run_tests # set sys.path
 
 import os
@@ -18,13 +18,13 @@ class TestShortcuts(unittest.TestCase):
         self.assertEqual(force_list("a"), ["a"])
         self.assertEqual(force_list(["a"]), ["a"])
         self.assertEqual(force_list(["a", "b"]), ["a", "b"])
-        self.assertEqual(force_list(set(["a", "b"])), ["a", "b"])
+        self.assertItemsEqual(force_list(set(["a", "b"])), ["a", "b"])
 
     def test_force_tuple(self):
-        self.assertEqual(force_tuple("a"), ("a",))
-        self.assertEqual(force_tuple(("a",)), ("a",))
-        self.assertEqual(force_tuple(("a", "b")), ("a", "b"))
-        self.assertEqual(force_tuple(set(["a", "b"])), ("a", "b"))
+        self.assertItemsEqual(force_tuple("a"), ("a",))
+        self.assertItemsEqual(force_tuple(("a",)), ("a",))
+        self.assertItemsEqual(force_tuple(("a", "b")), ("a", "b"))
+        self.assertItemsEqual(force_tuple(set(["a", "b"])), ("a", "b"))
 
     def test_allof(self):
         self.assertEqual(allof(), True)
