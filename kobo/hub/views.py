@@ -130,41 +130,26 @@ def _trim_log(text):
     return '<...trimmed, download required for full log>' + subtext
 
 
-def task_log(request, id, log_name):
-    """
-    IMPORTANT: reverse to 'task/log-json' *must* exist
-    """
-    if os.path.basename(log_name).startswith("traceback") and not request.user.has_perm('hub.can_see_traceback'):
-        return HttpResponseForbidden("You don't have permission to see the traceback.")
-
-    task = get_object_or_404(Task, id=id)
-
-    file_path = task.logs._get_absolute_log_path(log_name)
-    if not os.path.isfile(file_path) and not file_path.endswith(".gz"):
-        file_path = task.logs._get_absolute_log_path(log_name + ".gz")
-
+def _streamed_log_response(file_path, offset, as_attachment):
     mimetype = mimetypes.guess_type(file_path)[0] or 'application/octet-stream'
-    offset = int(request.GET.get("offset", 0))
+
     try:
         content_len = os.path.getsize(file_path) - offset
     except OSError:
         content_len = 0
 
-    if request.GET.get("format") == "raw":
-        # use _stream_file() instad of passing file object in order to improve performance
-        response = StreamingHttpResponse(_stream_file(file_path, offset), content_type=mimetype)
+    # use _stream_file() instead of passing file object in order to improve performance
+    response = StreamingHttpResponse(_stream_file(file_path, offset), content_type=mimetype)
+    response["Content-Length"] = content_len
 
-        response["Content-Length"] = content_len
+    if as_attachment:
         # set filename to be real filesystem name
         response['Content-Disposition'] = 'attachment; filename=%s' % os.path.basename(file_path)
-        return response
 
-    if log_name.endswith(".html") or log_name.endswith(".htm"):
-        # use _stream_file() instad of passing file object in order to improve performance
-        response = StreamingHttpResponse(_stream_file(file_path, offset), content_type=mimetype)
-        response["Content-Length"] = content_len
-        return response
+    return response
 
+
+def _rendered_log_response(request, task, log_name, offset):
     exts = getattr(settings, "VALID_TASK_LOG_EXTENSIONS", [".log"])
     found = False
     for ext in exts:
@@ -196,10 +181,33 @@ def task_log(request, id, log_name):
         "content": content,
         "log_name": log_name,
         "task": task,
-        "json_url": reverse("task/log-json", args=[id, log_name]),
+        "json_url": reverse("task/log-json", args=[task.id, log_name]),
     }
 
     return render_to_response("task/log.html", context, context_instance=RequestContext(request))
+
+
+def task_log(request, id, log_name):
+    """
+    IMPORTANT: reverse to 'task/log-json' *must* exist
+    """
+    if os.path.basename(log_name).startswith("traceback") and not request.user.has_perm('hub.can_see_traceback'):
+        return HttpResponseForbidden("You don't have permission to see the traceback.")
+
+    task = get_object_or_404(Task, id=id)
+
+    file_path = task.logs._get_absolute_log_path(log_name)
+    if not os.path.isfile(file_path) and not file_path.endswith(".gz"):
+        file_path = task.logs._get_absolute_log_path(log_name + ".gz")
+
+    offset = int(request.GET.get("offset", 0))
+
+    request_format = request.GET.get("format")
+
+    if request_format == "raw" or log_name.endswith(".html") or log_name.endswith(".htm"):
+        return _streamed_log_response(file_path, offset, as_attachment=(request_format == 'raw'))
+
+    return _rendered_log_response(request, task, log_name, offset)
 
 
 def task_log_json(request, id, log_name):
