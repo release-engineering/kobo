@@ -8,6 +8,7 @@ from tempfile import TemporaryFile
 from gzip import GzipFile
 from StringIO import StringIO
 from shutil import rmtree
+import mock
 
 import django
 import django.conf
@@ -40,6 +41,13 @@ else:
 
 
 TASK_ID = 123
+
+
+def tiny_log_content():
+    """Returns very small log content.  Particularly, small enough that
+    gzip-compressing will *increase* the content size."""
+    return 'hi!'
+
 
 def small_log_content():
     """Returns content for a small log, where small means able to fit into
@@ -114,6 +122,7 @@ class TestViewLog(django.test.TestCase):
 
         # associate some compressed and decompressed logs with the task.
         # (the save and gzip_logs methods here are writing files to disk)
+        test_task.logs['zipped_tiny.log'] = tiny_log_content()
         test_task.logs['zipped_small.log'] = small_log_content()
         test_task.logs['zipped_big.log'] = self.big_log_content
         test_task.logs.save()
@@ -176,6 +185,21 @@ class TestViewLog(django.test.TestCase):
         self.assertTrue(content.startswith('<!DOCTYPE html'))
         self.assertTrue((small_log_content() + "\n</pre>") in content, content)
 
+        # No trimming necessary
+        self.assertFalse('...trimmed, download required for full log' in content)
+
+    def test_view_tiny_html_wrapped(self):
+        """As typical case, but with a log file so small that the gzipped file
+        is larger than the uncompressed content."""
+        response, content = self.assertGetLog(
+            'zipped_tiny.log',
+            test_content_length=False,
+        )
+
+        self.assertTrue(content.startswith('<!DOCTYPE html'))
+        self.assertTrue((tiny_log_content() + "\n</pre>") in content, content)
+        self.assertFalse('...trimmed, download required for full log' in content)
+
     @profile
     def test_view_big_html_wrapped(self):
         response = self.get_log('big.log')
@@ -202,6 +226,34 @@ class TestViewLog(django.test.TestCase):
         self.assertTrue(big_log_content()[-2000:] in content)
 
         self.assertTrue('...trimmed, download required for full log' not in content)
+
+    @profile
+    def test_view_zipped_big_html_context(self):
+        """Verify the context passed into HTML template contains correct values."""
+        with mock.patch('kobo.hub.views.render_to_response') as render:
+            self.get_log('zipped_big.log')
+
+        mock_call = render.mock_calls[0]
+
+        # make sure we're looking at the right call
+        self.assertEqual(mock_call[0], '')
+
+        call_args = mock_call[1]
+        (template_name, context) = call_args
+
+        self.assertEqual(template_name, 'task/log.html')
+
+        # Check various things passed in context
+
+        # The task is not yet completed
+        self.assertEqual(context['task_finished'], 0)
+
+        # It should ask log watcher to poll soon
+        self.assertEqual(context['next_poll'], 5000)
+
+        # It should give an offset value exactly at the beginning
+        # of the next chunk
+        self.assertEqual(context['offset'], views.HTML_LOG_MAX_SIZE)
 
     @profile
     def test_view_big_raw(self):
