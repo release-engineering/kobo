@@ -149,7 +149,7 @@ def _streamed_log_response(file_path, offset, as_attachment):
     return response
 
 
-def _rendered_log_response(request, task, log_name, offset):
+def _rendered_log_response(request, task, log_name):
     exts = getattr(settings, "VALID_TASK_LOG_EXTENSIONS", [".log"])
     found = False
     for ext in exts:
@@ -158,20 +158,13 @@ def _rendered_log_response(request, task, log_name, offset):
     if not found:
         return HttpResponseForbidden("Can display only specific file types: %s" % ", ".join(exts))
 
-    content = task.logs.get_chunk(log_name, offset, HTML_LOG_MAX_SIZE)
+    (content, offset) = task.logs.tail(log_name, HTML_LOG_MAX_SIZE)
 
-    # Add "trimmed" message if there is likely more content to read.
-    # -3 offset is because get_chunk may return up to 3 bytes less than requested
-    needs_trim = len(content) >= (HTML_LOG_MAX_SIZE - 3)
-
-    # Next read should start at this offset.
-    # It's intentional that this calculation happens before decoding, i.e. is based on
-    # bytes, because the offset parameter works byte-wise in various APIs.
-    offset = offset + len(content)
+    # Add "trimmed" message if tail did not return entire log file.
+    if len(content) < offset:
+        content = b'<...trimmed, download required for full log>\n' + content
 
     content = content.decode("utf-8", "replace")
-    if needs_trim:
-        content = _trim_log(content)
 
     context = {
         "title": "Task log",
@@ -207,7 +200,7 @@ def task_log(request, id, log_name):
     if request_format == "raw" or log_name.endswith(".html") or log_name.endswith(".htm"):
         return _streamed_log_response(file_path, offset, as_attachment=(request_format == 'raw'))
 
-    return _rendered_log_response(request, task, log_name, offset)
+    return _rendered_log_response(request, task, log_name)
 
 
 def task_log_json(request, id, log_name):

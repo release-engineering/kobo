@@ -65,7 +65,7 @@ def big_log_content():
     while len(out) < (1024**2) * 20:
         out = ('\njoin %d\n' % i).join([out, out])
         i = i + 1
-    return out
+    return ''.join(['BEGIN LOG\n', out, 'END LOG\n'])
 
 
 def html_content():
@@ -211,21 +211,14 @@ class TestViewLog(django.test.TestCase):
         # Should not have returned whole content
         self.assertTrue(len(content) < len(self.big_log_content))
 
-        # Should tell the user that the response was trimmed, and should have trimmed
-        # at a line boundary
-        self.assertTrue('&lt;...trimmed, download required for full log&gt;\njoin' in content)
+        # Should tell the user that the response was trimmed
+        self.assertTrue('&lt;...trimmed, download required for full log&gt;\n' in content)
 
-    @profile
-    def test_view_big_html_wrapped_with_offset(self):
-        # Just get the last 2000 chars - this should not trigger log trimming
-        offset = len(big_log_content()) - 2000
-        response = self.get_log('big.log', data={'offset': offset})
+        # Content should contain the end of the log file
+        self.assertTrue(self.big_log_content[-5000:] in content)
 
-        content = response.content
-        self.assertTrue(content.startswith('<!DOCTYPE html'))
-        self.assertTrue(big_log_content()[-2000:] in content)
-
-        self.assertTrue('...trimmed, download required for full log' not in content)
+        # Content should NOT contain the beginning of the log file
+        self.assertFalse(self.big_log_content[0:5000] in content)
 
     @profile
     def test_view_zipped_big_html_context(self):
@@ -251,9 +244,9 @@ class TestViewLog(django.test.TestCase):
         # It should ask log watcher to poll soon
         self.assertEqual(context['next_poll'], 5000)
 
-        # It should give an offset value exactly at the beginning
-        # of the next chunk
-        self.assertEqual(context['offset'], views.HTML_LOG_MAX_SIZE)
+        # Since it provided the end of the log content, it should give an offset
+        # pointing just past the end
+        self.assertEqual(context['offset'], len(self.big_log_content))
 
     @profile
     def test_view_big_raw(self):

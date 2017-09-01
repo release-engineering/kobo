@@ -6,6 +6,7 @@ import datetime
 import gzip
 import shutil
 import logging
+from collections import deque
 
 logger =  logging.getLogger("kobo")
 
@@ -78,6 +79,30 @@ def _utf8_chunk(bytestr):
         # Just return unmodified bytes, so any decoding error is raised
         # from the caller
         return bytestr
+
+
+def _tail(fh, max_size, max_line_size):
+    """See TaskLogs.tail"""
+    buffer = deque()
+    current_size = 0
+    offset = 0
+
+    while True:
+        this_line = fh.readline(max_line_size)
+        if not this_line:
+            break
+
+        this_len = len(this_line)
+
+        current_size = current_size + this_len
+        offset = offset + this_len
+
+        buffer.append(this_line)
+        while current_size > max_size:
+            removed = buffer.popleft()
+            current_size = current_size - len(removed)
+
+    return b''.join(buffer), offset
 
 
 class Arch(models.Model):
@@ -304,6 +329,15 @@ class TaskLogs(object):
             raise RuntimeError("Invalid log normpath.")
         return log_path
 
+    def _open_log(self, name):
+        log_path = self._get_absolute_log_path(name)
+        if os.path.isfile(log_path):
+            return open(log_path, 'rb')
+        elif os.path.isfile(log_path + ".gz"):
+            return gzip.open(log_path + ".gz", "rb")
+        else:
+            raise Exception('Cannot find log %s' % name)
+
     def get_chunk(self, name, offset=0, length=-1):
         """Returns a sequence of bytes from the named log.
 
@@ -325,19 +359,33 @@ class TaskLogs(object):
         log_path = self._get_absolute_log_path(name)
         log_file = None
         try:
-            if os.path.isfile(log_path):
-                log_file = open(log_path, 'rb')
-            elif os.path.isfile(log_path + ".gz"):
-                log_file = gzip.open(log_path + ".gz", "rb")
-            else:
-                raise Exception('Cannot find log %s' % name)
-
+            log_file = self._open_log(name)
             log_file.seek(offset)
             return _utf8_chunk(log_file.read(length))
         finally:
             if log_file is not None:
                 log_file.close()
 
+    def tail(self, name, max_size, max_line_size=8192):
+        """Return a byte string containing trailing lines from a log,
+        up to a maximum count of bytes.
+
+        name          -- the log name
+        max_size      -- returned string will be equal or less than this size
+        max_line_size -- max expected size (in bytes) of a line in the file.
+                         If lines exceed this size then the return value
+                         might not be aligned to the beginning of a line.
+
+        Returns (bytestring, offset) where offset is the total number
+        of bytes read from the file (including discarded bytes).
+        """
+        log_file = None
+        try:
+            log_file = self._open_log(name)
+            return _tail(log_file, max_size, max_line_size)
+        finally:
+            if log_file is not None:
+                log_file.close()
 
     def __getitem__(self, name):
         """Get full content of named log, as a byte string.
