@@ -7,6 +7,7 @@ import gzip
 import shutil
 import logging
 from collections import deque
+import io
 
 logger =  logging.getLogger("kobo")
 
@@ -25,6 +26,8 @@ from django.db.models.signals import post_delete
 import kobo.django.fields
 from kobo.client.constants import *
 from kobo.shortcuts import random_string, read_from_file, save_to_file, run
+
+LOG_BUFFER_SIZE = 2**20
 
 
 def dump_dict(**kwargs):
@@ -332,9 +335,16 @@ class TaskLogs(object):
     def _open_log(self, name):
         log_path = self._get_absolute_log_path(name)
         if os.path.isfile(log_path):
-            return open(log_path, 'rb')
+            return io.open(log_path, 'rb', LOG_BUFFER_SIZE)
         elif os.path.isfile(log_path + ".gz"):
-            return gzip.open(log_path + ".gz", "rb")
+            out = gzip.open(log_path + ".gz", "rb")
+
+            # GZipFile was not usable with BufferedReader
+            # until 2.7
+            if sys.version_info[0:2] >= (2, 7):
+                out = io.BufferedReader(out, LOG_BUFFER_SIZE)
+
+            return out
         else:
             raise Exception('Cannot find log %s' % name)
 
