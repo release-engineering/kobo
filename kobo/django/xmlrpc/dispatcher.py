@@ -9,7 +9,7 @@
 
 import sys
 import six.moves.xmlrpc_client as xmlrpclib
-from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
+from six.moves.xmlrpc_server import SimpleXMLRPCDispatcher
 
 from django.conf import settings
 
@@ -109,7 +109,7 @@ class DjangoXMLRPCDispatcher(SimpleXMLRPCDispatcher):
                     allow_none=self.allow_none, encoding=self.encoding)
             else:
                 response = xmlrpclib.dumps(
-                    xmlrpclib.Fault(1, "%s: %s" % (sys.exc_type.__name__, sys.exc_value)),
+                    xmlrpclib.Fault(1, "%s: %s" % (sys.exc_type.__name__, sys.exc_info()[1])),
                     allow_none=self.allow_none, encoding=self.encoding)
 
         return response
