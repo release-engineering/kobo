@@ -271,6 +271,6 @@ class FileCache(object):
 
     def remove_by_filenames(self, file_names):
         file_names = [ os.path.basename(i) for i in force_list(file_names) ]
-        for i in self.file_cache.keys():
+        for i in dict(self.file_cache):
             if os.path.basename(i) in file_names:
                 self.remove(i)
