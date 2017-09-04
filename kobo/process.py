@@ -135,7 +135,7 @@ def get_proc_stat(pid):
     """
 
     # read stat file
-    procfile = file("/proc/%s/stat" % pid)
+    procfile = open("/proc/%s/stat" % pid)
     procdata = procfile.read()
     procfile.close()
 
