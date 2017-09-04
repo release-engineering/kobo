@@ -11,7 +11,7 @@ import warnings
 import tempfile
 import shutil
 import hashlib
-import cPickle as pickle
+import six.moves.cPickle as pickle
 import six
 
 # tolerate and skip in absence of rpm since it's not installable to virtualenv
