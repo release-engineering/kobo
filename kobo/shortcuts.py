@@ -17,6 +17,7 @@ import threading
 import locale
 import six
 from six.moves import range
+import shlex
 
 __all__ = (
     "force_list",
@@ -271,8 +272,13 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     @rtype: (int, str) or (int, None)
     """
     if type(cmd) in (list, tuple):
-        import pipes
-        cmd = " ".join((pipes.quote(i) for i in cmd))
+        if six.PY2:
+            from pipes import quote
+            cmd = " ".join((quote(i) for i in cmd))
+        else:
+            from shlex import quote
+            cmd = " ".join((quote(i) for i in cmd))
+            cmd = bytes(cmd, encoding='utf-8')
 
     log = None
     if logfile:
@@ -286,7 +292,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     try:
 
         if show_cmd:
-            command = "COMMAND: %s\n%s\n" % (cmd, "-" * (len(cmd) + 9))
+            command = b"COMMAND: %s\n%s\n" % (cmd, b"-" * (len(cmd) + 9))
             if stdout:
                 print(command, end=' ')
             if logfile:
@@ -380,7 +386,7 @@ def compute_file_checksums(filename, checksum_types):
         except AttributeError:
             raise ValueError("Checksum is not supported in hashlib: %s" % checksum_type)
 
-    fo = open(filename, "r")
+    fo = open(filename, "rb")
     while True:
         chunk = fo.read(1024**2)
         if not chunk:
@@ -405,6 +411,9 @@ def parse_checksum_line(line):
     @rtype: (str, str)
     """
 
+    if isinstance(line, six.binary_type):
+        line = line.decode()
+
     if not line.strip():
         return None
     if line.strip().startswith("#"):
@@ -413,7 +422,10 @@ def parse_checksum_line(line):
     match = CHECKSUM_LINE_RE.match(line)
     data = match.groupdict()
     if data["escaped"]:
-        data["path"] = data["path"].decode('string-escape')
+        try:
+            data["path"] = data["path"].decode('string-escape')
+        except AttributeError:
+            data["path"] = bytes(data["path"], "utf-8").decode('unicode_escape')
     return (data["checksum"], data["path"])
 
 

@@ -148,11 +148,11 @@ class TestUtils(unittest.TestCase):
         self.assertRaises(RuntimeError, run, "exit 1")
 
         # stdin test
-        ret, out = run("xargs -0 echo -n", stdin_data="\0".join([str(i) for i in xrange(10000)]))
-        self.assertEqual(out, " ".join([str(i) for i in xrange(10000)]))
+        ret, out = run("xargs -0 echo -n", stdin_data=b"\0".join([str(i).encode() for i in range(10000)]))
+        self.assertEqual(out, b" ".join([str(i).encode() for i in range(10000)]))
 
         # return None
-        ret, out = run("xargs echo", stdin_data="\n".join([str(i) for i in xrange(1000000)]), return_stdout=False)
+        ret, out = run("xargs echo", stdin_data=b"\n".join([str(i).encode() for i in range(1000000)]), return_stdout=False)
         self.assertEqual(out, None)
 
         # log file with absolute path
