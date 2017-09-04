@@ -40,9 +40,8 @@ can slow down saving process, as keys are being sorted. From these reasons is
 default value set to False.
 '''
 
-class StateEnumField(models.IntegerField):
+class StateEnumField(six.with_metaclass(models.SubfieldBase, models.IntegerField)):
     '''StateEnum DB encapsulation'''
-    __metaclass__ = models.SubfieldBase
 
 
     def __init__(self, state_machine, *args, **kwargs):
@@ -135,9 +134,8 @@ class StateEnumField(models.IntegerField):
         return form_class(**defaults)
 
 
-class JSONField(models.TextField):
+class JSONField(six.with_metaclass(models.SubfieldBase, models.TextField)):
     """JSON field for storing a serialized dictionary or list."""
-    __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
         self.human_readable = kwargs.pop('human_readable', False)
