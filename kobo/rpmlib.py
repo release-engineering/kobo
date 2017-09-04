@@ -5,7 +5,6 @@
 
 
 from six.moves import zip as izip
-from six.moves import xrange
 import datetime
 import time
 import six
@@ -118,7 +117,7 @@ def get_header_field(hdr, name):
         # HACK: workaround for https://bugzilla.redhat.com/show_bug.cgi?id=991329
         if result is None:
             result = []
-        elif isinstance(result, (int, long)):
+        elif isinstance(result, six.integer_types):
             result = [result]
     return result
 
