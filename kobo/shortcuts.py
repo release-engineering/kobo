@@ -14,7 +14,6 @@ import random
 import re
 import hashlib
 import threading
-from six.moves import xrange
 import locale
 import six
 from six.moves import range
@@ -143,7 +142,7 @@ def iter_chunks(input_list, chunk_size):
         return
 
     # TODO: any idea how to detect generators better?
-    if hasattr(input_list, "__iter__") and hasattr(input_list, "next"):
+    if hasattr(input_list, "__iter__") and not isinstance(input_list, six.string_types):
         chunk = []
         for i in input_list:
             chunk.append(i)
@@ -154,18 +153,8 @@ def iter_chunks(input_list, chunk_size):
             yield chunk
         return
 
-    can_slice = hasattr(input_list, "__getslice__")
     for i in range(0, len(input_list), chunk_size):
-        if can_slice:
-            # regular list
-            yield input_list[i:i + chunk_size]
-        else:
-            # xrange, etc.
-            chunk = []
-            for j in range(i, i + chunk_size):
-                if j < len(input_list):
-                    chunk.append(input_list[j])
-            yield chunk
+        yield input_list[i:i + chunk_size]
 
 
 def random_string(length=32, alphabet=None):
