@@ -44,6 +44,7 @@ Struct: task_info
     }
 """
 
+from __future__ import absolute_import
 import errno
 import os
 import sys
@@ -63,7 +64,7 @@ from kobo.exceptions import ShutdownException
 from kobo.process import kill_process_group, get_process_status
 from kobo.plugins import PluginContainer
 
-from task import FailTaskException
+from .task import FailTaskException
 from kobo.client.constants import TASK_STATES
 import six
 

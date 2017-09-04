@@ -3,7 +3,7 @@
 import six
 import threading
 import time
-import Queue
+import six.moves.queue
 from six.moves import StringIO
 from six.moves.xmlrpc_client import Fault
 
@@ -21,7 +21,7 @@ class LoggingThread(threading.Thread):
         threading.Thread.__init__(self, *args, **kwargs)
         self._hub = hub
         self._task_id = task_id
-        self._queue = Queue.Queue()
+        self._queue = six.moves.queue.Queue()
         self._event = threading.Event()
         self._running = True
         self._send_time = 0
@@ -37,7 +37,7 @@ class LoggingThread(threading.Thread):
             while True:
                 try:
                     self._send_data += self._queue.get_nowait()
-                except Queue.Empty:
+                except six.moves.queue.Empty:
                     break
 
             if not self._send_data:
