@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import absolute_import
 import django.contrib.admin as admin
 
-from models import Arch, Channel, Task, Worker
+from .models import Arch, Channel, Task, Worker
 
 
 class ArchAdmin(admin.ModelAdmin):
