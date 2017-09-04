@@ -19,6 +19,7 @@ import six.moves.urllib.parse as urlparse
 from six.moves import xrange
 
 import kobo.shortcuts
+from six.moves import range
 
 try:
     import kerberos
@@ -574,7 +575,7 @@ def retry_request_decorator(transport_class):
             if self.retry_count == 0:
                 return transport_class.request(self, *args, **kwargs)
 
-            for i in xrange(self.retry_count + 1):
+            for i in range(self.retry_count + 1):
                 try:
                     result = transport_class.request(self, *args, **kwargs)
                     return result

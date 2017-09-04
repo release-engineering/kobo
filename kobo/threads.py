@@ -32,6 +32,7 @@ import threading
 import Queue
 
 import kobo.log
+from six.moves import range
 
 
 class WorkerThread(threading.Thread):

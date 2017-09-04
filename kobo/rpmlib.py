@@ -9,6 +9,7 @@ from six.moves import xrange
 import datetime
 import time
 import six
+from six.moves import range
 try:
     import email.utils as email_utils
 except ImportError:
@@ -210,7 +211,7 @@ def parse_nvra(nvra):
         nvra = nvra.split("/")[-1]
 
     epoch = ""
-    for i in xrange(2):
+    for i in range(2):
         # run this twice to parse N-V-R.A.rpm:E and N-V-R.A:E.rpm
         if nvra.endswith(".rpm"):
             # strip .rpm suffix

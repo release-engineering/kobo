@@ -94,6 +94,7 @@ from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.encoding import smart_unicode
 import six
+from six.moves import range
 
 
 __all__ = (
@@ -297,7 +298,7 @@ class MainMenu(MenuItem):
         except ValueError:
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
 
-        if level not in range(1, self.depth + 1):
+        if level not in list(range(1, self.depth + 1)):
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
 
         if not self.active:

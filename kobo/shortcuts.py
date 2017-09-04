@@ -17,6 +17,7 @@ import threading
 from six.moves import xrange
 import locale
 import six
+from six.moves import range
 
 __all__ = (
     "force_list",
@@ -154,14 +155,14 @@ def iter_chunks(input_list, chunk_size):
         return
 
     can_slice = hasattr(input_list, "__getslice__")
-    for i in xrange(0, len(input_list), chunk_size):
+    for i in range(0, len(input_list), chunk_size):
         if can_slice:
             # regular list
             yield input_list[i:i + chunk_size]
         else:
             # xrange, etc.
             chunk = []
-            for j in xrange(i, i + chunk_size):
+            for j in range(i, i + chunk_size):
                 if j < len(input_list):
                     chunk.append(input_list[j])
             yield chunk
@@ -173,7 +174,7 @@ def random_string(length=32, alphabet=None):
     @rtype: str
     """
     alphabet = alphabet or "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    return "".join([ random.choice(alphabet) for i in xrange(length) ])
+    return "".join([ random.choice(alphabet) for i in range(length) ])
 
 
 def hex_string(string):

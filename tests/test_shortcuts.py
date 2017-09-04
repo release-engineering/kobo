@@ -11,6 +11,7 @@ import tempfile
 from six.moves import StringIO
 
 from kobo.shortcuts import *
+from six.moves import range
 
 
 class TestShortcuts(unittest.TestCase):
@@ -73,18 +74,18 @@ class TestShortcuts(unittest.TestCase):
 
     def test_iter_chunks(self):
         self.assertEqual(list(iter_chunks([], 100)), [])
-        self.assertEqual(list(iter_chunks(range(5), 1)), [[0], [1], [2], [3], [4]])
-        self.assertEqual(list(iter_chunks(range(5), 2)), [[0, 1], [2, 3], [4]])
-        self.assertEqual(list(iter_chunks(range(5), 5)), [[0, 1, 2, 3, 4]])
-        self.assertEqual(list(iter_chunks(range(6), 2)), [[0, 1], [2, 3], [4, 5]])
+        self.assertEqual(list(iter_chunks(list(range(5)), 1)), [[0], [1], [2], [3], [4]])
+        self.assertEqual(list(iter_chunks(list(range(5)), 2)), [[0, 1], [2, 3], [4]])
+        self.assertEqual(list(iter_chunks(list(range(5)), 5)), [[0, 1, 2, 3, 4]])
+        self.assertEqual(list(iter_chunks(list(range(6)), 2)), [[0, 1], [2, 3], [4, 5]])
 
-        self.assertEqual(list(iter_chunks(xrange(5), 2)), [[0, 1], [2, 3], [4]])
-        self.assertEqual(list(iter_chunks(xrange(6), 2)), [[0, 1], [2, 3], [4, 5]])
-        self.assertEqual(list(iter_chunks(xrange(1, 6), 2)), [[1, 2], [3, 4], [5]])
-        self.assertEqual(list(iter_chunks(xrange(1, 7), 2)), [[1, 2], [3, 4], [5, 6]])
+        self.assertEqual(list(iter_chunks(range(5), 2)), [[0, 1], [2, 3], [4]])
+        self.assertEqual(list(iter_chunks(range(6), 2)), [[0, 1], [2, 3], [4, 5]])
+        self.assertEqual(list(iter_chunks(range(1, 6), 2)), [[1, 2], [3, 4], [5]])
+        self.assertEqual(list(iter_chunks(range(1, 7), 2)), [[1, 2], [3, 4], [5, 6]])
 
         def gen(num):
-            for i in xrange(num):
+            for i in range(num):
                 yield i+1
         self.assertEqual(list(iter_chunks(gen(5), 2)), [[1, 2], [3, 4], [5]])
 
