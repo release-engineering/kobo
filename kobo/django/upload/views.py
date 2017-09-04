@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import absolute_import
 import hashlib
 import tempfile
 import shutil
@@ -11,7 +12,7 @@ from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseForbid
 from django.views.decorators.csrf import csrf_exempt
 from kobo.decorators import well_behaved
 
-from models import UPLOAD_STATES, FileUpload
+from .models import UPLOAD_STATES, FileUpload
 
 
 @well_behaved
