@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 from kobo.django.fields import *
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
 from django.forms import ModelForm
-from models import SimpleState
+from .models import SimpleState
 
 class ModifyForm(ModelForm):
     class Meta:

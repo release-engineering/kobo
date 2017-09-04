@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 from kobo.django.fields import StateEnumField
 from django.db import models
-from workflow import workflow
+from .workflow import workflow
 import six
 
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from kobo.types import *
 
 def perm_new(*args, **kwargs):
@@ -15,7 +16,7 @@ def perm_verified(**kwargs):
     elif next == 'ON_REVIEW':
         return user.has_perm('pkg.revert')
     else:
-        raise ValueError, 'Wrong transition'
+        raise ValueError('Wrong transition')
 
 def perm_change_reviewer(user, state = None):
     return user.has_perm('pkg.change_reviewer')
