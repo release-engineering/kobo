@@ -17,7 +17,6 @@ import threading
 import locale
 import six
 from six.moves import range
-import shlex
 
 __all__ = (
     "force_list",
@@ -278,7 +277,6 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         else:
             from shlex import quote
             cmd = " ".join((quote(i) for i in cmd))
-            cmd = bytes(cmd, encoding='utf-8')
 
     log = None
     if logfile:
@@ -292,7 +290,10 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     try:
 
         if show_cmd:
-            command = b"COMMAND: %s\n%s\n" % (cmd, b"-" * (len(cmd) + 9))
+            command = "COMMAND: %s\n%s\n" % (cmd, "-" * (len(cmd) + 9))
+            # Fix for Python 3.4 where we cannot use % formating on bytestr
+            if six.PY3:
+                command = bytes(cmd, encoding='utf-8')
             if stdout:
                 print(command, end=' ')
             if logfile:
