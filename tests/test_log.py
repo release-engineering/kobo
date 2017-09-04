@@ -4,6 +4,7 @@
 
 import unittest
 import run_tests # set sys.path
+import six
 
 import logging
 from kobo.log import *
@@ -19,8 +20,10 @@ class TestLog(unittest.TestCase):
         self.logger.verbose("foo")
         logging.verbose("foo")
         self.assertEqual(logging.VERBOSE, 15)
-        self.assertTrue("VERBOSE" in logging._levelNames)
-        self.assertEqual(logging._levelNames[15], "VERBOSE")
+        if six.PY2:
+            # There is no _levelNames attribute in Python 3
+            self.assertTrue("VERBOSE" in logging._levelNames)
+        self.assertEqual(logging.getLevelName(15), "VERBOSE")
 
 
 if __name__ == '__main__':
