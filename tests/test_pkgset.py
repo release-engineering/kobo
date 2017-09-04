@@ -20,7 +20,7 @@ try:
 except ImportError:
     HAVE_RPM = False
 else:
-    from kobo.pkgset import *
+    from kobo.pkgset import FileWrapper, RpmWrapper, SimpleRpmWrapper, FileCache
     HAVE_RPM = True
 
 

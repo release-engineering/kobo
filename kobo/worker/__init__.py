@@ -2,10 +2,7 @@
 
 
 from __future__ import absolute_import
-import os
-
-from .task import *
-from .taskmanager import *
+from .taskmanager import TaskContainer
 
 from . import tasks
 

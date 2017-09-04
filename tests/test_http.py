@@ -8,7 +8,7 @@ import run_tests # set sys.path
 import tempfile
 import os
 
-from kobo.http import *
+from kobo.http import POSTTransport
 
 
 class TestPOSTTransport(unittest.TestCase):

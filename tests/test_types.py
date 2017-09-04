@@ -14,7 +14,7 @@ settings_module.SECRET_KEY = "foo"
 sys.modules[module_name] = settings_module
 os.environ["DJANGO_SETTINGS_MODULE"] = module_name
 
-from kobo.types import *
+from kobo.types import Enum, EnumItem, State, StateEnum
 from kobo.django.fields import StateEnumField
 
 

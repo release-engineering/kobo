@@ -4,7 +4,7 @@
 from __future__ import print_function
 import sys
 
-from kobo.client.task_watcher import *
+from kobo.client.task_watcher import TaskWatcher
 from kobo.client import ClientCommand
 
 

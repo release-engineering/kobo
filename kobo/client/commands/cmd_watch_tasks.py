@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-from kobo.client.task_watcher import *
+from kobo.client.task_watcher import TaskWatcher
 from kobo.client import ClientCommand
 
 

@@ -25,7 +25,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_delete
 
 import kobo.django.fields
-from kobo.client.constants import *
+from kobo.client.constants import TASK_STATES, FINISHED_STATES
 from kobo.shortcuts import random_string, read_from_file, save_to_file, run
 
 LOG_BUFFER_SIZE = 2**20

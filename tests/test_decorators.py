@@ -8,7 +8,7 @@ import run_tests # set sys.path
 import tempfile
 import os
 
-from kobo.decorators import *
+from kobo.decorators import log_traceback
 
 
 class TestDecoratorsModule(unittest.TestCase):

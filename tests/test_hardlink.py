@@ -9,7 +9,7 @@ import tempfile
 import os.path
 import shutil
 
-from kobo.hardlink import *
+from kobo.hardlink import Hardlink, UndoHardlink
 
 
 class LoggerMock(object):

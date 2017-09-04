@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from kobo.types import *
+from kobo.types import State, StateEnum
 
 def perm_new(*args, **kwargs):
     return True

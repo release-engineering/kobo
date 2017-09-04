@@ -10,7 +10,7 @@ import shutil
 import tempfile
 from six.moves import StringIO
 
-from kobo.shortcuts import *
+from kobo.shortcuts import force_list, force_tuple, allof, anyof, noneof, oneof, is_empty, iter_chunks, save_to_file, read_from_file, run, read_checksum_file, compute_file_checksums, makedirs, split_path, relative_path
 from six.moves import range
 
 
