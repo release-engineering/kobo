@@ -29,10 +29,11 @@ Example:
 
 import sys
 import threading
-import Queue
+import six.moves.queue
 
 import kobo.log
 from six.moves import range
+import six
 
 
 class WorkerThread(threading.Thread):
@@ -54,7 +55,7 @@ class WorkerThread(threading.Thread):
         while (not self.kill) and (self.running or not self.pool.queue.empty()):
             try:
                 item = self.pool.queue.get(timeout=self.get_timeout)
-            except Queue.Empty:
+            except six.moves.queue.Empty:
                 continue
 
             self.pool.queue_get_lock.acquire()
@@ -78,7 +79,7 @@ class ThreadPool(kobo.log.LoggingBase):
         kobo.log.LoggingBase.__init__(self, logger)
         self.threads = []
         self.exceptions = []
-        self.queue = Queue.Queue()
+        self.queue = six.moves.queue.Queue()
         self.queue_put_lock = threading.Lock()
         self.queue_get_lock = threading.Lock()
         self.queue_total = 0
@@ -116,7 +117,7 @@ class ThreadPool(kobo.log.LoggingBase):
             i.join()
         if self.exceptions:
             exc_info = self.exceptions[0]
-            raise exc_info[0], exc_info[1], exc_info[2]
+            six.reraise(exc_info[0], exc_info[1], exc_info[2])
 
     def kill(self):
         for i in self.threads:
