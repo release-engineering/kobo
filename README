@@ -1,3 +1,37 @@
+KOBO 0.6.0 RELEASE NOTES
+========================
+
+FEATURES & IMPROVEMENTS
+-----------------------
+- kobo worker name no longer needs to match host FQDN
+- improved error reporting when loading configuration
+- improved error reporting from kobo.shortcuts.run
+- reduced memory usage when handling large log files
+- models now respect settings.AUTH_USER_MODEL
+
+BUG FIXES
+---------
+- fixed crash on xml-rpc client in python <= 2.7.9
+- fixed spurious whitespace from kobo.shortcuts.run (#40)
+- fixed missing migration for User model
+
+
+KOBO 0.5.0 RELEASE NOTES
+========================
+
+FEATURES & IMPROVEMENTS
+-----------------------
+- kobo.shortcuts.run now supports all Popen keyword arguments
+- resubmit-tasks has a --force argument to resubmit successful tasks
+- new watch-log command for watching a log from CLI
+- admin UI now covers user model
+
+BUG FIXES
+---------
+- kobo.shortcuts.run now resumes on interrupted system calls
+- worker load no longer includes assigned but unstarted tasks
+
+
 KOBO 0.4.0 RELEASE NOTES
 ========================
 
