@@ -2,58 +2,58 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from StringIO import StringIO
+from six import BytesIO
 
 from kobo.hub.models import _tail as tail
 
 
 SAMPLE_LINES = [
-    'this is a sample',
-    'string;     each',
-    'line    contains',
-    '16 chars exclud-',
-    'ing newline, and',
-    'six lines  total'
+    b'this is a sample',
+    b'string;     each',
+    b'line    contains',
+    b'16 chars exclud-',
+    b'ing newline, and',
+    b'six lines  total'
 ]
-SAMPLE_STRING = '\n'.join(SAMPLE_LINES)
+SAMPLE_STRING = b'\n'.join(SAMPLE_LINES)
 
 
 class TestTail(unittest.TestCase):
 
     def test_tail_empty(self):
         """tail of empty object returns empty"""
-        (actual, offset) = tail(StringIO(), 1024, 1024)
+        (actual, offset) = tail(BytesIO(), 1024, 1024)
 
-        self.assertEqual(actual, '')
+        self.assertEqual(actual, b'')
         self.assertEqual(offset, 0)
 
     def test_tail_noop(self):
         """tail returns all content if it fits in requested size"""
-        (actual, offset) = tail(StringIO(SAMPLE_STRING), 1024, 1024)
+        (actual, offset) = tail(BytesIO(SAMPLE_STRING), 1024, 1024)
 
         self.assertEqual(actual, SAMPLE_STRING)
         self.assertEqual(offset, len(SAMPLE_STRING))
 
     def test_tail_limit(self):
         """tail returns trailing lines up to given limit"""
-        expected = '\n'.join([
-            'ing newline, and',
-            'six lines  total',
+        expected = b'\n'.join([
+            b'ing newline, and',
+            b'six lines  total',
         ])
-        (actual, offset) = tail(StringIO(SAMPLE_STRING), 40, 1024)
+        (actual, offset) = tail(BytesIO(SAMPLE_STRING), 40, 1024)
 
         self.assertEqual(actual, expected)
         self.assertEqual(offset, len(SAMPLE_STRING))
 
     def test_tail_line_break(self):
         """tail breaks in middle of line if lines are longer than max length"""
-        expected = '\n'.join([
+        expected = b'\n'.join([
             # this line is partially returned
-            'xclud-',
-            'ing newline, and',
-            'six lines  total',
+            b'xclud-',
+            b'ing newline, and',
+            b'six lines  total',
         ])
-        (actual, offset) = tail(StringIO(SAMPLE_STRING), 40, 10)
+        (actual, offset) = tail(BytesIO(SAMPLE_STRING), 40, 10)
 
         self.assertEqual(actual, expected)
         self.assertEqual(offset, len(SAMPLE_STRING))
