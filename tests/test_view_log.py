@@ -250,10 +250,12 @@ class TestViewLog(django.test.TestCase):
     @profile
     def test_view_zipped_big_html_context(self):
         """Verify the context passed into HTML template contains correct values."""
-        with mock.patch('kobo.hub.views.render_to_response') as render:
+        with mock.patch('kobo.hub.views.render_to_response') as render_to_response:
+            response = render_to_response.return_value.render.return_value
+            response.status_code = 200
             self.get_log('zipped_big.log')
 
-        mock_call = render.mock_calls[0]
+        mock_call = render_to_response.mock_calls[0]
 
         # make sure we're looking at the right call
         self.assertEqual(mock_call[0], '')
