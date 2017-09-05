@@ -130,6 +130,56 @@ def _trim_log(text):
     return '<...trimmed, download required for full log>' + subtext
 
 
+def _streamed_log_response(file_path, offset, as_attachment):
+    mimetype = mimetypes.guess_type(file_path)[0] or 'application/octet-stream'
+
+    try:
+        content_len = os.path.getsize(file_path) - offset
+    except OSError:
+        content_len = 0
+
+    # use _stream_file() instead of passing file object in order to improve performance
+    response = StreamingHttpResponse(_stream_file(file_path, offset), content_type=mimetype)
+    response["Content-Length"] = content_len
+
+    if as_attachment:
+        # set filename to be real filesystem name
+        response['Content-Disposition'] = 'attachment; filename=%s' % os.path.basename(file_path)
+
+    return response
+
+
+def _rendered_log_response(request, task, log_name):
+    exts = getattr(settings, "VALID_TASK_LOG_EXTENSIONS", [".log"])
+    found = False
+    for ext in exts:
+        if log_name.endswith(ext):
+            found = True
+    if not found:
+        return HttpResponseForbidden("Can display only specific file types: %s" % ", ".join(exts))
+
+    (content, offset) = task.logs.tail(log_name, HTML_LOG_MAX_SIZE)
+
+    # Add "trimmed" message if tail did not return entire log file.
+    if len(content) < offset:
+        content = b'<...trimmed, download required for full log>\n' + content
+
+    content = content.decode("utf-8", "replace")
+
+    context = {
+        "title": "Task log",
+        "offset": offset,
+        "task_finished": task.is_finished() and 1 or 0,
+        "next_poll": None if task.is_finished() else LOG_WATCHER_INTERVAL,
+        "content": content,
+        "log_name": log_name,
+        "task": task,
+        "json_url": reverse("task/log-json", args=[task.id, log_name]),
+    }
+
+    return render_to_response("task/log.html", context, context_instance=RequestContext(request))
+
+
 def task_log(request, id, log_name):
     """
     IMPORTANT: reverse to 'task/log-json' *must* exist
@@ -143,63 +193,14 @@ def task_log(request, id, log_name):
     if not os.path.isfile(file_path) and not file_path.endswith(".gz"):
         file_path = task.logs._get_absolute_log_path(log_name + ".gz")
 
-    mimetype = mimetypes.guess_type(file_path)[0] or 'application/octet-stream'
     offset = int(request.GET.get("offset", 0))
-    try:
-        content_len = os.path.getsize(file_path) - offset
-    except OSError:
-        content_len = 0
 
-    if request.GET.get("format") == "raw":
-        # use _stream_file() instad of passing file object in order to improve performance
-        response = StreamingHttpResponse(_stream_file(file_path, offset), content_type=mimetype)
+    request_format = request.GET.get("format")
 
-        response["Content-Length"] = content_len
-        # set filename to be real filesystem name
-        response['Content-Disposition'] = 'attachment; filename=%s' % os.path.basename(file_path)
-        return response
+    if request_format == "raw" or log_name.endswith(".html") or log_name.endswith(".htm"):
+        return _streamed_log_response(file_path, offset, as_attachment=(request_format == 'raw'))
 
-    if log_name.endswith(".html") or log_name.endswith(".htm"):
-        # use _stream_file() instad of passing file object in order to improve performance
-        response = StreamingHttpResponse(_stream_file(file_path, offset), content_type=mimetype)
-        response["Content-Length"] = content_len
-        return response
-
-    exts = getattr(settings, "VALID_TASK_LOG_EXTENSIONS", [".log"])
-    found = False
-    for ext in exts:
-        if log_name.endswith(ext):
-            found = True
-    if not found:
-        return HttpResponseForbidden("Can display only specific file types: %s" % ", ".join(exts))
-
-    content = task.logs.get_chunk(log_name, offset, HTML_LOG_MAX_SIZE)
-
-    # Add "trimmed" message if there is likely more content to read.
-    # -3 offset is because get_chunk may return up to 3 bytes less than requested
-    needs_trim = len(content) >= (HTML_LOG_MAX_SIZE - 3)
-
-    # Next read should start at this offset.
-    # It's intentional that this calculation happens before decoding, i.e. is based on
-    # bytes, because the offset parameter works byte-wise in various APIs.
-    offset = offset + len(content)
-
-    content = content.decode("utf-8", "replace")
-    if needs_trim:
-        content = _trim_log(content)
-
-    context = {
-        "title": "Task log",
-        "offset": offset,
-        "task_finished": task.is_finished() and 1 or 0,
-        "next_poll": None if task.is_finished() else LOG_WATCHER_INTERVAL,
-        "content": content,
-        "log_name": log_name,
-        "task": task,
-        "json_url": reverse("task/log-json", args=[id, log_name]),
-    }
-
-    return render_to_response("task/log.html", context, context_instance=RequestContext(request))
+    return _rendered_log_response(request, task, log_name)
 
 
 def task_log_json(request, id, log_name):
