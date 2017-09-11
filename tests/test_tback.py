@@ -8,7 +8,6 @@ import unittest2 as unittest
 import run_tests # set sys.path
 
 from kobo.tback import get_traceback, Traceback
-from six.moves import range
 
 
 class TestTraceback(unittest.TestCase):

@@ -16,10 +16,8 @@ import time
 import six.moves.urllib.request as urllib2
 import six.moves.xmlrpc_client as xmlrpclib
 import six.moves.urllib.parse as urlparse
-from six.moves import xrange
 
 import kobo.shortcuts
-from six.moves import range
 
 try:
     import kerberos
