@@ -7,7 +7,6 @@
 #       Brendan W. McAdams
 
 
-from __future__ import absolute_import
 import sys
 import six.moves.xmlrpc_client as xmlrpclib
 from six.moves.xmlrpc_server import SimpleXMLRPCDispatcher

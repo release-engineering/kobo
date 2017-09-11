@@ -30,7 +30,6 @@ All double underscores in method names will be replaced with dots:
 def task__create(request, ...): will be registered as task.create(...)
 """
 
-from __future__ import absolute_import
 import sys
 
 import django.db
