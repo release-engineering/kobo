@@ -284,7 +284,9 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         # What happens to log file if it exists already? If show_cmd is True,
         # it will be overwritten. Otherwise the command output will just be
         # appended to the existing file.
-        mode = 'ab' if not show_cmd and os.path.exists(logfile) else 'wb'
+        mode = 'a' if not show_cmd and os.path.exists(logfile) else 'w'
+        if not kwargs.get('universal_newlines', False):
+            mode += 'b'
         log = open(logfile, mode)
 
     try:
@@ -316,7 +318,8 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             stdin_thread.daemon = True
             stdin_thread.start()
 
-        output = b""
+        output = "" if kwargs.get('universal_newlines', False) else b""
+        sentinel = "" if kwargs.get('universal_newlines', False) else b""
         while True:
             if buffer_size == -1:
                 lines = proc.stdout.readline()
@@ -330,7 +333,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
                     else:
                         raise
 
-            if lines == b"":
+            if lines == sentinel:
                 break
             if stdout:
                 sys.stdout.write(lines)
