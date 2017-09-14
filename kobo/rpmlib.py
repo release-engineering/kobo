@@ -92,15 +92,15 @@ def get_header_field(hdr, name):
     @param name: a rpm field name
     @type name: str
     @return: value of a rpm field
-    @rtype: str or list
+    @rtype: bytes or int or list
     """
 
     if name == "arch":
         # HACK: return "src" or "nosrc" arch instead of build arch
         if get_header_field(hdr, "sourcepackage"):
             if get_header_field(hdr, "nosource") or get_header_field(hdr, "nopatch"):
-                return "nosrc"
-            return "src"
+                return b"nosrc"
+            return b"src"
 
     hdr_key = getattr(rpm, "RPMTAG_%s" % name.upper(), None)
     if hdr_key is None:
