@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
+import mock
 import unittest2 as unittest
 import run_tests # set sys.path
 
@@ -173,6 +174,140 @@ class TestUtils(unittest.TestCase):
         self.assertRaises(RuntimeError, run, "echo foo | tee >(md5sum -b) >/dev/null")
         # passes in bash
         run("echo foo | tee >(md5sum -b) >/dev/null", executable="/bin/bash")
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_univ_nl_show_cmd_logfile_stdout(self, mock_out):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", universal_newlines=True, show_cmd=True,
+                       logfile=logfile, stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(),
+                             'COMMAND: echo foo\n-----------------\nfoo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'COMMAND: echo foo\n-----------------\nfoo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_show_cmd_logfile_stdout(self, mock_out):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", show_cmd=True, logfile=logfile, stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(),
+                             'COMMAND: echo foo\n-----------------\nfoo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'COMMAND: echo foo\n-----------------\nfoo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_univ_nl_logfile_stdout(self, mock_out):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", universal_newlines=True,
+                       logfile=logfile, stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(), 'foo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'foo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_logfile_stdout(self, mock_out):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", logfile=logfile, stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(), 'foo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'foo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_univ_nl_show_cmd_stdout(self, mock_out):
+        ret, out = run("echo foo", universal_newlines=True, show_cmd=True,
+                       stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'COMMAND: echo foo\n-----------------\nfoo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_show_cmd_stdout(self, mock_out):
+        ret, out = run("echo foo", show_cmd=True, stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'COMMAND: echo foo\n-----------------\nfoo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_univ_nl_stdout(self, mock_out):
+        ret, out = run("echo foo", universal_newlines=True, stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'foo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_stdout(self, mock_out):
+        ret, out = run("echo foo", stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'foo\n')
+
+    def test_run_univ_nl_show_cmd_logfile(self):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", universal_newlines=True, show_cmd=True,
+                       logfile=logfile)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(),
+                             'COMMAND: echo foo\n-----------------\nfoo\n')
+
+    def test_run_show_cmd_logfile(self):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", show_cmd=True, logfile=logfile)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(),
+                             'COMMAND: echo foo\n-----------------\nfoo\n')
+
+    def test_run_univ_nl_logfile(self):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", universal_newlines=True,
+                       logfile=logfile)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(), 'foo\n')
+
+    def test_run_logfile(self):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", logfile=logfile)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(), 'foo\n')
+
+    def test_run_univ_nl_show_cmd(self):
+        ret, out = run("echo foo", universal_newlines=True, show_cmd=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+
+    def test_run_show_cmd(self):
+        ret, out = run("echo foo", show_cmd=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+
+    def test_run_univ_nl(self):
+        ret, out = run("echo foo", universal_newlines=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+
+    # Test for all four options False is already contained in test_run.
 
     def test_run_move_dir_with_logfile(self):
         # Write log into a directory that gets renamed by the called command.

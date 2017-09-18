@@ -278,6 +278,8 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             from shlex import quote
             cmd = " ".join((quote(i) for i in cmd))
 
+    universal_newlines = kwargs.get('universal_newlines', False)
+
     log = None
     if logfile:
         logfile = os.path.join(workdir or "", logfile)
@@ -285,7 +287,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         # it will be overwritten. Otherwise the command output will just be
         # appended to the existing file.
         mode = 'a' if not show_cmd and os.path.exists(logfile) else 'w'
-        if not kwargs.get('universal_newlines', False):
+        if not universal_newlines:
             mode += 'b'
         log = open(logfile, mode)
 
@@ -293,12 +295,12 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
 
         if show_cmd:
             command = "COMMAND: %s\n%s\n" % (cmd, "-" * (len(cmd) + 9))
-            # Fix for Python 3.4 where we cannot use % formating on bytestr
-            if six.PY3:
-                command = bytes(cmd, encoding='utf-8')
             if stdout:
-                print(command, end=' ')
+                print(command, end='')
             if logfile:
+                if six.PY3 and not universal_newlines:
+                    # Log file opened as binary, encode the command
+                    command = bytes(command, encoding='utf-8')
                 log.write(command)
 
         stdin = None
@@ -318,8 +320,8 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             stdin_thread.daemon = True
             stdin_thread.start()
 
-        output = "" if kwargs.get('universal_newlines', False) else b""
-        sentinel = "" if kwargs.get('universal_newlines', False) else b""
+        output = "" if universal_newlines else b""
+        sentinel = "" if universal_newlines else b""
         while True:
             if buffer_size == -1:
                 lines = proc.stdout.readline()
@@ -336,7 +338,10 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             if lines == sentinel:
                 break
             if stdout:
-                sys.stdout.write(lines)
+                if not universal_newlines:
+                    sys.stdout.write(lines.decode('utf-8'))
+                else:
+                    sys.stdout.write(lines)
             if logfile:
                 log.write(lines)
             if return_stdout:
