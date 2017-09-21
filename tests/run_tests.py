@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -27,7 +27,7 @@ def run_test(test_with_args):
         # If tests were skipped, give caller a hint that this happened.
         # Summary line example:
         # "OK (skipped=9)"
-        if 'skipped=' in output.splitlines()[-1]:
+        if b'skipped=' in output.splitlines()[-1]:
             print("[  SKIP  ]")
         else:
             print("[   OK   ]")
