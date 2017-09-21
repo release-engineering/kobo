@@ -17,6 +17,7 @@ import threading
 import locale
 import six
 from six.moves import range
+from six.moves import shlex_quote
 
 __all__ = (
     "force_list",
@@ -271,12 +272,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     @rtype: (int, str) or (int, None)
     """
     if type(cmd) in (list, tuple):
-        if six.PY2:
-            from pipes import quote
-            cmd = " ".join((quote(i) for i in cmd))
-        else:
-            from shlex import quote
-            cmd = " ".join((quote(i) for i in cmd))
+        cmd = " ".join((shlex_quote(i) for i in cmd))
 
     universal_newlines = kwargs.get('universal_newlines', False)
 
