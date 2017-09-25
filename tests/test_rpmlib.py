@@ -12,7 +12,7 @@ except ImportError:
     HAVE_RPM = False
 else:
     HAVE_RPM = True
-    from kobo.rpmlib import *
+    from kobo.rpmlib import parse_nvr, parse_nvra, compare_nvr, parse_evr, make_nvr, make_nvra
 
 
 @unittest.skipUnless(HAVE_RPM, "rpm python module is not installed")

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import six
 try:
     import json
 except ImportError:
@@ -7,7 +8,7 @@ except ImportError:
 
 import django.forms.fields
 from django.core.exceptions import ValidationError
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.html import conditional_escape
 from django.utils.translation import ugettext_lazy as _
@@ -47,11 +48,11 @@ class JSONWidget(django.forms.widgets.Textarea):
         if value is None: value = ''
         final_attrs = self.build_attrs(attrs, name=name)
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             value = json.dumps(value)
 
         return mark_safe(u'<textarea%s>%s</textarea>' % (flatatt(final_attrs),
-                conditional_escape(force_unicode(value))))
+                conditional_escape(force_text(value))))
 
 
 class JSONFormField(django.forms.fields.CharField):

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import print_function
 import copy
 import signal
 
@@ -134,7 +135,7 @@ class TaskBase(Plugin):
             self._subtask_list.remove(i)
 
         if fail:
-            print "Failing because of at least one subtask hasn't closed properly."
+            print("Failing because of at least one subtask hasn't closed properly.")
             self.fail()
 
         return finished

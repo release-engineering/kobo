@@ -2,15 +2,17 @@
 # -*- coding: utf-8 -*-
 
 
+import mock
 import unittest2 as unittest
 import run_tests # set sys.path
 
 import os
 import shutil
 import tempfile
-from cStringIO import StringIO
+from six.moves import StringIO
 
-from kobo.shortcuts import *
+from kobo.shortcuts import force_list, force_tuple, allof, anyof, noneof, oneof, is_empty, iter_chunks, save_to_file, read_from_file, run, read_checksum_file, compute_file_checksums, makedirs, split_path, relative_path
+from six.moves import range
 
 
 class TestShortcuts(unittest.TestCase):
@@ -73,18 +75,18 @@ class TestShortcuts(unittest.TestCase):
 
     def test_iter_chunks(self):
         self.assertEqual(list(iter_chunks([], 100)), [])
-        self.assertEqual(list(iter_chunks(range(5), 1)), [[0], [1], [2], [3], [4]])
-        self.assertEqual(list(iter_chunks(range(5), 2)), [[0, 1], [2, 3], [4]])
-        self.assertEqual(list(iter_chunks(range(5), 5)), [[0, 1, 2, 3, 4]])
-        self.assertEqual(list(iter_chunks(range(6), 2)), [[0, 1], [2, 3], [4, 5]])
+        self.assertEqual(list(iter_chunks(list(range(5)), 1)), [[0], [1], [2], [3], [4]])
+        self.assertEqual(list(iter_chunks(list(range(5)), 2)), [[0, 1], [2, 3], [4]])
+        self.assertEqual(list(iter_chunks(list(range(5)), 5)), [[0, 1, 2, 3, 4]])
+        self.assertEqual(list(iter_chunks(list(range(6)), 2)), [[0, 1], [2, 3], [4, 5]])
 
-        self.assertEqual(list(iter_chunks(xrange(5), 2)), [[0, 1], [2, 3], [4]])
-        self.assertEqual(list(iter_chunks(xrange(6), 2)), [[0, 1], [2, 3], [4, 5]])
-        self.assertEqual(list(iter_chunks(xrange(1, 6), 2)), [[1, 2], [3, 4], [5]])
-        self.assertEqual(list(iter_chunks(xrange(1, 7), 2)), [[1, 2], [3, 4], [5, 6]])
+        self.assertEqual(list(iter_chunks(range(5), 2)), [[0, 1], [2, 3], [4]])
+        self.assertEqual(list(iter_chunks(range(6), 2)), [[0, 1], [2, 3], [4, 5]])
+        self.assertEqual(list(iter_chunks(range(1, 6), 2)), [[1, 2], [3, 4], [5]])
+        self.assertEqual(list(iter_chunks(range(1, 7), 2)), [[1, 2], [3, 4], [5, 6]])
 
         def gen(num):
-            for i in xrange(num):
+            for i in range(num):
                 yield i+1
         self.assertEqual(list(iter_chunks(gen(5), 2)), [[1, 2], [3, 4], [5]])
 
@@ -115,29 +117,29 @@ class TestUtils(unittest.TestCase):
         self.assertEqual("\n".join(read_from_file(self.tmp_file)), "foo\nbar")
 
         # append doesn't modify existing perms
-        self.assertEqual(os.stat(self.tmp_file).st_mode & 0777, 0644)
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o644)
 
         os.unlink(self.tmp_file)
-        save_to_file(self.tmp_file, "foo", append=True, mode=0600)
-        self.assertEqual(os.stat(self.tmp_file).st_mode & 0777, 0600)
+        save_to_file(self.tmp_file, "foo", append=True, mode=0o600)
+        self.assertEqual(os.stat(self.tmp_file).st_mode & 0o777, 0o600)
 
     def test_run(self):
         ret, out = run("echo hello")
         self.assertEqual(ret, 0)
-        self.assertEqual(out, "hello\n")
+        self.assertEqual(out, b"hello\n")
 
         ret, out = run(["echo", "'hello'"])
         self.assertEqual(ret, 0)
-        self.assertEqual(out, "'hello'\n")
+        self.assertEqual(out, b"'hello'\n")
 
         ret, out = run(["echo", "\" ' "])
         self.assertEqual(ret, 0)
-        self.assertEqual(out, "\" ' \n")
+        self.assertEqual(out, b"\" ' \n")
 
         # test a longer output that needs to be read in several chunks
         ret, out = run("echo -n '%s'; sleep 0.2; echo -n '%s'" % (10000 * "x", 10 * "a"), logfile=self.tmp_file, can_fail=True)
         self.assertEqual(ret, 0)
-        self.assertEqual(out, 10000 * "x" + 10 * "a")
+        self.assertEqual(out, 10000 * b"x" + 10 * b"a")
         # check if log file is written properly; it is supposed to append data to existing content
         self.assertEqual("\n".join(read_from_file(self.tmp_file)), "test" + 10000 * "x" + 10 * "a")
 
@@ -147,11 +149,11 @@ class TestUtils(unittest.TestCase):
         self.assertRaises(RuntimeError, run, "exit 1")
 
         # stdin test
-        ret, out = run("xargs -0 echo -n", stdin_data="\0".join([str(i) for i in xrange(10000)]))
-        self.assertEqual(out, " ".join([str(i) for i in xrange(10000)]))
+        ret, out = run("xargs -0 echo -n", stdin_data=b"\0".join([str(i).encode() for i in range(10000)]))
+        self.assertEqual(out, b" ".join([str(i).encode() for i in range(10000)]))
 
         # return None
-        ret, out = run("xargs echo", stdin_data="\n".join([str(i) for i in xrange(1000000)]), return_stdout=False)
+        ret, out = run("xargs echo", stdin_data=b"\n".join([str(i).encode() for i in range(1000000)]), return_stdout=False)
         self.assertEqual(out, None)
 
         # log file with absolute path
@@ -172,6 +174,140 @@ class TestUtils(unittest.TestCase):
         self.assertRaises(RuntimeError, run, "echo foo | tee >(md5sum -b) >/dev/null")
         # passes in bash
         run("echo foo | tee >(md5sum -b) >/dev/null", executable="/bin/bash")
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_univ_nl_show_cmd_logfile_stdout(self, mock_out):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", universal_newlines=True, show_cmd=True,
+                       logfile=logfile, stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(),
+                             'COMMAND: echo foo\n-----------------\nfoo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'COMMAND: echo foo\n-----------------\nfoo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_show_cmd_logfile_stdout(self, mock_out):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", show_cmd=True, logfile=logfile, stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(),
+                             'COMMAND: echo foo\n-----------------\nfoo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'COMMAND: echo foo\n-----------------\nfoo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_univ_nl_logfile_stdout(self, mock_out):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", universal_newlines=True,
+                       logfile=logfile, stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(), 'foo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'foo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_logfile_stdout(self, mock_out):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", logfile=logfile, stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(), 'foo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'foo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_univ_nl_show_cmd_stdout(self, mock_out):
+        ret, out = run("echo foo", universal_newlines=True, show_cmd=True,
+                       stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'COMMAND: echo foo\n-----------------\nfoo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_show_cmd_stdout(self, mock_out):
+        ret, out = run("echo foo", show_cmd=True, stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'COMMAND: echo foo\n-----------------\nfoo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_univ_nl_stdout(self, mock_out):
+        ret, out = run("echo foo", universal_newlines=True, stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'foo\n')
+
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_run_stdout(self, mock_out):
+        ret, out = run("echo foo", stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+        self.assertEqual(mock_out.getvalue(),
+                         'foo\n')
+
+    def test_run_univ_nl_show_cmd_logfile(self):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", universal_newlines=True, show_cmd=True,
+                       logfile=logfile)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(),
+                             'COMMAND: echo foo\n-----------------\nfoo\n')
+
+    def test_run_show_cmd_logfile(self):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", show_cmd=True, logfile=logfile)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(),
+                             'COMMAND: echo foo\n-----------------\nfoo\n')
+
+    def test_run_univ_nl_logfile(self):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", universal_newlines=True,
+                       logfile=logfile)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(), 'foo\n')
+
+    def test_run_logfile(self):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        ret, out = run("echo foo", logfile=logfile)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+        with open(logfile) as f:
+            self.assertEqual(f.read(), 'foo\n')
+
+    def test_run_univ_nl_show_cmd(self):
+        ret, out = run("echo foo", universal_newlines=True, show_cmd=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+
+    def test_run_show_cmd(self):
+        ret, out = run("echo foo", show_cmd=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b'foo\n')
+
+    def test_run_univ_nl(self):
+        ret, out = run("echo foo", universal_newlines=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, 'foo\n')
+
+    # Test for all four options False is already contained in test_run.
 
     def test_run_move_dir_with_logfile(self):
         # Write log into a directory that gets renamed by the called command.

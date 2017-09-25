@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 import os
 import datetime
 import inspect
@@ -9,7 +10,9 @@ from kobo.decorators import decorator_with_args
 from kobo.shortcuts import random_string
 from kobo.tback import Traceback
 
-from models import XmlRpcLog
+from .models import XmlRpcLog
+import six
+from six.moves import zip
 
 
 __all__ = (
@@ -77,9 +80,9 @@ def log_call(function):
         try:
             argspec = inspect.getargspec(function)
             arg_names = argspec[0][1:]
-            known_args = zip(arg_names, args)
+            known_args = list(zip(arg_names, args))
             unknown_args = list(enumerate(args[len(arg_names):]))
-            keyword_args = [ (key, value) for key, value in kwargs.iteritems() if (key, value) not in known_args ]
+            keyword_args = [ (key, value) for key, value in six.iteritems(kwargs) if (key, value) not in known_args ]
 
             log = XmlRpcLog()
             log.user = request.user
@@ -101,7 +104,7 @@ def log_traceback(function, logdir):
     def _new_function(request, *args, **kwargs):
         try:
             result = function(request, *args, **kwargs)
-        except Exception, ex:
+        except Exception as ex:
             # logdir must be absolute path
             if os.path.abspath(logdir) != logdir:
                 raise
@@ -118,7 +121,7 @@ def log_traceback(function, logdir):
 
             # create a file with 0600 perms (log can contain sensitive information like passwords)
             file_path = os.path.join(logdir, file_name)
-            fd = os.open(file_path, os.O_CREAT | os.O_WRONLY, 0600)
+            fd = os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o600)
             os.write(fd, Traceback().get_traceback())
             os.close(fd)
             raise

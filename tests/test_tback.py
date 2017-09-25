@@ -3,31 +3,14 @@
 
 
 import re
-import unittest
+import six
+import unittest2 as unittest
 import run_tests # set sys.path
 
-from kobo.tback import *
+from kobo.tback import get_traceback, Traceback
 
 
 class TestTraceback(unittest.TestCase):
-
-    # hack for python < 2.7
-    if not hasattr(unittest.TestCase, "assertRegexpMatches"):
-        def assertRegexpMatches(self, text, expected_regexp, msg=None):
-            """Fail the test unless the text matches the regular expression."""
-            if isinstance(expected_regexp, basestring):
-                expected_regexp = re.compile(expected_regexp)
-            if not expected_regexp.search(text):
-                msg = msg or "Regexp didn't match"
-                msg = '%s: %r not found in %r' % (msg, expected_regexp.pattern, text)
-                raise self.failureException(msg)
-
-    # hack for python < 2.7
-    if not hasattr(unittest.TestCase, "assertIsInstance"):
-        def assertIsInstance(self, obj, cls, msg=None):
-            """Same as self.assertTrue(isinstance(obj, cls)), with a nicer default message."""
-            if not isinstance(obj, cls):
-                standardMsg = '%s is not an instance of %r' % (safe_repr(obj), cls)
 
     def test_empty(self):
         self.assertEqual('', get_traceback())
@@ -38,28 +21,30 @@ class TestTraceback(unittest.TestCase):
         try:
             raise Exception('Simple text')
         except:
-            regexp = re.compile('Traceback \(most recent call last\):\n *File ".*test_tback.py", line .+, in test_text\n *raise Exception\(\'Simple text\'\)\n *Exception: Simple text', re.M)
-            self.assertRegexpMatches(get_traceback(), regexp)
+            str_regexp = re.compile('Traceback \(most recent call last\):\n *File ".*test_tback.py", line .+, in test_text\n *raise Exception\(\'Simple text\'\)\n *Exception: Simple text', re.M)
+            bytes_regexp = re.compile(b'Traceback \(most recent call last\):\n *File ".*test_tback.py", line .+, in test_text\n *raise Exception\(\'Simple text\'\)\n *Exception: Simple text', re.M)
+
+            self.assertRegex(get_traceback(), str_regexp)
             tb = Traceback(show_traceback = True, show_code = False, show_locals = False, show_environ = False, show_modules = False)
-            self.assertRegexpMatches(tb.get_traceback(), regexp)
+            self.assertRegex(tb.get_traceback(), bytes_regexp)
 
     def test_Traceback(self):
         try:
             raise Exception('Simple text')
         except:
             tb = Traceback(show_traceback = False, show_code = False, show_locals = False, show_environ = False, show_modules = False)
-        self.assertEqual('', tb.get_traceback())
+        self.assertEqual(b'', tb.get_traceback())
         tb.show_code = True
-        self.assertRegexpMatches(tb.get_traceback(), re.compile('<CODE>.*--> *\d+ *raise Exception.*<\/CODE>$', re.M | re.S))
+        self.assertRegex(tb.get_traceback(), re.compile(b'<CODE>.*--> *\d+ *raise Exception.*<\/CODE>$', re.M | re.S))
         tb.show_code = False
         tb.show_locals = True
-        self.assertRegexpMatches(tb.get_traceback(), re.compile('<LOCALS>.*tb = .*<\/LOCALS>$', re.M | re.S))
+        self.assertRegex(tb.get_traceback(), re.compile(b'<LOCALS>.*tb = .*<\/LOCALS>$', re.M | re.S))
         tb.show_locals = False
         tb.show_environ = True
-        self.assertRegexpMatches(tb.get_traceback(), re.compile('<ENVIRON>.*<\/ENVIRON>\n<GLOBALS>.*</GLOBALS>$', re.M | re.S))
+        self.assertRegex(tb.get_traceback(), re.compile(b'<ENVIRON>.*<\/ENVIRON>\n<GLOBALS>.*</GLOBALS>$', re.M | re.S))
         tb.show_environ = False
         tb.show_modules = True
-        self.assertRegexpMatches(tb.get_traceback(), re.compile('<MODULES>.*<\/MODULES>$', re.M | re.S))
+        self.assertRegex(tb.get_traceback(), re.compile(b'<MODULES>.*<\/MODULES>$', re.M | re.S))
 
     def test_encoding(self):
         try:
@@ -69,7 +54,7 @@ class TestTraceback(unittest.TestCase):
         except:
             tb = Traceback(show_code = False, show_traceback = False)
         output = tb.get_traceback()
-        self.assertIsInstance(output, str)
+        self.assertIsInstance(output, six.binary_type)
 
     def test_uninitialized_variables(self):
         class Foo(object):

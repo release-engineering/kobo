@@ -72,8 +72,8 @@ import os
 import base64
 import hashlib
 import ssl
-import urlparse
-import xmlrpclib
+import six.moves.urllib.parse as urlparse
+from six.moves import xmlrpc_client as xmlrpclib
 
 import kobo.conf
 import kobo.cli
@@ -163,7 +163,7 @@ class HubProxy(object):
             self._login(verbose=self._conf.get("DEBUG_XMLRPC"))
         except KeyboardInterrupt:
             raise
-        except Exception, ex:
+        except Exception as ex:
             self._logger and self._logger.warn("Authentication failed")
             raise
 
@@ -203,7 +203,7 @@ class HubProxy(object):
                 self._logout()
             except KeyboardInterrupt:
                 raise
-            except Exception, ex:
+            except Exception as ex:
                 self._logger and self._logger.error("Failed to log out: %s" % ex)
 
             try:
@@ -212,7 +212,7 @@ class HubProxy(object):
                 self._logged_in = True
             except KeyboardInterrupt:
                 raise
-            except Exception, ex:
+            except Exception as ex:
                 self._logger and self._logger.debug("Failed to create new session: %s" % ex)
             else:
                 self._logger and self._logger.info("New session created.")
@@ -291,7 +291,7 @@ class HubProxy(object):
         # create and encode the authentication request
         try:
             ac, req = ctx.mk_req(server=sprinc, client=cprinc, auth_context=ac, ccache=ccache, options=krbV.AP_OPTS_MUTUAL_REQUIRED)
-        except krbV.Krb5Error, ex:
+        except krbV.Krb5Error as ex:
             if getattr(ex, "err_code", None) == -1765328377:
                 ex.message += ". Make sure you correctly set KRB_REALM (current value: %s)." % realm
                 ex.args = (ex.err_code, ex.message)
@@ -329,7 +329,7 @@ class HubProxy(object):
         err_code, err_msg = upload.send_to_host(host, path, port, secure)
         return upload_id, err_code, err_msg
 
-    def upload_task_log(self, file_obj, task_id, remote_file_name, append=True, mode=0644):
+    def upload_task_log(self, file_obj, task_id, remote_file_name, append=True, mode=0o644):
         """
         Upload a task log to the hub.
 
@@ -354,7 +354,7 @@ class HubProxy(object):
             self._hub.worker.upload_task_log(task_id, remote_file_name, mode, chunk_start, chunk_len, chunk_checksum, encoded_chunk)
 
 
-from xmlrpclib import Fault
+from six.moves.xmlrpc_client import Fault
 
 
 # default implementation of Fault.__repr__ is:

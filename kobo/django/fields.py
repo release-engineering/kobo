@@ -1,6 +1,7 @@
 from copy import copy
 
 import json
+import six
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.core import exceptions
@@ -39,9 +40,8 @@ can slow down saving process, as keys are being sorted. From these reasons is
 default value set to False.
 '''
 
-class StateEnumField(models.IntegerField):
+class StateEnumField(six.with_metaclass(models.SubfieldBase, models.IntegerField)):
     '''StateEnum DB encapsulation'''
-    __metaclass__ = models.SubfieldBase
 
 
     def __init__(self, state_machine, *args, **kwargs):
@@ -64,7 +64,7 @@ class StateEnumField(models.IntegerField):
         if isinstance(value, StateEnum):
             return value
 
-        if isinstance(value, (str, unicode)) and not value.isdigit():
+        if isinstance(value, (str, six.text_type)) and not value.isdigit():
             value = self.state_machine.get_num(value)
 
         try:
@@ -134,9 +134,8 @@ class StateEnumField(models.IntegerField):
         return form_class(**defaults)
 
 
-class JSONField(models.TextField):
+class JSONField(six.with_metaclass(models.SubfieldBase, models.TextField)):
     """JSON field for storing a serialized dictionary or list."""
-    __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
         self.human_readable = kwargs.pop('human_readable', False)
@@ -146,7 +145,7 @@ class JSONField(models.TextField):
         if value is None:
             return None
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             return value
 
         try:

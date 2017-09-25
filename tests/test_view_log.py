@@ -3,10 +3,12 @@ import os
 import json
 import gc
 import itertools
+import six
+import locale
 
 from tempfile import TemporaryFile
 from gzip import GzipFile
-from StringIO import StringIO
+from io import BytesIO
 from shutil import rmtree
 import mock
 
@@ -77,15 +79,23 @@ def response_content(response):
     """Get all the content from an HttpResponse (eagerly loaded if the
     response is streaming)."""
     if response.streaming:
-        return b''.join(response.streaming_content)
+        content = b''.join(response.streaming_content)
     else:
-        return response.content
+        content = response.content
+
+    if six.PY3:
+        try:
+            return str(content, encoding=response.charset)
+        except UnicodeDecodeError:
+            return content
+    else:
+        return content
 
 
 def gzip_decompress(data):
     """Like zlib.decompress but handles the gzip header, so it can be used
     on gzipped log files."""
-    io = StringIO(data)
+    io = BytesIO(data)
     gzfile = GzipFile(fileobj=io)
     return gzfile.read()
 
@@ -147,6 +157,9 @@ class TestViewLog(django.test.TestCase):
         )
 
         uncompressed_content = gzip_decompress(content)
+        if six.PY3:
+            uncompressed_content = str(uncompressed_content,
+                                       encoding=locale.getpreferredencoding())
         self.assertEqual(uncompressed_content, small_log_content())
 
     def test_view_small_raw_offset(self):
@@ -206,6 +219,8 @@ class TestViewLog(django.test.TestCase):
         self.assertEqual(response.status_code, 200, response)
 
         content = response.content
+        if six.PY3:
+            content = str(content, encoding=response.charset)
         self.assertTrue(content.startswith('<!DOCTYPE html'))
 
         # Should not have returned whole content
@@ -221,12 +236,26 @@ class TestViewLog(django.test.TestCase):
         self.assertFalse(self.big_log_content[0:5000] in content)
 
     @profile
+    def test_view_big_html_wrapped_with_offset(self):
+        # Just get the last 2000 chars - this should not trigger log trimming
+        offset = len(big_log_content()) - 2000
+        response = self.get_log('big.log', data={'offset': offset})
+
+        content = response.content
+        if six.PY3:
+            content = str(content, encoding=response.charset)
+        self.assertTrue(content.startswith('<!DOCTYPE html'))
+        self.assertTrue(big_log_content()[-2000:] in content)
+
+    @profile
     def test_view_zipped_big_html_context(self):
         """Verify the context passed into HTML template contains correct values."""
-        with mock.patch('kobo.hub.views.render_to_response') as render:
+        with mock.patch('kobo.hub.views.render_to_response') as render_to_response:
+            response = render_to_response.return_value.render.return_value
+            response.status_code = 200
             self.get_log('zipped_big.log')
 
-        mock_call = render.mock_calls[0]
+        mock_call = render_to_response.mock_calls[0]
 
         # make sure we're looking at the right call
         self.assertEqual(mock_call[0], '')
@@ -260,6 +289,8 @@ class TestViewLog(django.test.TestCase):
         count = 0
         for chunk in response.streaming_content:
             chunklen = len(chunk)
+            if six.PY3:
+                chunk = str(chunk, encoding=locale.getpreferredencoding())
             self.assertEqual(chunk, big_content[offset:offset + chunklen])
             offset = offset + chunklen
             count = count + 1
@@ -283,8 +314,10 @@ class TestViewLog(django.test.TestCase):
             tempfile.write(chunk)
 
         tempfile.seek(0)
-        gz_file = GzipFile(mode='rb', fileobj=tempfile)
+        gz_file = GzipFile(mode='r', fileobj=tempfile)
         all_data = gz_file.read()
+        if six.PY3:
+            all_data = str(all_data, encoding=locale.getpreferredencoding())
         self.assertEqual(all_data, big_content)
 
     def test_view_zipped_small_json(self):

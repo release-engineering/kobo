@@ -2,7 +2,7 @@
 
 import sys
 import time
-import urllib2
+import six.moves.urllib.request as urllib2
 try:
     import json
 except ImportError:

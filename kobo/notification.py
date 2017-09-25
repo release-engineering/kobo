@@ -12,6 +12,7 @@ import sys
 import optparse
 
 import kobo.shortcuts
+import six
 
 
 class EmailNotification(object):
@@ -39,7 +40,7 @@ class EmailNotification(object):
             if reply_to:
                 headers.append("Reply-To: %s" % reply_to)
 
-            for key, value in xheaders.iteritems():
+            for key, value in six.iteritems(xheaders):
                 if not key.startswith("X-"):
                     raise KeyError("X-Header has to start with 'X-': %s" % key)
                 headers.append("%s: %s" % (key, value))

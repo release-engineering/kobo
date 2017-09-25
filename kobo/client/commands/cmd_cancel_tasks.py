@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import print_function
 import sys
 
 from kobo.client import ClientCommand
+import six
 
 
 class Cancel_Tasks(ClientCommand):
@@ -29,11 +31,11 @@ class Cancel_Tasks(ClientCommand):
         for task_id in tasks:
             try:
                 result = self.hub.client.cancel_task(task_id)
-                if result and isinstance(result, basestring):
-                    print result
-            except Exception, ex:
+                if result and isinstance(result, six.string_types):
+                    print(result)
+            except Exception as ex:
                 failed = True
-                print ex
+                print(ex)
 
         if failed:
             sys.exit(1)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import print_function
 from kobo.client import ClientCommand
 
 
@@ -26,4 +27,4 @@ class List_Workers(ClientCommand):
         show_disabled = kwargs.get("show_disabled", False)
 
         self.set_hub(username, password)
-        print self.hub.client.list_workers(not show_disabled)
+        print(self.hub.client.list_workers(not show_disabled))

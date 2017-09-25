@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import print_function
 import sys
 import time
+import six
 
 
 __all__ = (
@@ -14,10 +16,10 @@ __all__ = (
 def display_tasklist_status(task_list):
     state_dict = {}
     for task in task_list:
-        for state, value in task.get_state_dict().iteritems():
+        for state, value in six.iteritems(task.get_state_dict()):
             state_dict.setdefault(state, 0)
             state_dict[state] += value
-    print "--> " + " ".join(( "%s: %s" % (key, state_dict[key]) for key in sorted(state_dict) )) + " [total: %s]" % sum(state_dict.values())
+    print("--> " + " ".join(( "%s: %s" % (key, state_dict[key]) for key in sorted(state_dict) )) + " [total: %s]" % sum(state_dict.values()))
 
 
 def watch_tasks(hub, task_id_list, indentation_level=0, sleep_time=1, task_url=None):
@@ -26,7 +28,7 @@ def watch_tasks(hub, task_id_list, indentation_level=0, sleep_time=1, task_url=N
         return
 
     try:
-        print "Watching tasks (this may be safely interrupted)..."
+        print("Watching tasks (this may be safely interrupted)...")
         task_list = []
         for task_id in sorted(task_id_list):
             task_list.append(TaskWatcher(hub, task_id, indentation_level))
@@ -34,7 +36,7 @@ def watch_tasks(hub, task_id_list, indentation_level=0, sleep_time=1, task_url=N
             # print task url if task_url is set or TASK_URL exists in config file
             task_url = task_url or hub._conf.get("TASK_URL", None)
             if task_url is not None:
-                print "Task url: %s" % (task_url % task_id)
+                print("Task url: %s" % (task_url % task_id))
 
         while True:
             all_done = True
@@ -52,7 +54,7 @@ def watch_tasks(hub, task_id_list, indentation_level=0, sleep_time=1, task_url=N
     except KeyboardInterrupt:
         running_task_list = [ t.task_id for t in task_list if not t.is_finished() ]
         if running_task_list:
-            print "Tasks still running: %s" % running_task_list
+            print("Tasks still running: %s" % running_task_list)
 
 
 
@@ -80,7 +82,7 @@ class TaskWatcher(object):
             return False
 
         result = self.task_info.get("is_finished", False)
-        for subtask in self.subtask_dict.itervalues():
+        for subtask in six.itervalues(self.subtask_dict):
             result &= subtask.is_finished()
         return result
 
@@ -105,7 +107,7 @@ class TaskWatcher(object):
         self.task_info = self.hub.client.task_info(self.task_id, False)
 
         if self.task_info is None:
-            print "No such task id: %s" % self.task_id
+            print("No such task id: %s" % self.task_id)
             sys.exit(1)
 
         # watch new tasks
@@ -119,11 +121,11 @@ class TaskWatcher(object):
             # compare and note status changes
             laststate = last["state"]
             if laststate != state:
-                print "%s: %s -> %s" % (self, self.display_state(last), self.display_state(self.task_info))
+                print("%s: %s -> %s" % (self, self.display_state(last), self.display_state(self.task_info)))
                 changed = True
         else:
             # first time we're seeing this task, so just show the current state
-            print "%s: %s" % (self, self.display_state(self.task_info))
+            print("%s: %s" % (self, self.display_state(self.task_info)))
             changed = True
 
         # update all subtasks
@@ -138,8 +140,8 @@ class TaskWatcher(object):
             state_dict.setdefault(state, 0)
             state_dict[state] += 1
 
-        for subtask in self.subtask_dict.itervalues():
-            for state, value in subtask.get_state_dict().iteritems():
+        for subtask in six.itervalues(self.subtask_dict):
+            for state, value in six.iteritems(subtask.get_state_dict()):
                 state_dict.setdefault(state, 0)
                 state_dict[state] += value
 

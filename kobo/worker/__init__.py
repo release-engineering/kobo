@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
 
-import os
+from __future__ import absolute_import
+from .taskmanager import TaskContainer
+from .task import *
 
-from task import *
-from taskmanager import *
-
-import tasks
+from . import tasks
 
 
 TaskContainer.register_module(tasks)

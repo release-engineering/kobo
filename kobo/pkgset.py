@@ -5,6 +5,7 @@ import os
 
 import kobo.rpmlib
 from kobo.shortcuts import compute_file_checksums, force_list
+import six
 
 
 __all__ = (
@@ -53,7 +54,7 @@ class FileWrapper(object):
         return result
 
     def __setstate__(self, value_dict):
-        for key, value in value_dict.iteritems():
+        for key, value in six.iteritems(value_dict):
             setattr(self, key, value)
 
     @property
@@ -175,19 +176,21 @@ class SimpleRpmWrapper(FileWrapper):
         ts = kwargs.pop("ts", None)
         header = kobo.rpmlib.get_rpm_header(file_path, ts=ts)
 
-        self.name = kobo.rpmlib.get_header_field(header, "name")
-        self.version = kobo.rpmlib.get_header_field(header, "version")
-        self.release = kobo.rpmlib.get_header_field(header, "release")
+        self.name = kobo.rpmlib.get_header_field(header, "name").decode('utf-8')
+        self.version = kobo.rpmlib.get_header_field(header, "version").decode('utf-8')
+        self.release = kobo.rpmlib.get_header_field(header, "release").decode('utf-8')
         self.epoch = kobo.rpmlib.get_header_field(header, "epoch")
-        self.arch = kobo.rpmlib.get_header_field(header, "arch")
+        self.arch = kobo.rpmlib.get_header_field(header, "arch").decode('utf-8')
         self.signature = kobo.rpmlib.get_keys_from_header(header)
         if self.signature is not None:
             self.signature = self.signature.upper()
-        self.excludearch = kobo.rpmlib.get_header_field(header, "excludearch")
-        self.exclusivearch = kobo.rpmlib.get_header_field(header, "exclusivearch")
+        self.excludearch = [x.decode('utf-8') for x in kobo.rpmlib.get_header_field(header, "excludearch")]
+        self.exclusivearch = [x.decode('utf-8') for x in kobo.rpmlib.get_header_field(header, "exclusivearch")]
         self.sourcerpm = kobo.rpmlib.get_header_field(header, "sourcerpm")
+        if self.sourcerpm:
+            self.sourcerpm = self.sourcerpm.decode('utf-8')
         self.is_source = bool(kobo.rpmlib.get_header_field(header, "sourcepackage"))
-        self.is_system_release = "system-release" in kobo.rpmlib.get_header_field(header, "providename")
+        self.is_system_release = b"system-release" in kobo.rpmlib.get_header_field(header, "providename")
         self.checksum_type = kobo.rpmlib.get_digest_algo_from_header(header).lower()
 
     def __str__(self):
@@ -229,16 +232,16 @@ class FileCache(object):
         self.file_cache[os.path.abspath(name)] = value
 
     def __iter__(self):
-        return self.file_cache.iterkeys()
+        return iter(self.file_cache)
 
     def __len__(self):
         return len(self.file_cache)
 
     def iteritems(self):
-        return self.file_cache.iteritems()
+        return six.iteritems(self.file_cache)
 
     def items(self):
-        return self.file_cache.items()
+        return list(self.file_cache.items())
 
     def add(self, file_path, file_wrapper_class=None, **kwargs):
         file_path = os.path.abspath(file_path)
@@ -257,7 +260,7 @@ class FileCache(object):
         return value
 
     def remove(self, file_path):
-        if type(file_path) not in (str, unicode):
+        if type(file_path) not in (str, six.text_type):
             file_obj = file_path
             file_path = file_obj.file_path
         else:
@@ -270,6 +273,6 @@ class FileCache(object):
 
     def remove_by_filenames(self, file_names):
         file_names = [ os.path.basename(i) for i in force_list(file_names) ]
-        for i in self.file_cache.keys():
+        for i in dict(self.file_cache):
             if os.path.basename(i) in file_names:
                 self.remove(i)

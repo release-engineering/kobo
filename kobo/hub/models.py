@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import os
 import sys
 import datetime
@@ -24,7 +25,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_delete
 
 import kobo.django.fields
-from kobo.client.constants import *
+from kobo.client.constants import TASK_STATES, FINISHED_STATES, FAILED_STATES
 from kobo.shortcuts import random_string, read_from_file, save_to_file, run
 
 LOG_BUFFER_SIZE = 2**20
@@ -62,7 +63,7 @@ def _utf8_chunk(bytestr):
     # Can we make it valid by chopping a few bytes from the end?
     idx = len(bytestr)
     while idx > 0:
-        last_char = ord(bytestr[idx - 1])
+        last_char = ord(bytestr[idx - 1:idx])
         if last_char < 0x80:
             # ascii - safe
             break
@@ -413,7 +414,7 @@ class TaskLogs(object):
 
             log_path = self._get_absolute_log_path(name)
             if os.path.isfile(log_path):
-                self.cache[name] = "\n".join(read_from_file(log_path))
+                self.cache[name] = b"\n".join(read_from_file(log_path, mode='rb'))
             elif os.path.isfile(log_path + ".gz"):
                 fo = gzip.open(log_path + ".gz", "rb")
                 self.cache[name] = fo.read()
@@ -435,9 +436,9 @@ class TaskLogs(object):
                 continue
             log_path = self._get_absolute_log_path(log)
             if os.path.basename(log).startswith("traceback"):
-                mode = 0600
+                mode = 0o600
             else:
-                mode = 0644
+                mode = 0o644
             save_to_file(log_path, self.cache[log], mode=mode)
             self.changed[log] = False
 
@@ -567,7 +568,7 @@ class Task(models.Model):
             raise Exception('Possible hack, trying to read path "%s"' % path)
 
         if create and not os.path.isdir(path):
-            os.makedirs(path, mode=0755)
+            os.makedirs(path, mode=0o755)
 
         return path
 
@@ -627,12 +628,12 @@ class Task(models.Model):
 
     def set_args(self, **kwargs):
         """Serialize args dictionary."""
-        print >> sys.stderr, "DeprecationWarning: kobo.hub.models.Task.set_args() is deprecated. Use kobo.hub.models.Task.args instead."
+        print("DeprecationWarning: kobo.hub.models.Task.set_args() is deprecated. Use kobo.hub.models.Task.args instead.", file=sys.stderr)
         self.args = kwargs
 
     def get_args(self):
         """Deserialize args dictionary."""
-        print >> sys.stderr, "DeprecationWarning: kobo.hub.models.Task.get_args() is deprecated. Use kobo.hub.models.Task.args instead."
+        print("DeprecationWarning: kobo.hub.models.Task.get_args() is deprecated. Use kobo.hub.models.Task.args instead.", file=sys.stderr)
         return self.args.copy()
 
     def get_args_display(self):

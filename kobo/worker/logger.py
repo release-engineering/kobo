@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-
+import six
 import threading
 import time
-import Queue
-from cStringIO import StringIO
-from xmlrpclib import Fault
+import six.moves.queue
+from six.moves import StringIO
+from six.moves.xmlrpc_client import Fault
 
 
 __all__ = (
@@ -21,7 +21,7 @@ class LoggingThread(threading.Thread):
         threading.Thread.__init__(self, *args, **kwargs)
         self._hub = hub
         self._task_id = task_id
-        self._queue = Queue.Queue()
+        self._queue = six.moves.queue.Queue()
         self._event = threading.Event()
         self._running = True
         self._send_time = 0
@@ -37,7 +37,7 @@ class LoggingThread(threading.Thread):
             while True:
                 try:
                     self._send_data += self._queue.get_nowait()
-                except Queue.Empty:
+                except six.moves.queue.Empty:
                     break
 
             if not self._send_data:
@@ -47,7 +47,7 @@ class LoggingThread(threading.Thread):
             if self._running and len(self._send_data) < 1200 and now - self._send_time < 5:
                 continue
 
-            if isinstance(self._send_data, unicode):
+            if isinstance(self._send_data, six.text_type):
                 self._send_data = self._send_data.encode('utf-8')
 
             try:

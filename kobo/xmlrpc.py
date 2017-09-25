@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import print_function
 import base64
-import cookielib
+import six.moves.http_cookiejar as cookielib
 import fcntl
 import hashlib
-import httplib
+import six.moves.http_client as httplib
 import os
 import socket
 import ssl
 import sys
 import threading
 import time
-import urllib2
-import xmlrpclib
-import urlparse
+import six.moves.urllib.request as urllib2
+import six.moves.xmlrpc_client as xmlrpclib
+import six.moves.urllib.parse as urlparse
 
 import kobo.shortcuts
 
@@ -86,7 +87,7 @@ class TimeoutHTTPProxyConnection(TimeoutHTTPConnection):
         else:
             (self.host, self.port) = self._get_hostport(host, port)
 
-class TimeoutHTTP(httplib.HTTP):
+class TimeoutHTTP(httplib.HTTPConnection):
     _connection_class = TimeoutHTTPConnection
 
     def set_timeout(self, timeout):
@@ -158,7 +159,7 @@ class TimeoutHTTPSProxyConnection(TimeoutHTTPProxyConnection):
         return TimeoutHTTPConnection.putrequest(self, method, url)
 
 
-class TimeoutHTTPS(httplib.HTTPS):
+class TimeoutHTTPS(httplib.HTTPSConnection):
     _connection_class = TimeoutHTTPSConnection
 
     def set_timeout(self, timeout):
@@ -381,7 +382,7 @@ class CookieTransport(xmlrpclib.Transport):
             if rc == -1:
                 errcode = 401
                 raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
-        except kerberos.GSSError, ex:
+        except kerberos.GSSError as ex:
             errcode = 401
             errmsg += ": %s/%s" % (ex[0][0], ex[1][0])
             raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg, headers)
@@ -572,18 +573,18 @@ def retry_request_decorator(transport_class):
             if self.retry_count == 0:
                 return transport_class.request(self, *args, **kwargs)
 
-            for i in xrange(self.retry_count + 1):
+            for i in range(self.retry_count + 1):
                 try:
                     result = transport_class.request(self, *args, **kwargs)
                     return result
                 except KeyboardInterrupt:
                     raise
-                except (socket.error, socket.herror, socket.gaierror, socket.timeout), ex:
+                except (socket.error, socket.herror, socket.gaierror, socket.timeout) as ex:
                     if i >= self.retry_count:
                         raise
                     retries_left = self.retry_count - i
                     retries = "%d %s left" % (retries_left, retries_left == 1 and "retry" or "retries") # 1 retry left / X retries left
-                    print >> sys.stderr, "XML-RPC connection to %s failed: %s, %s" % (args[0], ex.args[1:], retries)
+                    print("XML-RPC connection to %s failed: %s, %s" % (args[0], ex.args[1:], retries), file=sys.stderr)
                     raise
                     time.sleep(self.retry_timeout)
 
@@ -620,7 +621,7 @@ def encode_xmlrpc_chunks_iterator(file_obj):
     yield (str(chunk_start), -1, checksum.hexdigest().lower(), "")
 
 
-def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, write_to=None, mode=0644):
+def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, write_to=None, mode=0o644):
     """
     Decode a data chunk and optionally write it to a file.
 
@@ -660,8 +661,8 @@ def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, w
     target_dir = os.path.dirname(write_to)
     if not os.path.isdir(target_dir):
         try:
-            os.makedirs(target_dir, mode=0755)
-        except OSError, ex:
+            os.makedirs(target_dir, mode=0o755)
+        except OSError as ex:
             if ex.errno != 17:
                 raise
 

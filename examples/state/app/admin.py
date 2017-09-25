@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 import django.contrib.admin as admin
-from models import *
+from .models import SimpleState
 
 
 class SimpleStateAdmin(admin.ModelAdmin):

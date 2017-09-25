@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
+from __future__ import print_function
 import unittest2 as unittest
 import run_tests # set sys.path
 
@@ -10,7 +11,8 @@ import warnings
 import tempfile
 import shutil
 import hashlib
-import cPickle as pickle
+import six.moves.cPickle as pickle
+import six
 
 # tolerate and skip in absence of rpm since it's not installable to virtualenv
 try:
@@ -18,7 +20,7 @@ try:
 except ImportError:
     HAVE_RPM = False
 else:
-    from kobo.pkgset import *
+    from kobo.pkgset import FileWrapper, RpmWrapper, SimpleRpmWrapper, FileCache
     HAVE_RPM = True
 
 
@@ -57,7 +59,7 @@ class TestFileWrapperClass(unittest.TestCase):
         wrap = FileWrapper(file1)
         pickled_data = pickle.dumps(wrap)
         wrap2 = pickle.loads(pickled_data)
-        print wrap2.file_path
+        print(wrap2.file_path)
 
 
 @unittest.skipUnless(HAVE_RPM, "rpm python module is not installed")
@@ -189,7 +191,7 @@ class TestFileCacheClass(unittest.TestCase):
         wrap1 = self.cache.add(self.file1)
         wrap2 = self.cache.add(self.file2)
 
-        items = [path for path, _ in self.cache.iteritems()]
+        items = [path for path, _ in six.iteritems(self.cache)]
 
         self.assertEqual(len(self.cache.inode_cache), 2)
         self.assertEqual(len(self.cache.file_cache), 2)

@@ -4,9 +4,11 @@
 # Some code comes from koji: https://fedorahosted.org/koji/
 
 
-from itertools import izip
+from six.moves import zip as izip
 import datetime
 import time
+import six
+from six.moves import range
 try:
     import email.utils as email_utils
 except ImportError:
@@ -69,7 +71,7 @@ def get_rpm_header(file_name, ts=None):
             ts.setKeyring(rpm.keyring())
         ts.setVSFlags(rpm._RPMVSF_NOSIGNATURES|rpm._RPMVSF_NODIGESTS)
 
-    if type(file_name) in (str, unicode):
+    if isinstance(file_name, six.string_types):
         fo = open(file_name, "r")
     else:
         fo = file_name
@@ -90,15 +92,15 @@ def get_header_field(hdr, name):
     @param name: a rpm field name
     @type name: str
     @return: value of a rpm field
-    @rtype: str or list
+    @rtype: bytes or int or list
     """
 
     if name == "arch":
         # HACK: return "src" or "nosrc" arch instead of build arch
         if get_header_field(hdr, "sourcepackage"):
             if get_header_field(hdr, "nosource") or get_header_field(hdr, "nopatch"):
-                return "nosrc"
-            return "src"
+                return b"nosrc"
+            return b"src"
 
     hdr_key = getattr(rpm, "RPMTAG_%s" % name.upper(), None)
     if hdr_key is None:
@@ -115,7 +117,7 @@ def get_header_field(hdr, name):
         # HACK: workaround for https://bugzilla.redhat.com/show_bug.cgi?id=991329
         if result is None:
             result = []
-        elif isinstance(result, (int, long)):
+        elif isinstance(result, six.integer_types):
             result = [result]
     return result
 
@@ -208,7 +210,7 @@ def parse_nvra(nvra):
         nvra = nvra.split("/")[-1]
 
     epoch = ""
-    for i in xrange(2):
+    for i in range(2):
         # run this twice to parse N-V-R.A.rpm:E and N-V-R.A:E.rpm
         if nvra.endswith(".rpm"):
             # strip .rpm suffix

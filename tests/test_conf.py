@@ -9,8 +9,7 @@ import shutil
 import os
 import run_tests # set sys.path
 
-from kobo.conf import *
-from kobo.conf import PyConfigParser
+from kobo.conf import PyConfigParser, get_dict_value
 
 
 CONFIG = """

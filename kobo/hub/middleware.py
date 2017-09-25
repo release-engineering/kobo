@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 
-from models import Worker
+from .models import Worker
 
 
 def get_worker(request):

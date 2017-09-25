@@ -6,6 +6,7 @@ Various useful shortcuts.
 """
 
 
+from __future__ import print_function
 import os
 import sys
 import subprocess
@@ -13,7 +14,10 @@ import random
 import re
 import hashlib
 import threading
-
+import locale
+import six
+from six.moves import range
+from six.moves import shlex_quote
 
 __all__ = (
     "force_list",
@@ -70,7 +74,7 @@ def allof(*args, **kwargs):
 
     @rtype: bool
     """
-    for i in list(args) + kwargs.values():
+    for i in list(args) + list(kwargs.values()):
         if not i:
             return False
     return True
@@ -81,7 +85,7 @@ def anyof(*args, **kwargs):
 
     @rtype: bool
     """
-    for i in list(args) + kwargs.values():
+    for i in list(args) + list(kwargs.values()):
         if i:
             return True
     return False
@@ -92,7 +96,7 @@ def noneof(*args, **kwargs):
 
     @rtype: bool
     """
-    for i in list(args) + kwargs.values():
+    for i in list(args) + list(kwargs.values()):
         if i:
             return False
     return True
@@ -104,7 +108,7 @@ def oneof(*args, **kwargs):
     @rtype: bool
     """
     found = False
-    for i in list(args) + kwargs.values():
+    for i in list(args) + list(kwargs.values()):
         if i:
             if found:
                 return False
@@ -129,9 +133,7 @@ def is_empty(value):
 def iter_chunks(input_list, chunk_size):
     """Iterate through input_list and yield chunk_size-d chunks."""
 
-    # TODO: any idea how to detect files better? This works for StringIO at least...
-    is_file = type(input_list) is file
-    is_file |= hasattr(input_list, "read") and hasattr(input_list, "close") and hasattr(input_list, "seek")
+    is_file = hasattr(input_list, "read") and hasattr(input_list, "close") and hasattr(input_list, "seek")
     if is_file:
         while 1:
             chunk = input_list.read(chunk_size)
@@ -141,7 +143,7 @@ def iter_chunks(input_list, chunk_size):
         return
 
     # TODO: any idea how to detect generators better?
-    if hasattr(input_list, "__iter__") and hasattr(input_list, "next"):
+    if hasattr(input_list, "__iter__") and not isinstance(input_list, six.string_types):
         chunk = []
         for i in input_list:
             chunk.append(i)
@@ -152,18 +154,8 @@ def iter_chunks(input_list, chunk_size):
             yield chunk
         return
 
-    can_slice = hasattr(input_list, "__getslice__")
-    for i in xrange(0, len(input_list), chunk_size):
-        if can_slice:
-            # regular list
-            yield input_list[i:i + chunk_size]
-        else:
-            # xrange, etc.
-            chunk = []
-            for j in xrange(i, i + chunk_size):
-                if j < len(input_list):
-                    chunk.append(input_list[j])
-            yield chunk
+    for i in range(0, len(input_list), chunk_size):
+        yield input_list[i:i + chunk_size]
 
 
 def random_string(length=32, alphabet=None):
@@ -172,7 +164,7 @@ def random_string(length=32, alphabet=None):
     @rtype: str
     """
     alphabet = alphabet or "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    return "".join([ random.choice(alphabet) for i in xrange(length) ])
+    return "".join([ random.choice(alphabet) for i in range(length) ])
 
 
 def hex_string(string):
@@ -183,15 +175,21 @@ def hex_string(string):
     return "".join(( "%02x" % ord(i) for i in string ))
 
 
-def touch(filename, mode=0644):
+def touch(filename, mode=0o644):
     """Touch a file."""
     save_to_file(filename, "", append=True, mode=mode)
 
 
-def read_from_file(filename, lines=None, re_filter=None):
+def read_from_file(filename, lines=None, re_filter=None, mode='rt'):
     """Read a text file."""
+    # Use bytes for stipping when using binary mode
+    if 'b' in mode:
+        strip = b"\r\n"
+    else:
+        strip = "\r\n"
+
     result = []
-    fo = open(filename, "rt")
+    fo = open(filename, mode)
 
     if re_filter is not None:
         re_filter_compiled = re.compile(re_filter)
@@ -199,7 +197,7 @@ def read_from_file(filename, lines=None, re_filter=None):
     for i, line in enumerate(fo):
         if lines is not None and i+1 not in lines:
             continue
-        line = line.rstrip("\r\n")
+        line = line.rstrip(strip)
         if re_filter is not None and not re_filter_compiled.match(line):
             continue
         result.append(line)
@@ -208,18 +206,20 @@ def read_from_file(filename, lines=None, re_filter=None):
     return result
 
 
-def save_to_file(filename, text, append=False, mode=0644):
+def save_to_file(filename, text, append=False, mode=0o644):
     """Save text to a file."""
     if append and os.path.exists(filename):
         fd = os.open(filename, os.O_RDWR | os.O_APPEND, mode)
     else:
         fd = os.open(filename, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
+    if not isinstance(text, bytes):
+        text = bytes(text, encoding=locale.getpreferredencoding())
     os.write(fd, text)
     os.close(fd)
 
 
 def save(*args, **kwargs):
-    print >> sys.stderr, "DeprecationWarning: kobo.shortcuts.save() is deprecated, use kobo.shortcuts.save_to_file() instead."
+    print("DeprecationWarning: kobo.shortcuts.save() is deprecated, use kobo.shortcuts.save_to_file() instead.", file=sys.stderr)
     return save_to_file(*args, **kwargs)
 
 
@@ -272,8 +272,9 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     @rtype: (int, str) or (int, None)
     """
     if type(cmd) in (list, tuple):
-        import pipes
-        cmd = " ".join((pipes.quote(i) for i in cmd))
+        cmd = " ".join((shlex_quote(i) for i in cmd))
+
+    universal_newlines = kwargs.get('universal_newlines', False)
 
     log = None
     if logfile:
@@ -282,6 +283,8 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         # it will be overwritten. Otherwise the command output will just be
         # appended to the existing file.
         mode = 'a' if not show_cmd and os.path.exists(logfile) else 'w'
+        if not universal_newlines:
+            mode += 'b'
         log = open(logfile, mode)
 
     try:
@@ -289,8 +292,11 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         if show_cmd:
             command = "COMMAND: %s\n%s\n" % (cmd, "-" * (len(cmd) + 9))
             if stdout:
-                print command,
+                print(command, end='')
             if logfile:
+                if six.PY3 and not universal_newlines:
+                    # Log file opened as binary, encode the command
+                    command = bytes(command, encoding='utf-8')
                 log.write(command)
 
         stdin = None
@@ -310,24 +316,28 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             stdin_thread.daemon = True
             stdin_thread.start()
 
-        output = ""
+        output = "" if universal_newlines else b""
+        sentinel = "" if universal_newlines else b""
         while True:
             if buffer_size == -1:
                 lines = proc.stdout.readline()
             else:
                 try:
                     lines = proc.stdout.read(buffer_size)
-                except (IOError, OSError), ex:
+                except (IOError, OSError) as ex:
                     import errno
                     if ex.errno == errno.EINTR:
                         continue
                     else:
                         raise
 
-            if lines == "":
+            if lines == sentinel:
                 break
             if stdout:
-                sys.stdout.write(lines)
+                if not universal_newlines:
+                    sys.stdout.write(lines.decode('utf-8'))
+                else:
+                    sys.stdout.write(lines)
             if logfile:
                 log.write(lines)
             if return_stdout:
@@ -351,7 +361,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         raise exc
 
     if proc.returncode != 0 and show_cmd:
-        print >> sys.stderr, err_msg
+        print(err_msg, file=sys.stderr)
 
     if not return_stdout:
         output = None
@@ -381,7 +391,7 @@ def compute_file_checksums(filename, checksum_types):
         except AttributeError:
             raise ValueError("Checksum is not supported in hashlib: %s" % checksum_type)
 
-    fo = open(filename, "r")
+    fo = open(filename, "rb")
     while True:
         chunk = fo.read(1024**2)
         if not chunk:
@@ -391,7 +401,7 @@ def compute_file_checksums(filename, checksum_types):
     fo.close()
 
     result = {}
-    for checksum_type, checksum in checksums.iteritems():
+    for checksum_type, checksum in six.iteritems(checksums):
         result[checksum_type] = checksum.hexdigest().lower()
     return result
 
@@ -406,6 +416,9 @@ def parse_checksum_line(line):
     @rtype: (str, str)
     """
 
+    if isinstance(line, six.binary_type):
+        line = line.decode()
+
     if not line.strip():
         return None
     if line.strip().startswith("#"):
@@ -414,7 +427,10 @@ def parse_checksum_line(line):
     match = CHECKSUM_LINE_RE.match(line)
     data = match.groupdict()
     if data["escaped"]:
-        data["path"] = data["path"].decode('string-escape')
+        try:
+            data["path"] = data["path"].decode('string-escape')
+        except AttributeError:
+            data["path"] = bytes(data["path"], "utf-8").decode('unicode_escape')
     return (data["checksum"], data["path"])
 
 
@@ -495,14 +511,14 @@ def relative_path(src_path, dst_path=None):
     return os.path.join(*src_path)
 
 
-def makedirs(path, mode=0777):
+def makedirs(path, mode=0o777):
     """
     Wrapper to os.makedirs which does not
     throw an exception on existing directory.
     """
     try:
         os.makedirs(path, mode)
-    except OSError, ex:
+    except OSError as ex:
         if ex.errno != 17:
             raise
         if not os.path.isdir(path):

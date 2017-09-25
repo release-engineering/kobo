@@ -197,7 +197,7 @@ class UndoHardlink(object):
 
         try:
             st = os.stat(file_path)
-        except IOError, ex:
+        except IOError as ex:
             self.log(logging.ERROR, "Stat failed: %s" % ex)
 
         if st.st_nlink < 2:
@@ -211,13 +211,13 @@ class UndoHardlink(object):
 
         try:
             shutil.copy(file_path, tmp_file)
-        except IOError, ex:
+        except IOError as ex:
             self.log(logging.ERROR, "Copy failed: %s" % ex)
             raise
 
         try:
             shutil.move(tmp_file, file_path)
-        except IOError, ex:
+        except IOError as ex:
             self.log(logging.ERROR, "Move failed: %s" % ex)
             raise
 
@@ -227,6 +227,6 @@ class UndoHardlink(object):
 
         try:
             os.rmdir(tmp_dir)
-        except IOError, ex:
+        except IOError as ex:
             self.log(logging.ERROR, "Move failed: %s" % ex)
             raise

@@ -19,7 +19,9 @@ Always make sure all trees inherit from PluginContainer:
 """
 
 
+from __future__ import print_function
 import os
+import six
 
 
 __all__ = (
@@ -53,7 +55,7 @@ class PluginContainer(object):
         return self._get_plugin(name)
 
     def __iter__(self):
-        return self.plugins.iterkeys()
+        return iter(self.plugins)
 
     @classmethod
     def normalize_name(cls, name):
@@ -64,8 +66,8 @@ class PluginContainer(object):
         """Return dictionary of registered plugins."""
 
         result = {}
-        parent_plugins = cls._get_parent_plugins(cls.normalize_name).items()
-        class_plugins = getattr(cls, "_class_plugins", {}).items()
+        parent_plugins = list(cls._get_parent_plugins(cls.normalize_name).items())
+        class_plugins = list(getattr(cls, "_class_plugins", {}).items())
         for name, plugin_class in parent_plugins + class_plugins:
             result[name] = type(plugin_class.__name__, (plugin_class, ), {"__doc__": plugin_class.__doc__})
         return result
@@ -91,7 +93,7 @@ class PluginContainer(object):
                     normalized_name = normalize_function(plugin_class.__name__)
                     plugins[normalized_name] = plugin_class
 
-            for name, value in plugins.iteritems():
+            for name, value in six.iteritems(plugins):
                 if result.get(name, value) != value:
                    raise RuntimeError("Cannot register plugin '%s'. Another plugin with the same normalized name (%s) is already in the container." % (str(value), normalized_name))
 
@@ -165,7 +167,7 @@ class PluginContainer(object):
                     __import__(module.__name__, {}, {}, [mod])
                 except:
                     import sys
-                    print >> sys.stderr, "WARNING: Skipping broken plugin module: %s.%s" % (module.__name__, mod)
+                    print("WARNING: Skipping broken plugin module: %s.%s" % (module.__name__, mod), file=sys.stderr)
                     module_list.remove(mod)
         else:
             __import__(module.__name__, {}, {}, module_list)

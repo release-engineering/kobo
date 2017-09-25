@@ -23,5 +23,5 @@ class Start_Worker(kobo.cli.Command):
 
         try:
             kobo.admin.copy_helper(name, directory, "worker")
-        except kobo.admin.TemplateError, ex:
+        except kobo.admin.TemplateError as ex:
             self.parser.error(ex)

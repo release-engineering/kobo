@@ -93,6 +93,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.encoding import smart_unicode
+import six
+from six.moves import range
 
 
 __all__ = (
@@ -147,7 +149,7 @@ class MenuItem(object):
             return mark_safe(u"<li class='divider'></li>")
         result = ""
         if self.items:
-            result = u"<ul>%s</ul>" % u"".join([unicode(i) for i in self.items])
+            result = u"<ul>%s</ul>" % u"".join([six.text_type(i) for i in self.items])
         return mark_safe(u"<li>%s%s</li>" % (self.as_a(), result))
 
     @property
@@ -169,7 +171,7 @@ class MenuItem(object):
         if self.url:
             result = u"<a href='%s'%s>%s</a>" % (self.url, style, self.title)
         else:
-            result = unicode(self.title)
+            result = six.text_type(self.title)
 
         return mark_safe(result)
 
@@ -275,7 +277,7 @@ class MainMenu(MenuItem):
 
     def __unicode__(self):
         """Return menu as printable <ul> list."""
-        return mark_safe(u"<ul>%s</ul>" % "".join([unicode(i) for i in self.items]))
+        return mark_safe(u"<ul>%s</ul>" % "".join([six.text_type(i) for i in self.items]))
 
     def as_bootstrap_navbar_dropdown_menu(self):
         """
@@ -296,7 +298,7 @@ class MainMenu(MenuItem):
         except ValueError:
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
 
-        if level not in range(1, self.depth + 1):
+        if level not in list(range(1, self.depth + 1)):
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
 
         if not self.active:
