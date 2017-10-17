@@ -53,7 +53,7 @@ for package in package_data.keys():
 
 setup(
     name            = "kobo",
-    version         = "0.6.0",
+    version         = "0.7.0",
     description     = "A pile of python modules used by Red Hat release engineering to build their tools",
     url             = "https://github.com/release-engineering/kobo/",
     author          = "Red Hat, Inc.",
