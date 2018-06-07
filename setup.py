@@ -63,4 +63,5 @@ setup(
     packages        = packages,
     package_data    = package_data,
     scripts         = ["kobo/admin/kobo-admin"],
+    install_requires=["six"],
 )
