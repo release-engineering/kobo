@@ -290,7 +290,10 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     try:
 
         if show_cmd:
-            command = "COMMAND: %s\n%s\n" % (cmd, "-" * (len(cmd) + 9))
+            command = "COMMAND: %s\n%s\n" % (
+                cmd,
+                "-" * min(len(cmd) + 9, 79)
+            )
             if stdout:
                 print(command, end='')
             if logfile:
