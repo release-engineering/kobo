@@ -136,7 +136,10 @@ def task_url(request, task_id):
     @return: task URL
     @rtype:  str
     """
-    prefix = request.META["SERVER_PORT"] == 443 and "https://" or "http://"
+    if str(request.META["SERVER_PORT"]) == "443":
+        prefix = "https://"
+    else:
+        prefix = "http://"
 
     # use HTTP_HOST (address can point to a virtual host)
     # if address points to localhost, use SERVER_NAME in order to make link globally valid
