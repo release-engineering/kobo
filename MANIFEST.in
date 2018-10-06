@@ -3,7 +3,7 @@ include INSTALL
 include COPYING
 include LICENSE
 include MANIFEST.in
-include README
+include README.md
 include Makefile
 recursive-include kobo *.py *.conf *.json *.sql *.html *.css *.js *.png *.wsgi *.example *.template kobo-admin __*__
 recursive-include scripts *.py *.sh

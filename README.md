@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/release-engineering/kobo.svg?branch=master)](https://travis-ci.org/release-engineering/kobo)
+
+
 KOBO 0.7.0 RELEASE NOTES
 ========================
 
