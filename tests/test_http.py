@@ -3,7 +3,6 @@
 
 
 import unittest
-import run_tests # set sys.path
 
 import tempfile
 import os
@@ -35,6 +34,3 @@ class TestPOSTTransport(unittest.TestCase):
         self.assertRaises(OSError, self.postt.add_file, "file", tf1)
         self.assertEqual(self.postt.add_file("file", tf2), None)
         self.assertRaises(TypeError, self.postt.add_file, "file", tf3)
-
-if __name__ == '__main__':
-    unittest.main()

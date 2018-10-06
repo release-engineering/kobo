@@ -5,7 +5,6 @@
 import re
 import six
 import unittest2 as unittest
-import run_tests # set sys.path
 
 from kobo.tback import get_traceback, Traceback
 
@@ -72,7 +71,3 @@ class TestTraceback(unittest.TestCase):
 
         obj = Foo()
         self.assertTrue(obj.test())
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -5,3 +5,5 @@ MANIFEST
 .spyderproject
 *.un~
 .tox/
+**/.pytest_cache/
+/testdatabase

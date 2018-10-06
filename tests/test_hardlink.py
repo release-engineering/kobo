@@ -3,7 +3,6 @@
 
 
 import unittest
-import run_tests # set sys.path
 
 import tempfile
 import os.path
@@ -76,7 +75,3 @@ class TestUndoHardlinkClass(unittest.TestCase):
         new_stat = os.stat(path_dst)
         self.assertNotEqual(old_stat.st_ino, new_stat.st_ino)
         self.assertEqual(new_stat.st_nlink, 1) # Expected num of hardlinks is 1
-
-
-if __name__ == "__main__":
-    unittest.main()

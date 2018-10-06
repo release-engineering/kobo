@@ -3,7 +3,6 @@
 
 
 import unittest2 as unittest
-import run_tests # set sys.path
 
 # tolerate and skip in absence of rpm since it's not installable to virtualenv
 try:
@@ -165,6 +164,3 @@ class TestNVR(unittest.TestCase):
 
         nvra = dict(name="openmpi-1.10", version="1.10.2", release="2.el6", arch="i386")
         self.assertEqual(make_nvra(nvra), "openmpi-1.10-1.10.2-2.el6.i386")
-
-if __name__ == '__main__':
-    unittest.main()

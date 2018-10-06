@@ -3,7 +3,6 @@
 
 
 import unittest
-import run_tests # set sys.path
 import six
 
 import logging
@@ -24,7 +23,3 @@ class TestLog(unittest.TestCase):
             # There is no _levelNames attribute in Python 3
             self.assertTrue("VERBOSE" in logging._levelNames)
         self.assertEqual(logging.getLevelName(15), "VERBOSE")
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -27,6 +27,13 @@ from kobo.hub.models import Task, Arch, Channel, TASK_STATES
 from kobo.hub import views
 from django.contrib.auth.models import User
 
+from .utils import DjangoRunner
+
+runner = DjangoRunner()
+setup_module = runner.start
+teardown_module = runner.stop
+
+
 # Run test with KOBO_MEMORY_PROFILER=1 to generate memory usage reports from
 # tests annotated with @profile.
 #
@@ -481,9 +488,3 @@ class TestViewLog(django.test.TestCase):
     def get_log(self, log_name, view_type='log', data={}):
         url = '/task/{0}/{1}/{2}'.format(TASK_ID, view_type, log_name)
         return self.client.get(url, data)
-
-if __name__ == '__main__':
-    TestRunner = get_runner(django.conf.settings)
-    test_runner = TestRunner()
-    failures = test_runner.run_tests([__name__])
-    sys.exit(bool(failures))

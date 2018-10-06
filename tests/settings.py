@@ -44,4 +44,4 @@ TEMPLATE_DIRS = (
     os.path.join(KOBO_DIR, 'hub/templates'),
 )
 
-ROOT_URLCONF = 'hub_urls'
+ROOT_URLCONF = 'tests.hub_urls'

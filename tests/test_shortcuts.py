@@ -4,7 +4,6 @@
 
 import mock
 import unittest2 as unittest
-import run_tests # set sys.path
 
 import os
 import shutil
@@ -386,7 +385,3 @@ class TestPaths(unittest.TestCase):
         self.assertEqual(relative_path("/var/www/template/index.txt", "/var/www/html/index.html"), "../template/index.txt")
         self.assertEqual(relative_path("/var/www/template/index.txt", "/var/www/html/index.html"), "../template/index.txt")
         self.assertRaises(RuntimeError, relative_path, "/var/www/template/", "/var/www/html/index.html")
-
-
-if __name__ == '__main__':
-    unittest.main()
