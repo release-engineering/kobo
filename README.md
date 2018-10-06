@@ -4,6 +4,7 @@ kobo
 A collection of Python utilities.
 
 [![Build Status](https://travis-ci.org/release-engineering/kobo.svg?branch=master)](https://travis-ci.org/release-engineering/kobo)
+[![Coverage Status](https://coveralls.io/repos/github/release-engineering/kobo/badge.svg?branch=master)](https://coveralls.io/github/release-engineering/kobo?branch=master)
 
 
 Development

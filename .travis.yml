@@ -25,3 +25,5 @@ matrix:
     env: TOXENV=py35-django18
   - python: "3.6"
     env: TOXENV=py36-django18
+  - python: "3.6"
+    env: TOXENV=py36-cov-travis
