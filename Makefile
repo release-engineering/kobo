@@ -32,4 +32,4 @@ source: test clean
 
 
 test:
-	tests/run_tests.py
+	py.test

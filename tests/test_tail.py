@@ -57,7 +57,3 @@ class TestTail(unittest.TestCase):
 
         self.assertEqual(actual, expected)
         self.assertEqual(offset, len(SAMPLE_STRING))
-
-
-if __name__ == '__main__':
-    unittest.main()

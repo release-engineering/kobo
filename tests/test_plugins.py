@@ -3,7 +3,6 @@
 
 
 import unittest
-import run_tests # set sys.path
 
 from kobo.plugins import PluginContainer, Plugin
 
@@ -135,14 +134,10 @@ class TestPlugins(unittest.TestCase):
         self.assertRaises(RuntimeError, getattr, container_e, "plugins")
 
     def test_skip_broken(self):
-        import plugins
+        from . import plugins
         self.assertRaises(RuntimeError, ContainerA.register_module, plugins)
 
         ContainerA.register_module(plugins, skip_broken=True)
         container_a = ContainerA()
         container_a["WorkingPlugin"]
         self.assertRaises(KeyError, container_a.__getitem__, "BrokenPlugin")
-
-
-if __name__ == '__main__':
-    unittest.main()

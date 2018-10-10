@@ -47,6 +47,3 @@ class TestUtf8Chunk(unittest.TestCase):
         # utf8_chunk unbreaks it by removing until the previous
         # complete character
         self.assertEqual(utf8_chunk(bytestr).decode('utf-8'), u'hello 世')
-
-if __name__ == '__main__':
-    unittest.main()

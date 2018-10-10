@@ -7,7 +7,6 @@ import unittest2 as unittest
 import tempfile
 import shutil
 import os
-import run_tests # set sys.path
 
 from kobo.conf import PyConfigParser, get_dict_value
 
@@ -164,7 +163,3 @@ class TestDuplicateKeys(unittest.TestCase):
 
         self.assertEqual(str(ctx.exception),
                          "Duplicate dict key 'bar' in file None on line 3")
-
-
-if __name__ == '__main__':
-    unittest.main()

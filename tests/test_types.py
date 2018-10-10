@@ -2,17 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import run_tests # set sys.path
-
-# Following lines fix: django.core.exceptions.ImproperlyConfigured: The SECRET_KEY setting must not be empty.
-import os
-import sys
-import imp
-module_name = "test_types_settings"
-settings_module = imp.new_module(module_name)
-settings_module.SECRET_KEY = "foo"
-sys.modules[module_name] = settings_module
-os.environ["DJANGO_SETTINGS_MODULE"] = module_name
 
 from kobo.types import Enum, EnumItem, State, StateEnum
 from kobo.django.fields import StateEnumField
@@ -224,7 +213,3 @@ class TestStateEnumField(unittest.TestCase):
     def test_choices(self):
         correct = ((0, 'NEW'), (1, 'ASSIGNED'), (2, 'MODIFIED'))
         self.assertEqual(correct, self.field.choices)
-
-
-if __name__ == '__main__':
-    unittest.main()

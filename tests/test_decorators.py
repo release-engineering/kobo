@@ -3,7 +3,6 @@
 
 
 import unittest
-import run_tests # set sys.path
 
 import tempfile
 import os
@@ -30,7 +29,3 @@ class TestDecoratorsModule(unittest.TestCase):
 
         tb = open(self.tmp_file).read()
         self.assertTrue(tb.startswith("--- TRACEBACK BEGIN:"))
-
-
-if __name__ == "__main__":
-    unittest.main()

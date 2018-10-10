@@ -4,7 +4,6 @@
 
 from __future__ import print_function
 import unittest2 as unittest
-import run_tests # set sys.path
 
 import os
 import warnings
@@ -13,6 +12,8 @@ import shutil
 import hashlib
 import six.moves.cPickle as pickle
 import six
+
+from .utils import data_path
 
 # tolerate and skip in absence of rpm since it's not installable to virtualenv
 try:
@@ -65,9 +66,9 @@ class TestFileWrapperClass(unittest.TestCase):
 @unittest.skipUnless(HAVE_RPM, "rpm python module is not installed")
 class TestRpmWrapperClass(unittest.TestCase):
     def setUp(self):
-        self.file_path = "data/dummy-basesystem-10.0-6.noarch.rpm"
-        self.source_path = "data/dummy-basesystem-10.0-6.src.rpm"
-        self.nosource_path = "data/dummy-AdobeReader_enu-9.5.1-1.nosrc.rpm"
+        self.file_path = data_path("dummy-basesystem-10.0-6.noarch.rpm")
+        self.source_path = data_path("dummy-basesystem-10.0-6.src.rpm")
+        self.nosource_path = data_path("dummy-AdobeReader_enu-9.5.1-1.nosrc.rpm")
 
     def test_is_source(self):
         wrap = RpmWrapper(self.file_path)
@@ -101,8 +102,8 @@ class TestRpmWrapperClass(unittest.TestCase):
 @unittest.skipUnless(HAVE_RPM, "rpm python module is not installed")
 class TestSimpleRpmWrapperClass(unittest.TestCase):
     def setUp(self):
-        self.file_path = "data/dummy-basesystem-10.0-6.noarch.rpm"
-        self.source_path = "data/dummy-basesystem-10.0-6.src.rpm"
+        self.file_path = data_path("dummy-basesystem-10.0-6.noarch.rpm")
+        self.source_path = data_path("dummy-basesystem-10.0-6.src.rpm")
 
     def test_is_source(self):
         wrap = SimpleRpmWrapper(self.file_path)
@@ -265,7 +266,3 @@ class TestFileCacheClass(unittest.TestCase):
         self.assertEqual(len(items), 1)
         self.assertTrue(self.file1 not in items)
         self.assertTrue(self.file2 in items)
-
-
-if __name__ == "__main__":
-    unittest.main()

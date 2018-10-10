@@ -1,5 +1,9 @@
 language: python
 
+before_install:
+  # for rpm-py-installer
+  - sudo apt-get install -y rpm
+
 install:
  - pip install --upgrade pip setuptools
  - pip install tox
@@ -21,3 +25,5 @@ matrix:
     env: TOXENV=py35-django18
   - python: "3.6"
     env: TOXENV=py36-django18
+  - python: "3.6"
+    env: TOXENV=py36-cov-travis

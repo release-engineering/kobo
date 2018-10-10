@@ -3,6 +3,7 @@
 
 import sys
 import os
+import pytest
 
 from shutil import rmtree
 
@@ -21,6 +22,12 @@ if 'setup' in dir(django):
 
 from kobo.hub.models import Task, Arch, Channel
 from django.contrib.auth.models import User
+
+from .utils import DjangoRunner
+
+runner = DjangoRunner()
+setup_module = runner.start
+teardown_module = runner.stop
 
 TASK_ID = 123
 
@@ -139,11 +146,3 @@ class TestTaskLogs(django.test.TestCase):
         # given the same result as reading prior to the character
         self.assertEqual(chunk_min1, chunk_min3)
         self.assertEqual(chunk_min2, chunk_min3)
-
-
-
-if __name__ == '__main__':
-    TestRunner = get_runner(django.conf.settings)
-    test_runner = TestRunner()
-    failures = test_runner.run_tests([__name__])
-    sys.exit(bool(failures))
