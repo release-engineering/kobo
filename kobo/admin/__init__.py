@@ -8,7 +8,6 @@ import sys
 import shutil
 
 import kobo.cli
-from kobo.types import Enum, EnumItem
 
 import kobo.admin.commands
 

@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-import socket
-
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
-from kobo.decorators import decorator_with_args
 from kobo.django.xmlrpc.decorators import *
 
 

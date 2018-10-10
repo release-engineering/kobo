@@ -37,7 +37,6 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse
 from django.template import Template, RequestContext, loader
-from django.views.decorators.csrf import csrf_exempt
 
 from kobo.django.xmlrpc.dispatcher import DjangoXMLRPCDispatcher
 
