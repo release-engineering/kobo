@@ -4,6 +4,8 @@
 import os
 import random
 
+from operator import itemgetter
+
 from kobo.client.constants import TASK_STATES
 from kobo.hub.models import Task
 from kobo.hub.decorators import validate_worker
@@ -217,7 +219,7 @@ def get_tasks_to_assign(request):
     # It could also help to lower task assignment conflicts.
     # After that, sort it by priority again.
     random.shuffle(tasks)
-    tasks.sort(lambda x, y: cmp(x["priority"], y["priority"]), reverse=True)
+    tasks.sort(key=itemgetter("priority"), reverse=True)
     task_list.extend(tasks[:max_tasks])
 
     return task_list
@@ -227,7 +229,7 @@ def get_tasks_to_assign(request):
 def get_awaited_tasks(request, awaited_task_list):
     task_list = []
     for task in Task.objects.filter(awaited=True, parent__in=[ i["id"] for i in awaited_task_list ]):#.order_by("-exclusive", "-awaited", "id")[:50]:
-        task_info = task.export()
+        task_info = task.export(False)
         task_list.append(task_info)
     return task_list
 

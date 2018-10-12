@@ -257,6 +257,7 @@ class Worker(models.Model):
         """
         if (self.enabled, self.ready, self.task_count) != (enabled, ready, task_count):
             self.save()
+
         return self.export()
 
 
