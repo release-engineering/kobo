@@ -35,3 +35,12 @@ def data_path(basename):
     """Returns path to a file under 'data' dir."""
     this_dir = os.path.dirname(__file__)
     return os.path.join(this_dir, 'data', basename)
+
+
+class ArgumentIsInstanceOf(object):
+
+    def __init__(self, classinfo):
+        self.classinfo = classinfo
+
+    def __eq__(self, other):
+        return isinstance(other, self.classinfo)
