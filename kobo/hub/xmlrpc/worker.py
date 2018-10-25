@@ -164,7 +164,7 @@ def fail_task(request, task_id, task_result):
 @validate_worker
 def set_task_weight(request, task_id, weight):
     task = Task.objects.get_and_verify(task_id=task_id, worker=request.worker)
-    task.setWeight(weight)
+    task.set_weight(weight)
     return task.weight
 
 
