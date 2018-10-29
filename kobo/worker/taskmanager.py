@@ -207,7 +207,8 @@ class TaskManager(kobo.log.LoggingBase):
                 self.log_error("%s" % ex)
 
         self.log_debug("pids: %s" % list(self.pid_dict.values()))
-        for task_id in self.pid_dict.keys():
+
+        for task_id in list(self.pid_dict.keys()):
             if self.is_finished_task(task_id):
                 self.log_info("Task has finished: %s" % task_id)
                 finished_tasks.add(task_id)
@@ -217,7 +218,7 @@ class TaskManager(kobo.log.LoggingBase):
                 if task_id in self.task_dict:
                     del self.task_dict[task_id]
 
-        for task_id, pid in self.pid_dict.items():
+        for task_id, pid in list(self.pid_dict.items()):
             if task_id not in self.task_dict:
                 # expected to happen when:
                 #  - we are in the narrow gap between the time the task records its result
@@ -420,8 +421,9 @@ class TaskManager(kobo.log.LoggingBase):
             hub.upload_task_log(StringIO(message), task.task_id, "error.log")
             hub.upload_task_log(StringIO(kobo.tback.Traceback().get_traceback()), task.task_id, "traceback.log", mode=0o600)
             failed = True
+        finally:
+            thread.stop()
 
-        thread.stop()
         if failed:
             hub.worker.fail_task(task.task_id, task.result)
         else:
