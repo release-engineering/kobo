@@ -866,11 +866,11 @@ WHERE
         try:
             self.__lock(self.worker_id, new_state=TASK_STATES["TIMEOUT"], initial_states=(TASK_STATES["OPEN"], ))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
-            raise Exception("Cannot interrupt task %d, state is %s" % (self.id, self.get_state_display()))
+            raise Exception("Cannot timeout task %d, state is %s" % (self.id, self.get_state_display()))
 
         if recursive:
             for task in self.subtasks():
-                task.interrupt_task(recursive=True)
+                task.timeout_task(recursive=True)
         self.logs.gzip_logs()
 
     @transaction.atomic
@@ -992,6 +992,10 @@ WHERE
                 unfinished.append(task.id)
 
         return [finished, unfinished]
+
+    def set_weight(self, weight):
+        self.weight = weight
+        self.save()
 
 
 def _task_delete(sender, instance, **kwargs):
