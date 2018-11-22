@@ -4,7 +4,7 @@
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 
-import kobo.hub.models as models
+from kobo.hub import models
 from kobo.django.xmlrpc.decorators import admin_required, login_required
 
 
@@ -38,19 +38,19 @@ def shutdown_worker(request, worker_name, kill=False):
 def enable_worker(request, worker_name):
     """enable_worker(worker_name): none
     """
-    models.Worker.objects.filter(name = worker_name).update(enabled=True)
+    models.Worker.objects.filter(name=worker_name).update(enabled=True)
 
 
 @admin_required
 def disable_worker(request, worker_name):
     """disable_worker(worker_name, kill): None
     """
-    models.Worker.objects.filter(name = worker_name).update(enabled=False)
+    models.Worker.objects.filter(name=worker_name).update(enabled=False)
 
 @admin_required
 def get_worker_info(request, worker_name):
     try:
-        return models.Worker.objects.get(name = worker_name).export()
+        return models.Worker.objects.get(name=worker_name).export()
     except models.Worker.DoesNotExist:
         return {}
 
@@ -79,7 +79,7 @@ def get_tasks(request, task_id_list, state_list=None):
         tasks = models.Task.objects.all()
     if state_list:
         tasks = tasks.filter(state__in=state_list)
-    return [ i.export(flat=True) for i in tasks ]
+    return [i.export(flat=True) for i in tasks]
 
 
 @login_required
@@ -99,8 +99,14 @@ def resubmit_task(request, task_id, force=False):
 
 
 def list_workers(request, enabled=True):
-    """(): [string]"""
-    return sorted([ worker.name for worker in models.Worker.objects.filter(enabled=enabled) ])
+    """
+    Get a list of workers.
+
+    @param enabled: filter workers.
+    @return: list of workers
+    @rtype: list
+    """
+    return sorted([worker.name for worker in models.Worker.objects.filter(enabled=enabled)])
 
 
 @admin_required
@@ -109,7 +115,8 @@ def create_task(request, kwargs):
     Create a new task which is either brand new or based on existing one.
     This call can be invoked only by superuser.
 
-    @param kwargs: task attributes: owner_name, label, method, args, comment, parent_id, worker_name, arch_name, channel_name, timeout, priority, weight, exclusive
+    @param kwargs: task attributes: owner_name, label, method, args, comment, parent_id,
+                   worker_name, arch_name, channel_name, timeout, priority, weight, exclusive
                    when task_id is set, the task is used as a template for the new one
     @type kwargs: dict
     @return: task id

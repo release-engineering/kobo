@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 
-
 import os
 import random
 
 from operator import itemgetter
 
 from kobo.client.constants import TASK_STATES
-from kobo.hub.models import Task
 from kobo.hub.decorators import validate_worker
+from kobo.hub.models import Task
 from kobo.xmlrpc import decode_xmlrpc_chunk
 
 
@@ -69,8 +68,8 @@ def get_worker_tasks(request):
 
         # set wakeup alert
         if task.waiting:
-            finished, unfinished = task.check_wait()
-            if len(finished) > 0:
+            finished, _ = task.check_wait()
+            if finished:
                 task_info["alert"] = True
 
         task_list.append(task_info)
@@ -228,7 +227,7 @@ def get_tasks_to_assign(request):
 @validate_worker
 def get_awaited_tasks(request, awaited_task_list):
     task_list = []
-    for task in Task.objects.filter(awaited=True, parent__in=[ i["id"] for i in awaited_task_list ]):#.order_by("-exclusive", "-awaited", "id")[:50]:
+    for task in Task.objects.filter(awaited=True, parent__in=[i["id"] for i in awaited_task_list]):#.order_by("-exclusive", "-awaited", "id")[:50]:
         task_info = task.export(False)
         task_list.append(task_info)
     return task_list
@@ -237,9 +236,16 @@ def get_awaited_tasks(request, awaited_task_list):
 @validate_worker
 def create_subtask(request, label, method, args, parent_id):
     parent_task = Task.objects.get_and_verify(task_id=parent_id, worker=request.worker)
-#    def create_task(cls, owner_name, label, method, args=None, parent_id=None, worker_name=None, arch_name="noarch", channel_name="default", priority=10, weight=1, exclusive=False):
-#    subtask_id = self.__hub.worker.createSubtask(label, method, args, self.__task_id)
-    return Task.create_task(parent_task.owner.username, label, method, args=args, parent_id=parent_id, arch_name=parent_task.arch.name, channel_name=parent_task.channel.name)# priority=priority, weight=weight)
+
+    return Task.create_task(
+        parent_task.owner.username,
+        label,
+        method,
+        args=args,
+        parent_id=parent_id,
+        arch_name=parent_task.arch.name,
+        channel_name=parent_task.channel.name,
+    )
 
 
 @validate_worker
@@ -256,7 +262,8 @@ def check_wait(request, task_id, child_list=None):
 
 
 @validate_worker
-def upload_task_log(request, task_id, relative_path, mode, chunk_start, chunk_len, chunk_checksum, encoded_chunk):
+def upload_task_log(request, task_id, relative_path, mode,
+                    chunk_start, chunk_len, chunk_checksum, encoded_chunk):
     """
     Upload a task log.
 
@@ -287,7 +294,14 @@ def upload_task_log(request, task_id, relative_path, mode, chunk_start, chunk_le
         raise ValueError("Can't upload file for a task which is not OPEN: %s" % task_id)
 
     try:
-        decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, write_to=full_path, mode=mode)
+        decode_xmlrpc_chunk(
+            chunk_start,
+            chunk_len,
+            chunk_checksum,
+            encoded_chunk,
+            write_to=full_path,
+            mode=mode,
+        )
     except ValueError:
         return False
 
