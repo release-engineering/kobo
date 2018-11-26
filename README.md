@@ -31,6 +31,22 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.8.0
+----------
+
+### FEATURES & IMPROVEMENTS
+
+- Improved Python 3 compatibility
+- Improved Django 2.0 compatibility
+- Improved tests coverage
+- Header produced by kobo.shortcuts.run(show_cmd=True) is now limited to 79 characters length
+
+### BUG FIXES
+
+- Fixed handling of string SERVER_PORT in wsgi requests
+- Fixed Worker.timeout_task wrongly setting subtasks to INTERRUPTED ([#72](https://github.com/release-engineering/kobo/issues/72))
+- Fixed Worker.set_task_weight always crashing ([#75](https://github.com/release-engineering/kobo/issues/75))
+
 kobo 0.7.0
 ----------
 
