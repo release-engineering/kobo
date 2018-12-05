@@ -45,28 +45,31 @@ Struct: task_info
 """
 
 from __future__ import absolute_import
+
+import datetime
 import errno
 import os
-import sys
 import signal
+import sys
 import time
-import datetime
-from six.moves.xmlrpc_client import Fault, ProtocolError
+
 from six.moves import StringIO
+from six.moves.xmlrpc_client import Fault, ProtocolError
+
+import six
 
 import kobo.conf
-import kobo.worker.logger
 import kobo.log
 import kobo.tback
-from kobo.client import HubProxy
-from kobo.exceptions import ShutdownException
+import kobo.worker.logger
 
-from kobo.process import kill_process_group, get_process_status
+from kobo.client import HubProxy
+from kobo.client.constants import TASK_STATES
+from kobo.exceptions import ShutdownException
 from kobo.plugins import PluginContainer
+from kobo.process import kill_process_group, get_process_status
 
 from .task import FailTaskException
-from kobo.client.constants import TASK_STATES
-import six
 
 
 __all__ = (
@@ -102,10 +105,10 @@ class TaskManager(kobo.log.LoggingBase):
         # update data from kwargs
         self.conf.load_from_dict(kwargs)
 
-        self.pid_dict = {}      # { task_id: pid }
-        self.task_dict = {}     # { task_id: { task information obtained from self.hub.get_worker_tasks() } }
+        self.pid_dict = {}  # { task_id: pid }
+        self.task_dict = {}  # { task_id: { task information obtained from self.hub.get_worker_tasks() } }
 
-        self.locked = False     # if task manager is locked, it waits until tasks finish and exits
+        self.locked = False # if task manager is locked, it waits until tasks finish and exits
 
         self.task_container = TaskContainer()
 
@@ -125,21 +128,17 @@ class TaskManager(kobo.log.LoggingBase):
 
     def update_worker_info(self):
         """Update worker_info dictionary."""
-
         self.log_debug("Updating worker info.")
+
         try:
-            self.worker_info = self.hub.worker.update_worker(self.worker_info["enabled"], self.worker_info["ready"], len(self.pid_dict))
+            self.worker_info = self.hub.worker.update_worker(
+                self.worker_info["enabled"],
+                self.worker_info["ready"],
+                len(self.pid_dict)
+            )
         except ProtocolError as ex:
             self.log_error("Cannot update worker info: %s" % ex)
             return
-
-#    def check_version(self):
-#        """Check if worker version matches with hub."""
-#        hub_version = self.worker_info.get("hub_version", None)
-#        if hub_version is not None and not self.locked:
-#            if str(self.version) != str(hub_version):
-#                self.logger.error("Invalid version detected [worker=%s, hub=%s]." % (self.version, hub_version))
-#                self.lock()
 
     def wakeup_task(self, task_info):
         # alert is set in hub.worker.get_worker_tasks() when the task is supposed to wake up
@@ -168,15 +167,15 @@ class TaskManager(kobo.log.LoggingBase):
             self.log_debug("Checking task: %s." % self._task_str(task_info))
 
             if task_info["state"] == TASK_STATES["OPEN"] and task_info["id"] not in self.pid_dict:
-                # an interrupted task appears to be open, but running task manager doesn't track it in it's pid list
-                # this happens after a power outage, for example
+                # an interrupted task appears to be open, but running task manager doesn't track it
+                # in it's pid list this happens after a power outage, for example
                 interrupted_list.append(task_info["id"])
                 finished_tasks.add(task_info["id"])
                 continue
 
             if task_info["timeout"] is not None:
                 time_delta = datetime.datetime.now() - datetime.datetime(*time.strptime(task_info["dt_started"], "%Y-%m-%d %H:%M:%S")[0:6])
-                #time_delta = datetime.datetime.now() - datetime.datetime.strptime(task_info["dt_started"], "%Y-%m-%d %H:%M:%S") #for Python2.5+
+
                 if time_delta.seconds >= (int(task_info["timeout"])):
                     timeout_list.append(task_info["id"])
                     finished_tasks.add(task_info["id"])
@@ -259,7 +258,7 @@ class TaskManager(kobo.log.LoggingBase):
         self.update_worker_info()
 
     def get_next_task(self):
-        """ """
+        """Takes new task."""
         if not self.worker_info["enabled"]:
             self.log_info("Worker is disabled.")
             return
@@ -270,11 +269,12 @@ class TaskManager(kobo.log.LoggingBase):
 
         if self.locked:
             task_list = self.hub.worker.get_worker_tasks()
-            if len(task_list) == 0:
+
+            if not task_list:
                 raise ShutdownException()
 
             awaited_task_list = self.hub.worker.get_awaited_tasks(task_list)
-            self.log_debug("Current awaited tasks: %r" % [ task_info["id"] for task_info in awaited_task_list ])
+            self.log_debug("Current awaited tasks: %r" % [ti["id"] for ti in awaited_task_list])
 
             # process assigned tasks first
             for task_info in awaited_task_list:
@@ -283,7 +283,7 @@ class TaskManager(kobo.log.LoggingBase):
             return
 
         assigned_task_list = self.hub.worker.get_tasks_to_assign()
-        self.log_debug("Current assigned tasks: %r" % [ task_info["id"] for task_info in assigned_task_list ])
+        self.log_debug("Current assigned tasks: %r" % [ti["id"] for ti in assigned_task_list])
 
         # process assigned tasks first
         for task_info in assigned_task_list:
@@ -328,7 +328,6 @@ class TaskManager(kobo.log.LoggingBase):
                 reason = "[%s] %s" % (ex.faultCode, ex.faultString)
             except Exception as ex:
                 # TODO: log proper error message
-#                self.logger.error("[%s] %s" % (ex.faultCode, ex.faultString))
                 reason = "%s" % ex
 
         if not result:
@@ -431,10 +430,12 @@ class TaskManager(kobo.log.LoggingBase):
 
     def finish_task(self, task_info):
         TaskClass = self.task_container[task_info["method"]]
+
         try:
             TaskClass.cleanup(self.hub, self.conf, task_info)
         except:
             self.log_critical(kobo.tback.get_exception())
+
         try:
             TaskClass.notification(self.hub, self.conf, task_info)
         except:
@@ -465,33 +466,20 @@ class TaskManager(kobo.log.LoggingBase):
         return False
 
     def cleanup_task(self, task_id):
-        """Cleanup after the task.
-          - kill child processes
-        """
-
-        # clean up stray subtasks
-#        self.logger.debug("cleanup_task: Trying to terminate task with SIGTERM: %s [#%s] (pid: %s)" % (self.task_dict[task_id]["method"], task_id, self.pid_dict[task_id]))
+        """Cleanup after the task. Kill child processes."""
 
         try:
-#            success = kill_process_group(self.pid_dict[task_id])
             success = kill_process_group(self.pid_dict[task_id], logger=self._logger)
         except IOError as ex:
             # proc file doesn"t exist -> process was already killed
             success = True
 
         if not success:
-#            self.logger.debug("cleanup_task: Trying to terminate task with SIGKILL: %s [#%s] (pid: %s)" % (self.task_dict[task_id]["method"], task_id, self.pid_dict[task_id]))
             try:
-#                success = kill_process_group(self.pid_dict[task_id], signal.SIGKILL, timeout=2)
                 success = kill_process_group(self.pid_dict[task_id], signal.SIGKILL, timeout=2, logger=self._logger)
             except IOError:
                 # proc file doesn"t exist -> process was already killed
                 success = True
-
-#        if success:
-#            self.logger.info("cleanup_task: Task terminated: %s [#%s] (pid: %s)" % (self.task_dict[task_id]["method"], task_id, self.pid_dict[task_id]))
-#        else:
-#            self.logger.error("cleanup_task: Task NOT terminated: %s [#%s] (pid: %s)" % (self.task_dict[task_id]["method"], task_id, self.pid_dict[task_id]))
 
         return success
 
