@@ -1,21 +1,22 @@
-import sys
-import os
-import json
 import gc
 import itertools
-import six
+import json
 import locale
+import os
 
 from tempfile import TemporaryFile
 from gzip import GzipFile
 from io import BytesIO
 from shutil import rmtree
+
 import mock
+import six
 
 import django
 import django.conf
 import django.test
-from django.test.utils import get_runner
+
+from django.http import HttpResponse
 
 # Only for Django >= 1.7
 if 'setup' in dir(django):
@@ -23,31 +24,15 @@ if 'setup' in dir(django):
     # on settings being loaded before import.
     django.setup()
 
-from kobo.hub.models import Task, Arch, Channel, TASK_STATES
-from kobo.hub import views
 from django.contrib.auth.models import User
 
-from .utils import DjangoRunner
+from kobo.hub.models import Task, Arch, Channel, TASK_STATES
+
+from .utils import DjangoRunner, profile
 
 runner = DjangoRunner()
 setup_module = runner.start
 teardown_module = runner.stop
-
-
-# Run test with KOBO_MEMORY_PROFILER=1 to generate memory usage reports from
-# tests annotated with @profile.
-#
-# The point of the memory profiler with this test is to prove that requesting
-# a log doesn't require loading the entire log into memory.  When using the
-# profiler, you'll want to verify that the peak memory usage shows no significant
-# increase in the tests dealing with big logs.
-if os.environ.get('KOBO_MEMORY_PROFILER', '0') == '1':
-    from memory_profiler import profile
-else:
-    # If memory_profiler is disabled, this is a no-op decorator
-    def profile(fn):
-        return fn
-
 
 TASK_ID = 123
 
@@ -257,12 +242,13 @@ class TestViewLog(django.test.TestCase):
     @profile
     def test_view_zipped_big_html_context(self):
         """Verify the context passed into HTML template contains correct values."""
-        with mock.patch('kobo.hub.views.render_to_response') as render_to_response:
-            response = render_to_response.return_value.render.return_value
-            response.status_code = 200
+        def render(*args, **kwargs):
+            return HttpResponse(status=200)
+
+        with mock.patch('kobo.hub.views.render_to_response', side_effect=render) as render_mock:
             self.get_log('zipped_big.log')
 
-        mock_call = render_to_response.mock_calls[0]
+        mock_call = render_mock.mock_calls[0]
 
         # make sure we're looking at the right call
         self.assertEqual(mock_call[0], '')
