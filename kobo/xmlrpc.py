@@ -579,7 +579,7 @@ def retry_request_decorator(transport_class):
                     return result
                 except KeyboardInterrupt:
                     raise
-                except (socket.error, socket.herror, socket.gaierror, socket.timeout) as ex:
+                except (socket.error, socket.herror, socket.gaierror, socket.timeout, httplib.CannotSendRequest) as ex:
                     if i >= self.retry_count:
                         raise
                     retries_left = self.retry_count - i
