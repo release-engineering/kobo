@@ -535,9 +535,12 @@ class SafeCookieTransport(xmlrpclib.SafeTransport, CookieTransport):
             conn.set_timeout(self.timeout)
             return conn
         else:
+            CONNECTION_LOCK.acquire()
+            self._connection = (None, None) # this disables connection caching which causes a race condition when running in threads
             conn = xmlrpclib.SafeTransport.make_connection(self, host)
             if self.timeout:
                 conn.timeout = self.timeout
+            CONNECTION_LOCK.release()
             return conn
 
     # override the appropriate request method
