@@ -16,12 +16,15 @@ UPLOAD_DIR = '/tmp/kobo-test-dir'
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'kobo.django.auth.middleware.LimitedRemoteUserMiddleware',
     'kobo.hub.middleware.WorkerMiddleware',
 )
 
 INSTALLED_APPS = (
     'django.contrib.contenttypes',
+    'django.contrib.admin',
     'django.contrib.auth',
+    'django.contrib.sessions',
     'kobo.hub',
 )
 

@@ -1,7 +1,20 @@
 import os
 
 from django.test.utils import get_runner
-import django.conf
+from django.conf import settings
+
+# Run test with KOBO_MEMORY_PROFILER=1 to generate memory usage reports from
+# tests annotated with @profile.
+#
+# The point of the memory profiler with tests is to prove that the function
+# is memory efficient. When using the profiler, you'll want to verify that
+# the peak memory usage shows no significant increase in the annotated test.
+if os.environ.get('KOBO_MEMORY_PROFILER', '0') == '1':
+    from memory_profiler import profile
+else:
+    # If memory_profiler is disabled, this is a no-op decorator
+    def profile(fn):
+        return fn
 
 
 class DjangoRunner(object):
@@ -19,7 +32,7 @@ class DjangoRunner(object):
         self.old_config = None
 
     def start(self):
-        runner_class = get_runner(django.conf.settings)
+        runner_class = get_runner(settings)
         self.runner = runner_class()
         self.runner.setup_test_environment()
         self.old_config = self.runner.setup_databases()
