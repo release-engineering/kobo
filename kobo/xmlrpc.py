@@ -579,13 +579,12 @@ def retry_request_decorator(transport_class):
                     return result
                 except KeyboardInterrupt:
                     raise
-                except (socket.error, socket.herror, socket.gaierror, socket.timeout) as ex:
+                except (socket.error, socket.herror, socket.gaierror, socket.timeout, httplib.CannotSendRequest) as ex:
                     if i >= self.retry_count:
                         raise
                     retries_left = self.retry_count - i
                     retries = "%d %s left" % (retries_left, retries_left == 1 and "retry" or "retries") # 1 retry left / X retries left
                     print("XML-RPC connection to %s failed: %s, %s" % (args[0], ex.args[1:], retries), file=sys.stderr)
-                    raise
                     time.sleep(self.retry_timeout)
 
     RetryTransportClass.__name__ = transport_class.__name__
