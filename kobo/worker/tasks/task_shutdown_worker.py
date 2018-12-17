@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 from kobo.worker import TaskBase
 from kobo.exceptions import ShutdownException
 

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-
 from __future__ import print_function
+
 import copy
 import signal
 
+from kobo.client.constants import TASK_STATES
 from kobo.plugins import Plugin
 from kobo.shortcuts import force_list
-from kobo.client.constants import TASK_STATES
 
 
 __all__ = (
@@ -26,7 +26,7 @@ class TaskBase(Plugin):
     enabled = True
 
     def __init__(self, hub, conf, task_id, args):
-        self._hub = hub            # created by taskmanager
+        self._hub = hub  # created by taskmanager
         self._conf = conf
         self._task_id = task_id
         self._task_info = self.hub.worker.get_task(self.task_id)
@@ -118,7 +118,7 @@ class TaskBase(Plugin):
         while True:
             (finished, unfinished) = self.hub.worker.check_wait(self.task_id)
 
-            if len(unfinished) == 0:
+            if not unfinished:
                 # all done
                 break
 
