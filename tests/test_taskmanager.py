@@ -3,6 +3,7 @@
 import errno
 import os
 import signal
+import logging
 
 import django
 import pytest
@@ -749,6 +750,34 @@ class TestTaskManager(django.test.TestCase):
 
         t = Task.objects.get(id=t.id)
         self.assertEqual(t.state, TASK_STATES['CLOSED'])
+
+    def test_fork_task_logs_exceptions(self):
+        """Exceptions from the child within fork_task are logged."""
+
+        t = Task.objects.create(
+            worker=self._worker.worker,
+            arch=self._arch,
+            channel=self._channel,
+            owner=self._user,
+            method='DummyForegroundTask',
+            state=TASK_STATES['OPEN'],
+        )
+
+        logger = Mock()
+
+        with patch('kobo.worker.taskmanager.HubProxy') as hub_mock:
+            # Arrange for close_task call to fail (at end of task)
+            hub_mock.return_value.worker.close_task.side_effect = RuntimeError("simulated error")
+
+            tm = TaskManager(conf={'worker': self._worker}, logger=logger)
+            task_info = t.export(False)
+
+            with patch('kobo.worker.taskmanager.os', fork=Mock(return_value=0)) as os_mock:
+                os_mock.devnull = os.devnull
+                tm.fork_task(task_info)
+
+        # It should have logged something about the failure to close the task.
+        logger.log.assert_called_with(logging.CRITICAL, 'Error running forked task', exc_info=1)
 
     @patch('kobo.worker.taskmanager.HubProxy', HubProxyMock)
     def test_run_task_runs_foreground_task(self):
