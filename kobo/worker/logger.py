@@ -6,7 +6,6 @@ import time
 import six
 
 from six.moves import queue
-from six.moves.xmlrpc_client import Fault
 from six import BytesIO
 
 
@@ -56,7 +55,7 @@ class LoggingThread(threading.Thread):
                 self._hub.upload_task_log(BytesIO(self._send_data), self._task_id, "stdout.log", append=True)
                 self._send_time = now
                 self._send_data = ""
-            except Fault:
+            except Exception:
                 continue
 
     def write(self, data):
