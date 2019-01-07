@@ -5,8 +5,9 @@ import time
 
 import six
 
-from six.moves import StringIO, queue
+from six.moves import queue
 from six.moves.xmlrpc_client import Fault
+from six import BytesIO
 
 
 __all__ = (
@@ -52,7 +53,7 @@ class LoggingThread(threading.Thread):
                 self._send_data = self._send_data.encode('utf-8')
 
             try:
-                self._hub.upload_task_log(StringIO(self._send_data), self._task_id, "stdout.log", append=True)
+                self._hub.upload_task_log(BytesIO(self._send_data), self._task_id, "stdout.log", append=True)
                 self._send_time = now
                 self._send_data = ""
             except Fault:
