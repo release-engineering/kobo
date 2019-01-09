@@ -367,6 +367,9 @@ class TaskManager(kobo.log.LoggingBase):
 
             # run the task
             self.run_task(task_info)
+        except Exception:
+            self.log_critical("Error running forked task", exc_info=1)
+            # don't bother raising since we're about to exit
         finally:
             # die
             os._exit(os.EX_OK)
