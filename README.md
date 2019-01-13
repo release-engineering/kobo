@@ -31,6 +31,16 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.9.0
+----------
+
+### BUG FIXES
+
+- Fixed LoggingThread on Python 3 ([#66](https://github.com/release-engineering/kobo/issues/66))
+- Fixed `kobo.django.xmlrpc` migrations for Django 2.x
+- Fixed some exceptions discarded without logging ([#32](https://github.com/release-engineering/kobo/issues/32))
+- Fixed some reliability issues in `kobo.xmlrpc`
+
 kobo 0.8.0
 ----------
 
