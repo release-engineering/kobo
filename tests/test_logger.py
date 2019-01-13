@@ -2,12 +2,11 @@
 
 import time
 
-import six
 import unittest2 as unittest
-import pytest
+
+from six import BytesIO
 
 from mock import Mock
-from six.moves import StringIO
 
 from kobo.worker.logger import LoggingThread, LoggingIO
 from .utils import ArgumentIsInstanceOf
@@ -15,7 +14,6 @@ from .utils import ArgumentIsInstanceOf
 
 class TestLoggingThread(unittest.TestCase):
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #66 for more info (https://git.io/fxSc6).')
     def test_upload_task_log_on_stop(self):
         mock_hub = Mock()
         thread = LoggingThread(mock_hub, 9999)
@@ -31,9 +29,8 @@ class TestLoggingThread(unittest.TestCase):
         thread.stop()
         self.assertFalse(thread.is_alive())
         self.assertFalse(thread._running)
-        mock_hub.upload_task_log.assert_called_once_with(ArgumentIsInstanceOf(StringIO), 9999, 'stdout.log', append=True)
+        mock_hub.upload_task_log.assert_called_once_with(ArgumentIsInstanceOf(BytesIO), 9999, 'stdout.log', append=True)
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #66 for more info (https://git.io/fxSc6).')
     def test_upload_task_log_after_some_time(self):
         mock_hub = Mock()
         thread = LoggingThread(mock_hub, 9999)
@@ -50,7 +47,7 @@ class TestLoggingThread(unittest.TestCase):
 
         # let the thread running for a while
         time.sleep(.1)
-        mock_hub.upload_task_log.assert_called_once_with(ArgumentIsInstanceOf(StringIO), 9999, 'stdout.log', append=True)
+        mock_hub.upload_task_log.assert_called_once_with(ArgumentIsInstanceOf(BytesIO), 9999, 'stdout.log', append=True)
 
         thread.stop()
         self.assertFalse(thread.is_alive())
