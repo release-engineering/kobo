@@ -24,6 +24,21 @@ matrix:
   - python: "3.5"
     env: TOXENV=py35-django18
   - python: "3.6"
-    env: TOXENV=py36-django18
+    env: TOXENV=py36-django18 DEPLOY=1
   - python: "3.6"
     env: TOXENV=py36-cov-travis
+
+deploy:
+  # Tagging a new kobo automatically releases to PyPI.
+  provider: pypi
+  user: content-delivery-release-bot
+  password:
+    secure: vTifAzR8zmrCQwEVPoV8d6JkrFsSHL/GytACXuCwYlutUZGk6dWt3B1CW5YKdWZ8SlrgrKc1mAYHFzyPAKMfzFZVJdN+prFnIJNwAQOrnbq6wpotwlUn5UbaR/rkkACWKZrQujPWhuv7G5ORu/RP3pKxt3byl+0EcF8u33tDD52oS55QqDeKcAYharC/gECn/z24AaqL12mZ7fhETvYCrEynAMq2kmjbIvDiK8xBt7SgDuRUqFfb9YH/ernLgOZ9lqbNEj3VgjU5bRAAwOHqrtMZhoLWV+a3ECdQkzTMwfIXIc4N3+eBM6k2VP3xzVAurzi/0IEHaaAY0/jMGmRUYfjIMSRBychHx0ZtTLnaeHN+BcBgWvKBb1QOsZmpg7B5wouQzdK3tkT8ETnzrYZum+wx4uaRG5s7ARNkthZsexZhnZvGUklmz4ajkEVTdnMU/Lu3Q1GmoLtxlrimeJpU3f/LiWdnBmyjCwbQnn6HxGNX9VT7AtIP9NH/jqGNg9NssPutPR7nbi6wi1BvhUmgpWwOwN5eSRZIQpRtrgkzxIU4c03aAT7gpw0e8ZRHxE+thSU9erRm4qaQL1Ch1PJzy/kzamwPMSDhkxaEuPm7F8HB1bttCC21dP7MW8iBXVQ/8nxta1AWGjCsS6kLUQeOP9kqbz60yNeztXnzfZzxi8k=
+  on:
+    tags: true
+    # Only one of the environments in the matrix should have
+    # deployments enabled. It's mostly arbitrary which one,
+    # but best to select some Python 3.x so up-to-date tools
+    # are used during release.
+    condition: $DEPLOY = 1
+  skip_existing: true
