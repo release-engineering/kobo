@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 
-from django.conf.urls import url, patterns
+from django.conf.urls import url
 from django.utils.translation import ugettext_lazy as _
 from kobo.django.views.generic import ExtraListView, ExtraDetailView
 from kobo.hub.models import Worker
 
 
-urlpatterns = patterns("",
+urlpatterns = [
     url(r"^$", ExtraListView.as_view(
         queryset=Worker.objects.order_by("name"),
         template_name="worker/list.html",
@@ -20,4 +20,4 @@ urlpatterns = patterns("",
         context_object_name="worker",
         title=_("Worker detail"),
     ), name="worker/detail"),
-)
+]

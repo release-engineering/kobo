@@ -25,6 +25,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.sessions',
+    'kobo.django',
     'kobo.hub',
 )
 

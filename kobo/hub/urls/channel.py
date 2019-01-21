@@ -2,12 +2,12 @@
 
 
 from django.utils.translation import ugettext_lazy as _
-from django.conf.urls import url, patterns
+from django.conf.urls import url
 from kobo.django.views.generic import ExtraListView
 from kobo.hub.views import DetailViewWithWorkers
 from kobo.hub.models import Channel
 
-urlpatterns = patterns("",
+urlpatterns = [
     url(r"^$", ExtraListView.as_view(
         queryset=Channel.objects.order_by("name"),
         template_name="channel/list.html",
@@ -20,4 +20,4 @@ urlpatterns = patterns("",
         context_object_name = "channel",
         title = _("Architecture detail"),
     ), name="channel/detail"),
-)
+]

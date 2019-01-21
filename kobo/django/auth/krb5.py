@@ -18,13 +18,13 @@ AUTHENTICATION_BACKENDS = (
 
 # Add login and logout adresses to urls.py:
 
-urlpatterns = patterns("",
+urlpatterns = [
     ...
     url(r'^auth/krb5login/$',
     django.views.generic.TemplateView.as_view(template = 'auth/krb5login.html'),
     url(r'^auth/logout/$', 'django.contrib.auth.views.logout', kwargs={"next_page": "/"}),
     ...
-)
+]
 
 
 # Set a httpd config to protect krb5login page with kerberos.
