@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import django
+
+# Only for Django >= 1.7
+if 'setup' in dir(django):
+    # This has to happen before below imports because they have a hard requirement
+    # on settings being loaded before import.
+    django.setup()
+
 import unittest2 as unittest
 
 from mock import Mock, PropertyMock, patch
