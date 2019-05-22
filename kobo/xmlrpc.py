@@ -315,12 +315,6 @@ class CookieTransport(xmlrpclib.Transport):
                 conn.timeout = self.timeout
             return conn
 
-    def send_request(self, connection, handler, request_body):
-        return xmlrpclib.Transport.send_request(self, connection, handler, request_body)
-
-    def send_host(self, connection, host):
-        return xmlrpclib.Transport.send_host(self, connection, host)
-
     def send_cookies(self, connection, cookie_request):
         """Add cookies to the header."""
         self.cookiejar.add_cookie_header(cookie_request)
@@ -498,7 +492,7 @@ class CookieTransport(xmlrpclib.Transport):
         request = _request
 
 
-class SafeCookieTransport(xmlrpclib.SafeTransport, CookieTransport):
+class SafeCookieTransport(CookieTransport, xmlrpclib.SafeTransport):
     """
     Cookie enabled XML-RPC transport over HTTPS.
 
@@ -543,24 +537,10 @@ class SafeCookieTransport(xmlrpclib.SafeTransport, CookieTransport):
             CONNECTION_LOCK.release()
             return conn
 
-    # override the appropriate request method
-    if hasattr(xmlrpclib.Transport, "single_request"):
-        # python 2.7+
-        single_request = CookieTransport._single_request
-    else:
-        # python 2.6-
-        request = CookieTransport._request
-
     def __init__(self, *args, **kwargs):
         self.context = kwargs.pop('context', None)
         xmlrpclib.SafeTransport.__init__(self, *args, **kwargs)
         CookieTransport.__init__(self, *args, **kwargs)
-
-    def send_request(self, connection, handler, request_body):
-        return xmlrpclib.SafeTransport.send_request(self, connection, handler, request_body)
-
-    def send_host(self, connection, host):
-        return xmlrpclib.SafeTransport.send_host(self, connection, host)
 
 
 def retry_request_decorator(transport_class):
