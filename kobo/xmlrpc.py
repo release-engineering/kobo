@@ -218,6 +218,9 @@ class CookieTransport(xmlrpclib.Transport):
         self.no_proxy = os.environ.get("no_proxy", "").lower().split(',')
         self.context = kwargs.pop('context', None)
 
+        self._cookie_headers = []
+        self._krb_headers = []
+
         if hasattr(xmlrpclib.Transport, "__init__"):
             xmlrpclib.Transport.__init__(self, *args, **kwargs)
 
@@ -483,13 +486,77 @@ class CookieTransport(xmlrpclib.Transport):
             response.read()
         raise xmlrpclib.ProtocolError(host + handler, response.status, response.reason, response.msg)
 
+    def _single_request3(self, host, handler, request_body, verbose=False):
+        # issue XML-RPC request
+
+        request_url = "%s://%s/" % (self.scheme, host)
+        cookie_request = urllib2.Request(request_url)
+
+        self.prepare_cookies(cookie_request)
+
+        self.verbose = verbose
+
+        try:
+            h = self.send_request(host, handler, request_body, verbose)
+
+            response = h.getresponse()
+
+            if response.status == 401 and USE_KERBEROS:
+                vc, challenge = self._kerberos_client_request(host, handler, response.status, response.reason, response.msg)
+
+                # discard any response data
+                if (response.getheader("content-length", 0)):
+                    response.read()
+
+                # retry the original request & add the Authorization header:
+                self._krb_headers = [("Authorization", "Negotiate %s" % challenge)]
+                h = self.send_request(host, handler, request_body, verbose)
+                self._krb_headers = []
+
+                response = h.getresponse()
+                self._kerberos_verify_response(vc, host, handler, response.status, response.reason, response.msg)
+
+            if response.status == 200:
+                self.verbose = verbose
+                self._save_cookies(response.msg, cookie_request)
+                return self.parse_response(response)
+        except xmlrpclib.Fault:
+            raise
+        except Exception:
+            # All unexpected errors leave connection in
+            # a strange state, so we clear it.
+            self.close()
+            raise
+
+        # discard any response data and raise exception
+        if (response.getheader("content-length", 0)):
+            response.read()
+        raise xmlrpclib.ProtocolError(host + handler, response.status, response.reason, response.msg)
+
     # override the appropriate request method
-    if hasattr(xmlrpclib.Transport, "single_request"):
+    if sys.version_info[0] >= 3:
+        single_request = _single_request3
+    elif hasattr(xmlrpclib.Transport, "single_request"):
         # python 2.7+
         single_request = _single_request
     else:
         # python 2.6-
         request = _request
+
+    def send_headers(self, connection, headers):
+        headers.extend(self._cookie_headers)
+        headers.extend(self._krb_headers)
+        super().send_headers(connection, headers)
+
+    def prepare_cookies(self, cookie_request):
+        """Add cookies to the header."""
+        self.cookiejar.add_cookie_header(cookie_request)
+
+        self._cookie_headers = []
+
+        for header, value in cookie_request.header_items():
+            if header.startswith("Cookie"):
+                self._cookie_headers.append((header, value))
 
 
 class SafeCookieTransport(CookieTransport, xmlrpclib.SafeTransport):
