@@ -842,7 +842,6 @@ class TestTaskManager(django.test.TestCase):
         t = Task.objects.get(id=t.id)
         self.assertEqual(t.state, TASK_STATES['FAILED'])
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #66 for more info (https://git.io/fxSc6).')
     @patch('kobo.worker.taskmanager.HubProxy', HubProxyMock)
     def test_run_task_mark_task_as_failed_if_generic_exception(self):
         t = Task.objects.create(
