@@ -176,19 +176,17 @@ class SimpleRpmWrapper(FileWrapper):
         ts = kwargs.pop("ts", None)
         header = kobo.rpmlib.get_rpm_header(file_path, ts=ts)
 
-        self.name = kobo.rpmlib.get_header_field(header, "name").decode('utf-8')
-        self.version = kobo.rpmlib.get_header_field(header, "version").decode('utf-8')
-        self.release = kobo.rpmlib.get_header_field(header, "release").decode('utf-8')
+        self.name = kobo.rpmlib.get_header_field(header, "name")
+        self.version = kobo.rpmlib.get_header_field(header, "version")
+        self.release = kobo.rpmlib.get_header_field(header, "release")
         self.epoch = kobo.rpmlib.get_header_field(header, "epoch")
-        self.arch = kobo.rpmlib.get_header_field(header, "arch").decode('utf-8')
+        self.arch = kobo.rpmlib.get_header_field(header, "arch")
         self.signature = kobo.rpmlib.get_keys_from_header(header)
         if self.signature is not None:
             self.signature = self.signature.upper()
-        self.excludearch = [x.decode('utf-8') for x in kobo.rpmlib.get_header_field(header, "excludearch")]
-        self.exclusivearch = [x.decode('utf-8') for x in kobo.rpmlib.get_header_field(header, "exclusivearch")]
+        self.excludearch = kobo.rpmlib.get_header_field(header, "excludearch")
+        self.exclusivearch = kobo.rpmlib.get_header_field(header, "exclusivearch")
         self.sourcerpm = kobo.rpmlib.get_header_field(header, "sourcerpm")
-        if self.sourcerpm:
-            self.sourcerpm = self.sourcerpm.decode('utf-8')
         self.is_source = bool(kobo.rpmlib.get_header_field(header, "sourcepackage"))
         self.is_system_release = b"system-release" in kobo.rpmlib.get_header_field(header, "providename")
         self.checksum_type = kobo.rpmlib.get_digest_algo_from_header(header).lower()
