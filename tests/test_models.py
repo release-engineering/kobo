@@ -507,11 +507,10 @@ class TestTaskLog(django.test.TestCase):
 
         self.assertEquals(s, log_msg)
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #90 for more info (https://git.io/fp62v).')
     def test_get_chunk_gz_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log.gz', text=True)
         filename = os.path.basename(filepath)[:-3]
-        content = 'This is a log message.'
+        content = b'This is a log message.'
 
         f = gzip.open(filepath, mode='wb')
         f.write(content)
@@ -530,13 +529,12 @@ class TestTaskLog(django.test.TestCase):
 
         self.assertEquals(s, content)
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #90 for more info (https://git.io/fp62v).')
     def test_get_chunk_small_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log', text=True)
         filename = os.path.basename(filepath)
-        content = 'This is a log message.'
+        content = b'This is a log message.'
 
-        with open(filepath, 'w') as f:
+        with open(filepath, 'wb') as f:
             f.write(content)
 
         task = PropertyMock(
@@ -552,16 +550,15 @@ class TestTaskLog(django.test.TestCase):
 
         self.assertEquals(s, content)
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #90 for more info (https://git.io/fp62v).')
     def test_get_chunk_long_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log', text=True)
         filename = os.path.basename(filepath)
         lines = []
 
         for i in range(100):
-            lines.append('This is the line %d in the log message.\n' % (i + 1))
+            lines.append(('This is the line %d in the log message.\n' % (i + 1)).encode())
 
-        with open(filepath, 'w') as f:
+        with open(filepath, 'wb') as f:
             f.writelines(lines)
 
         task = PropertyMock(
@@ -589,11 +586,10 @@ class TestTaskLog(django.test.TestCase):
         with self.assertRaises(Exception):
             task_log.get_chunk('invalid.log', 0, 1024)
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #90 for more info (https://git.io/fp62v).')
     def test_tail_gz_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log.gz', text=True)
         filename = os.path.basename(filepath)[:-3]
-        content = 'This is a log message.'
+        content = b'This is a log message.'
 
         f = gzip.open(filepath, mode='wb')
         f.write(content)
@@ -613,13 +609,12 @@ class TestTaskLog(django.test.TestCase):
         self.assertEquals(s, content)
         self.assertEquals(n, len(content))
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #90 for more info (https://git.io/fp62v).')
     def test_tail_small_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log', text=True)
         filename = os.path.basename(filepath)
-        content = 'This is a log message.'
+        content = b'This is a log message.'
 
-        with open(filepath, 'w') as f:
+        with open(filepath, 'wb') as f:
             f.write(content)
 
         task = PropertyMock(
@@ -636,16 +631,15 @@ class TestTaskLog(django.test.TestCase):
         self.assertEquals(s, content)
         self.assertEquals(n, len(content))
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #90 for more info (https://git.io/fp62v).')
     def test_tail_long_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log', text=True)
         filename = os.path.basename(filepath)
         lines = []
 
         for i in range(1000):
-            lines.append('This is the line %d in the log message.\n' % (i + 1))
+            lines.append(('This is the line %d in the log message.\n' % (i + 1)).encode())
 
-        with open(filepath, 'w') as f:
+        with open(filepath, 'wb') as f:
             f.writelines(lines)
 
         task = PropertyMock(
@@ -849,9 +843,9 @@ class TestTaskLog(django.test.TestCase):
     def test_get_item_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log', text=True)
         filename = os.path.basename(filepath)
-        content = 'This is a log message.'
+        content = b'This is a log message.'
 
-        with open(filepath, mode='w') as f:
+        with open(filepath, mode='wb') as f:
             f.write(content)
 
         task = PropertyMock(
@@ -861,18 +855,17 @@ class TestTaskLog(django.test.TestCase):
         )
 
         task_log = TaskLogs(task)
-        content = task_log[filename]
+        file_content = task_log[filename]
         os.remove(filepath)
 
-        self.assertEquals(content, content)
+        self.assertEquals(file_content, content)
         self.assertEquals(task_log.cache[filename], content)
         self.assertEquals(task_log.changed[filename], False)
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #90 for more info (https://git.io/fp62v).')
     def test_get_item_gz_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log.gz', text=True)
         filename = os.path.basename(filepath)[:-3]
-        content = 'This is a log message.'
+        content = b'This is a log message.'
 
         f = gzip.open(filepath, mode='wb')
         f.write(content)
@@ -885,10 +878,10 @@ class TestTaskLog(django.test.TestCase):
         )
 
         task_log = TaskLogs(task)
-        content = task_log[filename]
+        file_content = task_log[filename]
         os.remove(filepath)
 
-        self.assertEquals(content, content)
+        self.assertEquals(file_content, content)
         self.assertEquals(task_log.cache[filename], content)
         self.assertEquals(task_log.changed[filename], False)
 

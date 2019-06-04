@@ -146,7 +146,6 @@ class TestMainLoop(unittest.TestCase):
             self.assertEqual(self.task_manager.sleep.call_count, max_runs - 1)
             self.assertEqual(self.task_manager.shutdown.call_count, 1)
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #86 for more info (https://git.io/fpRMn).')
     def test_main_loop_with_file_logger(self):
         max_runs = 1
 
@@ -182,7 +181,6 @@ class TestMainLoop(unittest.TestCase):
             self.assertEqual(self.task_manager.sleep.call_count, max_runs - 1)
             self.assertEqual(self.task_manager.shutdown.call_count, 1)
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #86 for more info (https://git.io/fpRMn).')
     def test_main_loop_foreground_with_file_logger(self):
         max_runs = 1
 

@@ -1092,7 +1092,6 @@ class TestXmlRpcWorker(django.test.TestCase):
         self.assertEqual(len(finished), 0)
         self.assertEqual(len(unfinished), 0)
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #66 for more info (https://git.io/fxSc6).')
     def test_upload_task_log(self):
         t = Task.objects.create(
             worker=self._worker,
@@ -1105,7 +1104,7 @@ class TestXmlRpcWorker(django.test.TestCase):
         req = _make_request(self._worker)
 
         with tempfile.NamedTemporaryFile(delete=True) as tf:
-            msg = 'this is a text message'
+            msg = b'this is a text message'
             checksum = hashlib.sha256(msg).hexdigest()
             chunk = base64.encodestring(msg)
             chunk_start = 0
@@ -1122,7 +1121,6 @@ class TestXmlRpcWorker(django.test.TestCase):
             self.assertTrue(ok)
             self.assertEqual(tf.read(), msg)
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #66 for more info (https://git.io/fxSc6).')
     def test_upload_task_log_catch_decode_error(self):
         t = Task.objects.create(
             worker=self._worker,
@@ -1135,7 +1133,7 @@ class TestXmlRpcWorker(django.test.TestCase):
         req = _make_request(self._worker)
 
         with tempfile.NamedTemporaryFile(delete=True) as tf:
-            msg = 'this is a text message'
+            msg = b'this is a text message'
             checksum = 'invalid-checksum'
             chunk = base64.encodestring(msg)
             chunk_start = 0
@@ -1150,7 +1148,7 @@ class TestXmlRpcWorker(django.test.TestCase):
                                         checksum, chunk)
 
             self.assertFalse(ok)
-            self.assertEqual(tf.read(), '')
+            self.assertEqual(tf.read(), b'')
 
     def test_upload_task_log_fails_if_invalid_path(self):
         t = Task.objects.create(

@@ -34,7 +34,7 @@ def main_loop(conf, foreground=False):
         logger = logging.Logger("TaskManager")
         logger.setLevel(logging.DEBUG)
         if log_file:
-            log_level = logging._levelNames.get(conf.get("LOG_LEVEL", "DEBUG").upper())
+            log_level = logging.getLevelName(conf.get("LOG_LEVEL", "DEBUG").upper())
             kobo.log.add_rotating_file_logger(logger, log_file, log_level=log_level)
 
         tm = TaskManager(conf=conf, logger=logger)
