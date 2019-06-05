@@ -119,6 +119,18 @@ def get_header_field(hdr, name):
             result = []
         elif isinstance(result, six.integer_types):
             result = [result]
+
+    if six.PY3:
+        # We are on Python 3 with python3-rpm <= 4.14.2 that returns bytes, the
+        # value needs to be decoded. Newer versions of python3-rpm will do the
+        # decoding by themselves and don't need to be handled here.
+        if isinstance(result, bytes):
+            result = result.decode("utf-8", "surrogateescape")
+        if isinstance(result, list):
+            result = [
+                x.decode("utf-8", "surrogateescape") if isinstance(x, bytes) else x
+                for x in result
+            ]
     return result
 
 
