@@ -31,6 +31,20 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.10.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- Improved Python 3 compatibility, particularly in xmlrpc and rpmlib modules
+- Improved Django 1.11 and 2.x compatibility
+
+### REMOVED
+
+- Testing of Python 2.6 has been dropped; some kobo functionality still works
+  with Python 2.6, but may break without warning in later releases
+- Support for Django 1.6 has been removed
+
 kobo 0.9.0
 ----------
 
