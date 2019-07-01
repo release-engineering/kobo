@@ -16,6 +16,7 @@ class Resubmit_Tasks(ClientCommand):
     def options(self):
         self.parser.usage = "%%prog %s task_id [task_id...]" % self.normalized_name
         self.parser.add_option("--force", action="store_true", help="Resubmit also tasks which are closed properly.")
+        self.parser.add_option("--nowait", default=False, action="store_true", help="Don't wait until tasks finish.")
 
 
     def run(self, *args, **kwargs):
@@ -38,6 +39,7 @@ class Resubmit_Tasks(ClientCommand):
                 failed = True
                 print(ex)
 
-        TaskWatcher.watch_tasks(self.hub, resubmitted_tasks)
+        if not kwargs.get('nowait'):
+            TaskWatcher.watch_tasks(self.hub, resubmitted_tasks)
         if failed:
             sys.exit(1)
