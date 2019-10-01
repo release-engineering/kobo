@@ -10,6 +10,8 @@ import shutil
 import tempfile
 from six.moves import StringIO
 
+import pytest
+
 from kobo.shortcuts import force_list, force_tuple, allof, anyof, noneof, oneof, is_empty, iter_chunks, save_to_file, read_from_file, run, read_checksum_file, compute_file_checksums, makedirs, split_path, relative_path
 from six.moves import range
 
@@ -198,6 +200,13 @@ class TestUtils(unittest.TestCase):
                              'COMMAND: echo foo\n-----------------\nfoo\n')
         self.assertEqual(mock_out.getvalue(),
                          'COMMAND: echo foo\n-----------------\nfoo\n')
+
+    @pytest.mark.xfail(reason="Not fixed yet (#119)", strict=True)
+    def test_run_split_in_middle_of_utf8_sequence(self):
+        logfile = os.path.join(self.tmp_dir, 'output.log')
+        cmd = "printf ' ' && bash -c \"printf 'č%.0s' {1..10000}\""
+        ret, out = run(cmd, show_cmd=True, logfile=logfile, stdout=True)
+        self.assertEqual(ret, 0)
 
     @mock.patch('sys.stdout', new_callable=StringIO)
     def test_run_univ_nl_logfile_stdout(self, mock_out):
