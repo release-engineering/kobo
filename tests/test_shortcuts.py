@@ -10,8 +10,6 @@ import shutil
 import tempfile
 from six.moves import StringIO
 
-import pytest
-
 from kobo.shortcuts import force_list, force_tuple, allof, anyof, noneof, oneof, is_empty, iter_chunks, save_to_file, read_from_file, run, read_checksum_file, compute_file_checksums, makedirs, split_path, relative_path
 from six.moves import range
 
@@ -201,12 +199,23 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(mock_out.getvalue(),
                          'COMMAND: echo foo\n-----------------\nfoo\n')
 
-    @pytest.mark.xfail(reason="Not fixed yet (#119)", strict=True)
     def test_run_split_in_middle_of_utf8_sequence(self):
-        logfile = os.path.join(self.tmp_dir, 'output.log')
         cmd = "printf ' ' && bash -c \"printf 'č%.0s' {1..10000}\""
-        ret, out = run(cmd, show_cmd=True, logfile=logfile, stdout=True)
+        ret, out = run(cmd, stdout=True)
         self.assertEqual(ret, 0)
+        self.assertEqual(out, b" " + b"\xc4\x8d" * 10000)
+
+    def test_run_chunk_ends_with_incomplete_char(self):
+        cmd = "bash -c \"printf 'a b \\xc4'\""
+        self.assertRaises(UnicodeDecodeError, run, cmd, stdout=True)
+
+    def test_run_chunk_with_incomplete_char_in_middle(self):
+        cmd = "bash -c \"printf 'a \\xc4 b'\""
+        self.assertRaises(UnicodeDecodeError, run, cmd, stdout=True)
+
+    def test_run_other_unicode_decode_error(self):
+        cmd = "bash -c \"printf 'a \\x80 b'\""
+        self.assertRaises(UnicodeDecodeError, run, cmd, stdout=True)
 
     @mock.patch('sys.stdout', new_callable=StringIO)
     def test_run_univ_nl_logfile_stdout(self, mock_out):

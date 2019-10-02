@@ -321,6 +321,8 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
 
         output = "" if universal_newlines else b""
         sentinel = "" if universal_newlines else b""
+        leftover = None
+        exception = None
         while True:
             if buffer_size == -1:
                 lines = proc.stdout.readline()
@@ -336,9 +338,30 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
 
             if lines == sentinel:
                 break
+
+            if leftover:
+                lines = leftover + lines
+                leftover = None
+
             if stdout:
                 if not universal_newlines:
-                    sys.stdout.write(lines.decode('utf-8'))
+                    try:
+                        sys.stdout.write(lines.decode('utf-8'))
+                    except UnicodeDecodeError as exc:
+                        if exc.reason != "unexpected end of data":
+                            # This error was not caused by us. If there is an
+                            # incomplete sequence in the middle of the string,
+                            # we would get "invalid continuation byte".
+                            raise
+                        # We split the chunk in the middle of a multibyte
+                        # sequence. Print text until this character, and save
+                        # the rest for later. It will be prepended to the next
+                        # chunk. If there is no next chunk, we will re-raise
+                        # the error.
+                        exception = exc
+                        leftover = lines[exc.start:]
+                        lines = lines[:exc.start]
+                        sys.stdout.write(lines.decode('utf-8'))
                 else:
                     sys.stdout.write(lines)
             if logfile:
@@ -346,6 +369,11 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             if return_stdout:
                 output += lines
         proc.wait()
+        if leftover:
+            # There is some data left over. That means there was an unfinished
+            # multibyte sequence not caused by our splitting. Let's raise the
+            # stored exception to report it.
+            raise exception
 
     finally:
         if logfile:
