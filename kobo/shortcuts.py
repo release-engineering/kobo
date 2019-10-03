@@ -15,6 +15,7 @@ import re
 import hashlib
 import threading
 import locale
+import codecs
 import six
 from six.moves import range
 from six.moves import shlex_quote
@@ -266,7 +267,8 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     @type stdin_data: str
     @param buffer_size: size of buffer for reading from proc's stdout, use -1 for line-buffering
     @type buffer_size: int
-    @return_stdout: return command stdout as a function result (turn off when working with large data, None is returned instead of stdout)
+    @return_stdout: return command stdout as a function result (turn off when working with large data, None is returned instead of stdout);
+                    the command must output valid UTF-8
     @return_stdout: bool
     @return: (command return code, merged stdout+stderr)
     @rtype: (int, str) or (int, None)
@@ -274,7 +276,18 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     if type(cmd) in (list, tuple):
         cmd = " ".join((shlex_quote(i) for i in cmd))
 
-    universal_newlines = kwargs.get('universal_newlines', False)
+    # True if Popen and run are operating in text mode (returning str rather than bytes).
+    # We need to accurately reproduce Popen behavior here, see:
+    # https://docs.python.org/3/library/subprocess.html#subprocess.run
+    #
+    # Note that this determines the output type, but the process must still
+    # produce valid UTF-8 regardless.
+    text_mode = (
+        kwargs.get('universal_newlines', False)
+        or kwargs.get('text', False)
+        or kwargs.get('encoding', False)
+        or kwargs.get('errors', False)
+    )
 
     log = None
     if logfile:
@@ -283,7 +296,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         # it will be overwritten. Otherwise the command output will just be
         # appended to the existing file.
         mode = 'a' if not show_cmd and os.path.exists(logfile) else 'w'
-        if not universal_newlines:
+        if not text_mode:
             mode += 'b'
         log = open(logfile, mode)
 
@@ -297,7 +310,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             if stdout:
                 print(command, end='')
             if logfile:
-                if six.PY3 and not universal_newlines:
+                if six.PY3 and not text_mode:
                     # Log file opened as binary, encode the command
                     command = bytes(command, encoding='utf-8')
                 log.write(command)
@@ -319,16 +332,22 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             stdin_thread.daemon = True
             stdin_thread.start()
 
-        output = "" if universal_newlines else b""
-        sentinel = "" if universal_newlines else b""
-        leftover = None
-        exception = None
+        # Get a reader for stdout which provides unicode rather than bytes.
+        # In text_mode case, that's what proc.stdout is already:
+        out_reader = proc.stdout
+
+        # Otherwise, we can wrap it. Note we only support UTF-8.
+        if not text_mode:
+            out_reader = codecs.getreader('utf-8')(out_reader)
+
+        output = ""
+        sentinel = ""
         while True:
             if buffer_size == -1:
-                lines = proc.stdout.readline()
+                lines = out_reader.readline()
             else:
                 try:
-                    lines = proc.stdout.read(buffer_size)
+                    lines = out_reader.read(buffer_size)
                 except (IOError, OSError) as ex:
                     import errno
                     if ex.errno == errno.EINTR:
@@ -338,42 +357,13 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
 
             if lines == sentinel:
                 break
-
-            if leftover:
-                lines = leftover + lines
-                leftover = None
-
             if stdout:
-                if not universal_newlines:
-                    try:
-                        sys.stdout.write(lines.decode('utf-8'))
-                    except UnicodeDecodeError as exc:
-                        if exc.reason != "unexpected end of data":
-                            # This error was not caused by us. If there is an
-                            # incomplete sequence in the middle of the string,
-                            # we would get "invalid continuation byte".
-                            raise
-                        # We split the chunk in the middle of a multibyte
-                        # sequence. Print text until this character, and save
-                        # the rest for later. It will be prepended to the next
-                        # chunk. If there is no next chunk, we will re-raise
-                        # the error.
-                        exception = exc
-                        leftover = lines[exc.start:]
-                        lines = lines[:exc.start]
-                        sys.stdout.write(lines.decode('utf-8'))
-                else:
-                    sys.stdout.write(lines)
+                sys.stdout.write(lines)
             if logfile:
                 log.write(lines)
             if return_stdout:
                 output += lines
         proc.wait()
-        if leftover:
-            # There is some data left over. That means there was an unfinished
-            # multibyte sequence not caused by our splitting. Let's raise the
-            # stored exception to report it.
-            raise exception
 
     finally:
         if logfile:
@@ -396,6 +386,18 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
 
     if not return_stdout:
         output = None
+    elif not text_mode:
+        # run() acts like Popen with respect to the return type,
+        # which means it should return bytes if not in text mode.
+        # We already know that UTF8 is the correct encoding
+        # because we'd have crashed earlier if proc.stdout wasn't UTF-8.
+        output = output.encode('utf-8')
+
+        # If there was any data left over in the reader's buffer, it means
+        # we got an incomplete sequence. Make sure an exception is raised
+        # in that case so the problem is detected.
+        if out_reader.bytebuffer:
+            out_reader.bytebuffer.decode('utf-8')
 
     return (proc.returncode, output)
 
