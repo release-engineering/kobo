@@ -19,6 +19,11 @@ import six
 from six.moves import range
 from six.moves import shlex_quote
 
+if six.PY3:
+    from collections.abc import KeysView
+else:
+    from collections import KeysView
+
 __all__ = (
     "force_list",
     "force_tuple",
@@ -50,10 +55,12 @@ def force_list(value):
 
     @rtype: list
     """
-    if type(value) is list:
+    if isinstance(value, list):
         return value
-    if type(value) in (tuple, set):
+
+    if isinstance(value, (tuple, set, KeysView)):
         return list(value)
+
     return [value]
 
 
@@ -62,10 +69,12 @@ def force_tuple(value):
 
     @rtype: tuple
     """
-    if type(value) is tuple:
+    if isinstance(value, tuple):
         return value
-    if type(value) in (list, set):
+
+    if isinstance(value, (list, set, KeysView)):
         return tuple(value)
+
     return (value, )
 
 
