@@ -51,8 +51,8 @@ class Migration(migrations.Migration):
                 ('priority', models.PositiveIntegerField(default=10, help_text='Priority.')),
                 ('weight', models.PositiveIntegerField(default=1, help_text='Weight determines how many resources is used when processing the task.')),
                 ('subtask_count', models.PositiveIntegerField(default=0, help_text='Subtask count.<br />This is a generated field.')),
-                ('arch', models.ForeignKey(to='hub.Arch')),
-                ('channel', models.ForeignKey(to='hub.Channel')),
+                ('arch', models.ForeignKey(to='hub.Arch', on_delete=models.CASCADE)),
+                ('channel', models.ForeignKey(to='hub.Channel', on_delete=models.CASCADE)),
             ],
             options={
                 'ordering': ('-id',),

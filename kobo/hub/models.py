@@ -487,9 +487,9 @@ class TaskLogs(object):
 class Task(models.Model):
     """Model for hub_task table."""
     archive             = models.BooleanField(default=False, help_text=_("When a task is archived, it disappears from admin interface and cannot be accessed by taskd.<br />Make sure that archived tasks are finished and you won't need them anymore."))
-    owner               = models.ForeignKey(settings.AUTH_USER_MODEL)
-    worker              = models.ForeignKey(Worker, null=True, blank=True, help_text=_("A worker which has this task assigned."))
-    parent              = models.ForeignKey("self", null=True, blank=True, help_text=_("Parent task."))
+    owner               = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    worker              = models.ForeignKey(Worker, null=True, blank=True, help_text=_("A worker which has this task assigned."), on_delete=models.CASCADE)
+    parent              = models.ForeignKey("self", null=True, blank=True, help_text=_("Parent task."), on_delete=models.CASCADE)
     state               = models.PositiveIntegerField(default=TASK_STATES["FREE"], choices=TASK_STATES.get_mapping(), help_text=_("Current task state."))
     label               = models.CharField(max_length=255, blank=True, help_text=_("Label, description or any reason for this task."))
     exclusive           = models.BooleanField(default=False, help_text=_("Exclusive tasks have highest priority. They are used e.g. when shutting down a worker."))
@@ -499,8 +499,8 @@ class Task(models.Model):
     result              = models.TextField(blank=True, help_text=_("Task result. Do not store a lot of data here (use HubProxy.upload_task_log instead)."))
     comment             = models.TextField(null=True, blank=True)
 
-    arch                = models.ForeignKey(Arch)
-    channel             = models.ForeignKey(Channel)
+    arch                = models.ForeignKey(Arch, on_delete=models.CASCADE)
+    channel             = models.ForeignKey(Channel, on_delete=models.CASCADE)
     timeout             = models.PositiveIntegerField(null=True, blank=True, help_text=_("Task timeout. Leave blank for no timeout."))
 
     waiting             = models.BooleanField(default=False, help_text=_("Task is waiting until some subtasks finish."))
@@ -513,8 +513,8 @@ class Task(models.Model):
     priority            = models.PositiveIntegerField(default=10, help_text=_("Priority."))
     weight              = models.PositiveIntegerField(default=1, help_text=_("Weight determines how many resources is used when processing the task."))
 
-    resubmitted_by      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="resubmitted_by1")
-    resubmitted_from    = models.ForeignKey("self", null=True, blank=True, related_name="resubmitted_from1")
+    resubmitted_by      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="resubmitted_by1", on_delete=models.CASCADE)
+    resubmitted_from    = models.ForeignKey("self", null=True, blank=True, related_name="resubmitted_from1", on_delete=models.CASCADE)
 
     subtask_count       = models.PositiveIntegerField(default=0, help_text=_("Subtask count.<br />This is a generated field."))
 
