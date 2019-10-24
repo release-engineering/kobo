@@ -58,6 +58,10 @@ class JSONWidget(django.forms.widgets.Textarea):
 class JSONFormField(django.forms.fields.CharField):
     widget = JSONWidget
 
+    def from_db_value(self, value, expression, connection, context):
+        return self.to_python(value)
+
+
     def to_python(self, value):
         try:
             result = json.loads(value)
