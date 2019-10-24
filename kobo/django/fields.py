@@ -40,7 +40,7 @@ can slow down saving process, as keys are being sorted. From these reasons is
 default value set to False.
 '''
 
-class StateEnumField(six.with_metaclass(models.SubfieldBase, models.IntegerField)):
+class StateEnumField(models.IntegerField):
     '''StateEnum DB encapsulation'''
 
 
@@ -56,6 +56,23 @@ class StateEnumField(six.with_metaclass(models.SubfieldBase, models.IntegerField
         else:
             return self.get_default()
 
+    def from_db_value(self, value, expression, connection, context):
+        if value is None:
+            return None
+
+        if isinstance(value, (str, six.text_type)) and not value.isdigit():
+            value = self.state_machine.get_num(value)
+
+        try:
+            value = int(value)
+            if value < 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            raise exceptions.ValidationError(_("This value must be a positive integer."))
+
+        state_machine = copy(self.state_machine)
+        state_machine.set_state(state_machine.get_value(value))
+        return state_machine
 
     def to_python(self, value):
         if value is None:
@@ -134,12 +151,21 @@ class StateEnumField(six.with_metaclass(models.SubfieldBase, models.IntegerField
         return form_class(**defaults)
 
 
-class JSONField(six.with_metaclass(models.SubfieldBase, models.TextField)):
+class JSONField(models.TextField):
     """JSON field for storing a serialized dictionary or list."""
 
     def __init__(self, *args, **kwargs):
         self.human_readable = kwargs.pop('human_readable', False)
         return super(JSONField, self).__init__(*args, **kwargs)
+
+    def from_db_value(self, value, expression, connection, context):
+        if not isinstance(value, six.string_types):
+            return value
+
+        try:
+            return json.loads(value)
+        except ValueError:
+            raise exceptions.ValidationError(_("Cannot deserialize JSON data. '%s'") % value)
 
     def to_python(self, value):
         if value is None:
