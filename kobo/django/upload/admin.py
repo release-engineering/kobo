@@ -3,7 +3,7 @@
 
 import django.contrib.admin as admin
 
-from models import FileUpload
+from .models import FileUpload
 
 
 class FileUploadAdmin(admin.ModelAdmin):
