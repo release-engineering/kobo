@@ -14,7 +14,11 @@ import django.contrib.auth.views
 from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
+from kobo.django.django_version import django_version_ge
+if django_version_ge('1.10.0'):
+    from django.urls import reverse
+else:
+    from django.core.urlresolvers import reverse
 from django.http import HttpResponse, StreamingHttpResponse, HttpResponseForbidden
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
