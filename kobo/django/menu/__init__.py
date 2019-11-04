@@ -93,7 +93,11 @@ from six.moves import range
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
+from kobo.django.django_version import django_version_ge
+if django_version_ge('1.10.0'):
+    from django.urls import reverse
+else:
+    from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 
 try:

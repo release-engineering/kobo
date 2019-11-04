@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
 
-from django.core.urlresolvers import reverse
+from kobo.django.django_version import django_version_ge
+if django_version_ge('1.10.0'):
+    from django.urls import reverse
+else:
+    from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 
 from kobo.hub import models
