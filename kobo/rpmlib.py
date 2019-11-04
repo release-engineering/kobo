@@ -84,13 +84,15 @@ def get_rpm_header(file_name, ts=None):
     return hdr
 
 
-def get_header_field(hdr, name):
+def get_header_field(hdr, name, decode=True):
     """Extract named field from a rpm header.
 
     @param hdr: a rpm header
     @type hdr: rpm.hdr
     @param name: a rpm field name
     @type name: str
+    @param decode: whether to decode returned bytes to str
+    @type decode: bool
     @return: value of a rpm field
     @rtype: str or int or list
     """
@@ -120,7 +122,7 @@ def get_header_field(hdr, name):
         elif isinstance(result, six.integer_types):
             result = [result]
 
-    if six.PY3:
+    if six.PY3 and decode:
         # We are on Python 3 with python3-rpm <= 4.14.2 that returns bytes, the
         # value needs to be decoded. Newer versions of python3-rpm will do the
         # decoding by themselves and don't need to be handled here.
@@ -381,12 +383,12 @@ def get_keys_from_header(hdr):
     head_keys = []
 
     for field in head_header_tags:
-        sigkey = get_header_field(hdr, field)
+        sigkey = get_header_field(hdr, field, decode=False)
         if sigkey:
             head_keys.append(koji.get_sigpacket_key_id(sigkey).upper())
 
     for field in body_header_tags:
-        sigkey = get_header_field(hdr, field)
+        sigkey = get_header_field(hdr, field, decode=False)
         if sigkey:
             key_id = koji.get_sigpacket_key_id(sigkey).upper()
             if key_id in head_keys:
