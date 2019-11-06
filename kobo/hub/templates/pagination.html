@@ -1,21 +1,22 @@
 {% load i18n %}
+{% load staticfiles %}
 
 {% if page_obj.has_other_pages %}
 <div class="paginator">
   {% trans "Page" %} {{ page_obj.number }}/{{ paginator.num_pages }}. {% trans "Records" %} {{ page_obj.start_index }} - {{ page_obj.end_index }} {% trans "of" %} {{ paginator.count }}.
 {% if page_obj.has_previous %}
-  <a href="?page=1{{ get_vars }}"><img src="{{ STATIC_URL }}kobo/img/list-first.png" /></a>
-  <a href="?page={{ page_obj.previous_page_number }}{{ get_vars }}"><img src="{{ STATIC_URL }}kobo/img/list-prev.png" /></a>
+  <a href="?page=1{{ get_vars }}"><img src="{% static "kobo/img/list-first.png" %}" /></a>
+  <a href="?page={{ page_obj.previous_page_number }}{{ get_vars }}"><img src="{% static "kobo/img/list-prev.png" %}"/></a>
 {% else %}
-  <img src="{{ STATIC_URL }}kobo/img/list-first-disabled.png" />
-  <img src="{{ STATIC_URL }}kobo/img/list-prev-disabled.png" />
+  <img src="{% static "kobo/img/list-first-disabled.png" %}"  />
+  <img src="{% static "kobo/img/list-prev-disabled.png" %}" />
 {% endif %}
 {% if page_obj.has_next %}
-  <a href="?page={{ page_obj.next_page_number }}{{ get_vars }}"><img src="{{ STATIC_URL }}kobo/img/list-next.png" /></a>
-  <a href="?page={{ paginator.num_pages }}{{ get_vars }}"><img src="{{ STATIC_URL }}kobo/img/list-last.png" /></a>
+  <a href="?page={{ page_obj.next_page_number }}{{ get_vars }}"><img src="{% static "kobo/img/list-next.png" %}" /></a>
+  <a href="?page={{ paginator.num_pages }}{{ get_vars }}"><img src="{% static "kobo/img/list-last.png" %}"/></a>
 {% else %}
-  <img src="{{ STATIC_URL }}kobo/img/list-next-disabled.png" />
-  <img src="{{ STATIC_URL }}kobo/img/list-last-disabled.png" />
+  <img src="{% static "kobo/img/list-next-disabled.png" %}" />
+  <img src="{% static "kobo/img/list-last-disabled.png" %}" />
 {% endif %}
 </div>
 <div style="clear: both" />

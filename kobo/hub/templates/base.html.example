@@ -1,8 +1,9 @@
 {% extends "layout.html" %}
 {% load i18n %}
+{% load staticfiles %}
 
 {% block css %}
-  <link rel="stylesheet" href="{{ STATIC_URL }}css/style.css" type="text/css" media="screen" />
+  <link rel="stylesheet" href="{% static "css/style.css" %}" type="text/css" media="screen" />
 {% endblock %}
 
 {% block header_site_name %}
