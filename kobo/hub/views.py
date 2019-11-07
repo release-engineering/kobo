@@ -246,9 +246,15 @@ if django_version_ge('1.11.0'):
     class LoginView(django.contrib.auth.views.LoginView):
         template_name = 'auth/login.html'
 
+    class LogoutView(django.contrib.auth.views.LogoutView):
+        pass
+
 else:
     def login(request, redirect_field_name=REDIRECT_FIELD_NAME):
         return django.contrib.auth.views.login(request, template_name="auth/login.html", redirect_field_name=redirect_field_name)
+
+    def logout(request, redirect_field_name=REDIRECT_FIELD_NAME):
+        return django.contrib.auth.views.logout(request, redirect_field_name=redirect_field_name)
 
 
 def krb5login(request, redirect_field_name=REDIRECT_FIELD_NAME):
@@ -260,7 +266,4 @@ def krb5login(request, redirect_field_name=REDIRECT_FIELD_NAME):
     if not redirect_to:
         redirect_to = reverse("home/index")
     return RedirectView.as_view(url=redirect_to)(request)
-    
 
-def logout(request, redirect_field_name=REDIRECT_FIELD_NAME):
-    return django.contrib.auth.views.logout(request, redirect_field_name=redirect_field_name)

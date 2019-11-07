@@ -9,7 +9,7 @@ if django_version_ge('1.11.0'):
     urlpatterns = [
         url(r"^login/$", kobo.hub.views.LoginView.as_view(), name="auth/login"),
         url(r"^krb5login/$", kobo.hub.views.krb5login, name="auth/krb5login"),
-        url(r'^logout/$', kobo.hub.views.logout, name="auth/logout"),
+        url(r'^logout/$', kobo.hub.views.LogoutView.as_view(), name="auth/logout"),
     ]
 
 else:
