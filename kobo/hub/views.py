@@ -4,6 +4,7 @@ import mimetypes
 import os
 import six
 import locale
+from kobo.django.django_version import django_version_ge
 
 try:
     import json
@@ -241,9 +242,13 @@ def task_log_json(request, id, log_name):
 
     return HttpResponse(json.dumps(result), content_type="application/json")
 
+if django_version_ge('1.11.0'):
+    class LoginView(django.contrib.auth.views.LoginView):
+        template_name = 'auth/login.html'
 
-def login(request, redirect_field_name=REDIRECT_FIELD_NAME):
-    return django.contrib.auth.views.login(request, template_name="auth/login.html", redirect_field_name=redirect_field_name)
+else:
+    def login(request, redirect_field_name=REDIRECT_FIELD_NAME):
+        return django.contrib.auth.views.login(request, template_name="auth/login.html", redirect_field_name=redirect_field_name)
 
 
 def krb5login(request, redirect_field_name=REDIRECT_FIELD_NAME):
