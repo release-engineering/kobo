@@ -21,8 +21,10 @@ matrix:
     env: TOXENV=py35-django18
   - python: "3.6"
     env: TOXENV=py36-django18 DEPLOY=1
-  - python: "3.6"
-    env: TOXENV=py36-cov-travis
+  - python: "3.7"
+    env: TOXENV=py37-django18
+  - python: "3.7"
+    env: TOXENV=py37-cov-travis
 
 deploy:
   # Tagging a new kobo automatically releases to PyPI.
