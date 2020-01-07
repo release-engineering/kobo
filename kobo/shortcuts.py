@@ -291,7 +291,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
 
     # any of these args is passed, text mode will be enabled.
     is_text_mode = any([universal_newlines, text, encoding, errors])
-    encoding_method = encoding or 'utf-8'
+    encoding = encoding or 'utf-8'
 
     log = None
     if logfile:
@@ -316,7 +316,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             if logfile:
                 if six.PY3 and not is_text_mode:
                     # Log file opened as binary, encode the command
-                    command = bytes(command, encoding=encoding_method)
+                    command = bytes(command, encoding=encoding)
                 log.write(command)
 
         stdin = None
@@ -355,7 +355,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
                 break
             if stdout:
                 if not is_text_mode:
-                    sys.stdout.write(lines.decode(encoding_method))
+                    sys.stdout.write(lines.decode(encoding))
                 else:
                     sys.stdout.write(lines)
             if logfile:
