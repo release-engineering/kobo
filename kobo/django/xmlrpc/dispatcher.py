@@ -108,8 +108,10 @@ class DjangoXMLRPCDispatcher(SimpleXMLRPCDispatcher):
                     xmlrpclib.Fault(1, u"%s" % Traceback().get_traceback()),
                     allow_none=self.allow_none, encoding=self.encoding)
             else:
+                exc_info = sys.exc_info()[1]
+                exc_type = exc_info.__class__.__name__
                 response = xmlrpclib.dumps(
-                    xmlrpclib.Fault(1, "%s: %s" % (sys.exc_type.__name__, sys.exc_info()[1])),
+                    xmlrpclib.Fault(1, "%s: %s" % (exc_type, exc_info)),
                     allow_none=self.allow_none, encoding=self.encoding)
 
         return response

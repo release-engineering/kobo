@@ -19,6 +19,11 @@ import six
 from six.moves import range
 from six.moves import shlex_quote
 
+if six.PY3:
+    from collections.abc import KeysView
+else:
+    from collections import KeysView
+
 __all__ = (
     "force_list",
     "force_tuple",
@@ -50,10 +55,12 @@ def force_list(value):
 
     @rtype: list
     """
-    if type(value) is list:
+    if isinstance(value, list):
         return value
-    if type(value) in (tuple, set):
+
+    if isinstance(value, (tuple, set, KeysView)):
         return list(value)
+
     return [value]
 
 
@@ -62,10 +69,12 @@ def force_tuple(value):
 
     @rtype: tuple
     """
-    if type(value) is tuple:
+    if isinstance(value, tuple):
         return value
-    if type(value) in (list, set):
+
+    if isinstance(value, (list, set, KeysView)):
         return tuple(value)
+
     return (value, )
 
 
@@ -275,6 +284,14 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         cmd = " ".join((shlex_quote(i) for i in cmd))
 
     universal_newlines = kwargs.get('universal_newlines', False)
+    # new args added in py3 for Popen
+    text = kwargs.get('text', False)
+    encoding = kwargs.get('encoding', None)
+    errors = kwargs.get('errors', None)
+
+    # any of these args is passed, text mode will be enabled.
+    is_text_mode = any([universal_newlines, text, encoding, errors])
+    encoding = encoding or 'utf-8'
 
     log = None
     if logfile:
@@ -283,7 +300,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         # it will be overwritten. Otherwise the command output will just be
         # appended to the existing file.
         mode = 'a' if not show_cmd and os.path.exists(logfile) else 'w'
-        if not universal_newlines:
+        if not is_text_mode:
             mode += 'b'
         log = open(logfile, mode)
 
@@ -297,9 +314,9 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             if stdout:
                 print(command, end='')
             if logfile:
-                if six.PY3 and not universal_newlines:
+                if six.PY3 and not is_text_mode:
                     # Log file opened as binary, encode the command
-                    command = bytes(command, encoding='utf-8')
+                    command = bytes(command, encoding=encoding)
                 log.write(command)
 
         stdin = None
@@ -319,8 +336,8 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
             stdin_thread.daemon = True
             stdin_thread.start()
 
-        output = "" if universal_newlines else b""
-        sentinel = "" if universal_newlines else b""
+        output = "" if is_text_mode else b""
+        sentinel = "" if is_text_mode else b""
         leftover = None
         exception = None
         while True:
@@ -344,9 +361,9 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
                 leftover = None
 
             if stdout:
-                if not universal_newlines:
+                if not is_text_mode:
                     try:
-                        sys.stdout.write(lines.decode('utf-8'))
+                        sys.stdout.write(lines.decode(encoding))
                     except UnicodeDecodeError as exc:
                         if exc.reason != "unexpected end of data":
                             # This error was not caused by us. If there is an
@@ -361,7 +378,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
                         exception = exc
                         leftover = lines[exc.start:]
                         lines = lines[:exc.start]
-                        sys.stdout.write(lines.decode('utf-8'))
+                        sys.stdout.write(lines.decode(encoding))
                 else:
                     sys.stdout.write(lines)
             if logfile:

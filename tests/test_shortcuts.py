@@ -4,8 +4,10 @@
 
 import mock
 import unittest2 as unittest
+import pytest
 
 import os
+import sys
 import shutil
 import tempfile
 from six.moves import StringIO
@@ -19,12 +21,14 @@ class TestShortcuts(unittest.TestCase):
         self.assertEqual(force_list("a"), ["a"])
         self.assertEqual(force_list(["a"]), ["a"])
         self.assertEqual(force_list(["a", "b"]), ["a", "b"])
+        self.assertItemsEqual(force_list({'a': True, 'b': True}.keys()), ["a", "b"])
         self.assertItemsEqual(force_list(set(["a", "b"])), ["a", "b"])
 
     def test_force_tuple(self):
         self.assertItemsEqual(force_tuple("a"), ("a",))
         self.assertItemsEqual(force_tuple(("a",)), ("a",))
         self.assertItemsEqual(force_tuple(("a", "b")), ("a", "b"))
+        self.assertItemsEqual(force_tuple({'a': True, 'b': True}.keys()), ("a", "b"))
         self.assertItemsEqual(force_tuple(set(["a", "b"])), ("a", "b"))
 
     def test_allof(self):
@@ -173,6 +177,24 @@ class TestUtils(unittest.TestCase):
         self.assertRaises(RuntimeError, run, "echo foo | tee >(md5sum -b) >/dev/null")
         # passes in bash
         run("echo foo | tee >(md5sum -b) >/dev/null", executable="/bin/bash")
+
+    @pytest.mark.xfail(sys.version_info < (3, 7), reason="python3.7 api changes")
+    def test_run_in_text_mode(self):
+        """test run with kwargs 'text', 'encoding' or/and 'errors' set. These kwargs are
+        added to Popen from python3.6(encoding, errors) and python3.7(text). Running test
+        with python version older than 3.7 is expected to fail
+        """
+        ret, out = run("echo hello", text=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, "hello\n")
+
+        ret, out = run("echo hello", encoding="utf-8")
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, "hello\n")
+
+        ret, out = run("echo hello", errors="strict")
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, "hello\n")
 
     @mock.patch('sys.stdout', new_callable=StringIO)
     def test_run_univ_nl_show_cmd_logfile_stdout(self, mock_out):

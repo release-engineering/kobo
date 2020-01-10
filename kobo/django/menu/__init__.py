@@ -87,14 +87,19 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 {{ m.as_bootstrap_navbar_dropdown_menu }}
 """
 
+import six
+
+from six.moves import range
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
-from django.utils.encoding import smart_unicode
-import six
-from six.moves import range
+
+try:
+    from django.utils.encoding import smart_unicode as smart_text
+except ImportError:
+    from django.utils.encoding import smart_text
 
 
 __all__ = (
@@ -118,7 +123,7 @@ class MenuItem(object):
     include = staticmethod(include)
 
     def __init__(self, title, url, acl_groups=None, acl_perms=None, absolute_url=False, menu=None):
-        self.title = smart_unicode(title)
+        self.title = smart_text(title)
         self._url = url
         self._url_is_resolved = absolute_url
         self.absolute_url = absolute_url
