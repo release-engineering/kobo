@@ -221,6 +221,24 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(mock_out.getvalue(),
                          'COMMAND: echo foo\n-----------------\nfoo\n')
 
+    def test_run_split_in_middle_of_utf8_sequence(self):
+        cmd = "printf ' ' && bash -c \"printf 'č%.0s' {1..10000}\""
+        ret, out = run(cmd, stdout=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, b" " + b"\xc4\x8d" * 10000)
+
+    def test_run_chunk_ends_with_incomplete_char(self):
+        cmd = "bash -c \"printf 'a b \\xc4'\""
+        self.assertRaises(UnicodeDecodeError, run, cmd, stdout=True)
+
+    def test_run_chunk_with_incomplete_char_in_middle(self):
+        cmd = "bash -c \"printf 'a \\xc4 b'\""
+        self.assertRaises(UnicodeDecodeError, run, cmd, stdout=True)
+
+    def test_run_other_unicode_decode_error(self):
+        cmd = "bash -c \"printf 'a \\x80 b'\""
+        self.assertRaises(UnicodeDecodeError, run, cmd, stdout=True)
+
     @mock.patch('sys.stdout', new_callable=StringIO)
     def test_run_univ_nl_logfile_stdout(self, mock_out):
         logfile = os.path.join(self.tmp_dir, 'output.log')
