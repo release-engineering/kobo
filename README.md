@@ -31,6 +31,23 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.11.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- The resubmit-tasks command now accepts a `--nowait` argument
+
+### BUG FIXES
+
+- Fixed usage of `shortcuts.run` with text mode in Python 3
+  ([#133](https://github.com/release-engineering/kobo/issues/133))
+- Fixed decoding crashes in `shortcuts.run` when an incomplete multibyte
+  sequence is read
+  ([#119](https://github.com/release-engineering/kobo/issues/119))
+- Fixed rpmlib attempting to decode binary data in RPM headers
+- Fixed various Python 3 compatibility issues
+
 kobo 0.10.0
 -----------
 
