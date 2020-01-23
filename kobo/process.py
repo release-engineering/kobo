@@ -2,6 +2,7 @@
 
 import os
 import re
+import io
 import sys
 import signal
 import time
@@ -67,7 +68,7 @@ def daemonize(daemon_func, daemon_pid_file=None, daemon_start_dir="/", daemon_ou
             # write pid to pid_file
             if daemon_pid_file is not None:
                 fd = os.open(daemon_pid_file, os.O_WRONLY | os.O_CREAT, 0o644)
-                os.write(fd, "%s" % pid)
+                os.write(fd, b"%s" % str(pid).encode())
                 os.close(fd)
             # exit from second parent
             sys.exit(0)
@@ -77,8 +78,14 @@ def daemonize(daemon_func, daemon_pid_file=None, daemon_start_dir="/", daemon_ou
 
     # redirect stdin, stdout and stderr
     stdin = open("/dev/null", "r")
-    stdout = open(daemon_out_log, "a+", 0)
-    stderr = open(daemon_err_log, "a+", 0)
+    # Python 3
+    try:
+        stdout = io.TextIOWrapper(open(daemon_out_log, "ab+", 0), write_through=True)
+        stderr = io.TextIOWrapper(open(daemon_err_log, "ab+", 0), write_through=True)
+    # Python 2
+    except TypeError:
+        stdout = open(daemon_out_log, "a+", 0)
+        stderr = open(daemon_err_log, "a+", 0)
     os.dup2(stdin.fileno(), sys.stdin.fileno())
     os.dup2(stdout.fileno(), sys.stdout.fileno())
     os.dup2(stderr.fileno(), sys.stderr.fileno())

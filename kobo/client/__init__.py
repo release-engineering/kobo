@@ -262,43 +262,41 @@ class HubProxy(object):
         ccache = self._conf.get("KRB_CCACHE")
         proxyuser = self._conf.get("KRB_PROXYUSER")
 
-        import krbV
-        ctx = krbV.default_context()
-
-        if ccache is not None:
-            ccache = krbV.CCache(name='FILE:' + ccache, context=ctx)
-        else:
-            ccache = ctx.default_ccache()
+        # For python versions older than 3.4, enum34 package has to be installed
+        import enum
+        import gssapi
 
         if principal is not None:
-            if keytab is not None:
-                cprinc = krbV.Principal(name=principal, context=ctx)
-                keytab = krbV.Keytab(name=keytab, context=ctx)
-                ccache.init(cprinc)
-                ccache.init_creds_keytab(principal=cprinc, keytab=keytab)
-            else:
+            if keytab is None:
                 raise ImproperlyConfigured("Cannot specify a principal without a keytab")
+            name = gssapi.Name(principal, gssapi.NameType.kerberos_principal)
+            store = {'client_keytab': keytab}
+            if ccache is not None:
+                store['ccache'] = 'FILE:' + ccache
+            
+            client_credentials = gssapi.Credentials(name=name, store=store, usage='initiate',
+                                                    mechs=gssapi.MechType.kerberos)
         else:
-            # connect using existing credentials
-            cprinc = ccache.principal()
+            if ccache is not None:
+                store = {'ccache': 'FILE' + ccache}
+                client_credentials = gssapi.Credentials.acquire(usage='initiate', store=store,
+                                                                mechs=gssapi.MechType.kerberos)
+            else:
+                client_credentials = gssapi.Credentials.acquire(usage='initiate',
+                                                                mechs=gssapi.MechType.kerberos)
 
-        sprinc = krbV.Principal(name=get_server_principal(service=service, realm=realm), context=ctx)
-
-        ac = krbV.AuthContext(context=ctx)
-        ac.flags = krbV.KRB5_AUTH_CONTEXT_DO_SEQUENCE | krbV.KRB5_AUTH_CONTEXT_DO_TIME
-        ac.rcache = ctx.default_rcache()
-
-        # create and encode the authentication request
+        server_name = get_server_principal(service=service, realm=realm)
+        flags = 0x00000004 | 0x00000001
+        client_context = gssapi.SecurityContext(name=server_name, creds=client_credentials,
+                                                flags=flags, usage='initiate')
         try:
-            ac, req = ctx.mk_req(server=sprinc, client=cprinc, auth_context=ac, ccache=ccache, options=krbV.AP_OPTS_MUTUAL_REQUIRED)
-        except krbV.Krb5Error as ex:
-            if getattr(ex, "err_code", None) == -1765328377:
-                ex.message += ". Make sure you correctly set KRB_REALM (current value: %s)." % realm
-                ex.args = (ex.err_code, ex.message)
-            raise ex
-        req_enc = base64.encodestring(req)
-
-        self._hub.auth.login_krbv(req_enc)
+            output_token = client_context.step()
+            self._hub.auth.login_krbv(output_token)
+        except gssapi.exceptions.GSSError as e:
+            if getattr(e, "min_code", None) == 2529638919:
+                e.message += ". Make sure you correctly set KRB_REALM (current value: %s)." % realm
+                e.args = (e.min_code, e.message)
+            raise e
 
     def upload_file(self, file_name, target_dir):
         scheme, netloc, path, params, query, fragment = urlparse.urlparse("%s/upload/" % self._hub_url)

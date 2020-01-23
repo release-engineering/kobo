@@ -136,6 +136,8 @@ INSTALLED_APPS = (
     # add your apps here:
 )
 
+STATIC_URL = os.path.join(os.path.dirname(kobo.__file__), "hub", "static") + '/'
+
 # kobo XML-RPC API calls
 # If you define additional methods, you have to list them there.
 XMLRPC_METHODS = {

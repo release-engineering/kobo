@@ -93,6 +93,7 @@ from six.moves import range
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.encoding import python_2_unicode_compatible
 from kobo.django.django_version import django_version_ge
 if django_version_ge('1.10.0'):
     from django.urls import reverse
@@ -119,6 +120,7 @@ def include(module):
     return m.menu
 
 
+@python_2_unicode_compatible
 class MenuItem(object):
     """basic menu item - every menuitem can have submenu collections of
     these. Only main menu is special instance of Menu class."""
@@ -153,7 +155,7 @@ class MenuItem(object):
     def __len__(self):
         return len(self.url)
 
-    def __unicode__(self):
+    def __str__(self):
         if self.title == "":
             return mark_safe(u"<li class='divider'></li>")
         result = ""
@@ -268,6 +270,7 @@ class MenuItem(object):
         return mark_safe('<li%s>%s%s</li>' % (cls, link, sub))
 
 
+@python_2_unicode_compatible
 class MainMenu(MenuItem):
 
     def __init__(self, menu, css_active_class=None):
@@ -284,7 +287,7 @@ class MainMenu(MenuItem):
     def __repr__(self):
         return "<MainMenu>: %s" % (self.path)
 
-    def __unicode__(self):
+    def __str__(self):
         """Return menu as printable <ul> list."""
         return mark_safe(u"<ul>%s</ul>" % "".join([six.text_type(i) for i in self.items]))
 

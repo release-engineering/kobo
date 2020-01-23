@@ -639,8 +639,8 @@ class Task(models.Model):
 
     def get_args_display(self):
         """Deserialize args dictionary to human readable form"""
-        from django.utils.datastructures import SortedDict
-        result = SortedDict()
+        from collections import OrderedDict
+        result = OrderedDict()
         for key, value in sorted(self.args.items()):
             result[key] = json.dumps(value)
         return result
