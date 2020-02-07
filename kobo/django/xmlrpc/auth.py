@@ -12,6 +12,7 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.sessions.models import Session
 
 from kobo.django.auth.krb5 import Krb5RemoteUserBackend
+from kobo.django.django_version import django_version_ge
 
 
 __all__ = (
@@ -36,7 +37,10 @@ def renew_session(request):
 def login_password(request, username, password):
     """login_password(username, password): session_id"""
     backend = ModelBackend()
-    user = backend.authenticate(username, password)
+    if django_version_ge('1.11.0'):
+        user = backend.authenticate(None, username, password)
+    else:
+        user = backend.authenticate(username, password)
     if user is None:
         raise PermissionDenied("Invalid username or password.")
     user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
@@ -65,7 +69,10 @@ def login_krbv(request, krb_request, proxy_user=None):
     # remove @REALM
     username = cprinc.name.split("@")[0]
     backend = Krb5RemoteUserBackend()
-    user = backend.authenticate(username)
+    if django_version_ge('1.11.0'):
+        user = backend.authenticate(None, username)
+    else:
+        user = backend.authenticate(username)
     if user is None:
         raise PermissionDenied()
     user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
@@ -94,7 +101,10 @@ def login_gssapi(request, krb_request, proxy_user=None):
 
     username = client_name.split("@")[0]
     backend = Krb5RemoteUserBackend()
-    user = backend.authenticate(username)
+    if django_version_ge('1.11.0'):
+        user = backend.authenticate(None, username)
+    else:
+        user = backend.authenticate(username)
     if user is None:
         raise PermissionDenied()
     user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
