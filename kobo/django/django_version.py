@@ -3,7 +3,7 @@ from distutils.version import LooseVersion
 
 def django_version_ge(version_str):
     """
-    Check if current django is in highier or equal version than specified by
+    Check if current django is in higher or equal version than specified by
     version_str parameter
     """
 

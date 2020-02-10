@@ -10,13 +10,6 @@ from .models import DummyDefaultModel, DummyModel, DummyNotHumanModel
 
 class TestBasicJSONField(unittest.TestCase):
 
-    def test_without_default(self):
-        """
-        This should trigger exception:
-            ValidationError: [u"Cannot deserialize JSON data. ''"]
-        """
-        self.assertRaises(ValidationError, DummyModel)
-
     def test_default(self):
         """
         Test if default works as it should
