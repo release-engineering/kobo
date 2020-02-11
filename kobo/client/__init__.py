@@ -330,7 +330,7 @@ class HubProxy(object):
                 e.args = (e.min_code, e.message)
             raise e
 
-    def get_server_principal(service=None, realm=None):
+    def get_server_principal(self, service=None, realm=None):
         """Convert hub url to kerberos principal."""
         hostname = urlparse.urlparse(self._hub_url)[1]
         # remove port from hostname
