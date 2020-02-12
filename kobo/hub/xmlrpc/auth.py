@@ -19,6 +19,7 @@ from kobo.django.xmlrpc.auth import *
 __all__ = (
     "renew_session",
     "login_krbv",
+    "login_gssapi",
     "login_password",
     "login_worker_key",
     "logout",
