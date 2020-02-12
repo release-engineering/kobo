@@ -21,7 +21,6 @@ from kobo.django.django_version import django_version_ge
 __all__ = (
     "renew_session",
     "login_krbv",
-    "login_gssapi",
     "login_password",
     "login_worker_key",
     "logout",

@@ -18,7 +18,6 @@ from kobo.django.django_version import django_version_ge
 __all__ = (
     "renew_session",
     "login_krbv",
-    "login_gssapi",
     "login_password",
     "logout",
 )
@@ -68,38 +67,6 @@ def login_krbv(request, krb_request, proxy_user=None):
 
     # remove @REALM
     username = cprinc.name.split("@")[0]
-    backend = Krb5RemoteUserBackend()
-    if django_version_ge('1.11.0'):
-        user = backend.authenticate(None, username)
-    else:
-        user = backend.authenticate(username)
-    if user is None:
-        raise PermissionDenied()
-    user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
-    django.contrib.auth.login(request, user)
-    return request.session.session_key
-
-
-def login_gssapi(request, krb_request, proxy_user=None):
-    #For python versions older than 3.4, enum34 package has to be installed
-    import enum
-    import gssapi
-
-    name = gssapi.Name(settings.KRB_AUTH_PRINCIPAL, gssapi.NameType.kerberos_principal)
-    store = {'keytab': settings.KRB_AUTH_KEYTAB}
-    server_credentials = gssapi.Credentials(name=name, store=store, usage='accept',
-                                            mechs=gssapi.MechType.kerberos)
-
-    flags = 0x00000004 | 0x00000001
-    bindings = gssapi.raw.ChannelBindings(
-        initiator_address_type=2, initiator_address=request.META["REMOTE_ADDR"],
-        acceptor_address_type=2, acceptor_address=socket.gethostbyname(request.META["HTTP_HOST"]))
-    server_context = gssapi.SecurityContext(
-        creds=server_credentials, flags=flags, usage='accept', channel_bindings=bindings)
-    server_context.step(krb_request)
-    client_name = str(gssapi.Name(token=krb_request))
-
-    username = client_name.split("@")[0]
     backend = Krb5RemoteUserBackend()
     if django_version_ge('1.11.0'):
         user = backend.authenticate(None, username)
