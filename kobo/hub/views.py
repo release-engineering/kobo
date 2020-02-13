@@ -4,6 +4,7 @@ import mimetypes
 import os
 import six
 import locale
+from kobo.django.django_version import django_version_ge
 
 try:
     import json
@@ -14,7 +15,11 @@ import django.contrib.auth.views
 from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
+from kobo.django.django_version import django_version_ge
+if django_version_ge('1.10.0'):
+    from django.urls import reverse
+else:
+    from django.core.urlresolvers import reverse
 from django.http import HttpResponse, StreamingHttpResponse, HttpResponseForbidden
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
@@ -237,9 +242,19 @@ def task_log_json(request, id, log_name):
 
     return HttpResponse(json.dumps(result), content_type="application/json")
 
+if django_version_ge('1.11.0'):
+    class LoginView(django.contrib.auth.views.LoginView):
+        template_name = 'auth/login.html'
 
-def login(request, redirect_field_name=REDIRECT_FIELD_NAME):
-    return django.contrib.auth.views.login(request, template_name="auth/login.html", redirect_field_name=redirect_field_name)
+    class LogoutView(django.contrib.auth.views.LogoutView):
+        pass
+
+else:
+    def login(request, redirect_field_name=REDIRECT_FIELD_NAME):
+        return django.contrib.auth.views.login(request, template_name="auth/login.html", redirect_field_name=redirect_field_name)
+
+    def logout(request, redirect_field_name=REDIRECT_FIELD_NAME):
+        return django.contrib.auth.views.logout(request, redirect_field_name=redirect_field_name)
 
 
 def krb5login(request, redirect_field_name=REDIRECT_FIELD_NAME):
@@ -251,7 +266,4 @@ def krb5login(request, redirect_field_name=REDIRECT_FIELD_NAME):
     if not redirect_to:
         redirect_to = reverse("home/index")
     return RedirectView.as_view(url=redirect_to)(request)
-    
 
-def logout(request, redirect_field_name=REDIRECT_FIELD_NAME):
-    return django.contrib.auth.views.logout(request, redirect_field_name=redirect_field_name)

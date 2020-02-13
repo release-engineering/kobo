@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load staticfiles %}
 
 {% block head %}
-<script type="text/javascript" src="{{ STATIC_URL }}kobo/js/log_watcher.js"></script>
+<script type="text/javascript" src="{% static "kobo/js/log_watcher.js" %}"></script>
 <script type="text/javascript" language="javascript">
 document.log_watcher = new LogWatcher('{{ json_url }}', {{ offset }}, {{ task_finished }}, {{ next_poll }});
 document.log_watcher.watch();

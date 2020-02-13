@@ -5,7 +5,7 @@ import os
 
 from django.conf import settings
 
-from models import FileUpload
+from .models import FileUpload
 from kobo.django.xmlrpc.decorators import login_required
 
 

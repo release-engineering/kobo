@@ -1,5 +1,6 @@
 # Settings for Django testcases against kobo hub
 import os
+import kobo
 
 KOBO_DIR = os.path.normpath(
     os.path.join(os.path.dirname(__file__), '..', 'kobo')
@@ -22,6 +23,7 @@ MIDDLEWARE_CLASSES = (
 
 INSTALLED_APPS = (
     'django.contrib.contenttypes',
+    'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.sessions',
@@ -49,3 +51,5 @@ TEMPLATE_DIRS = (
 )
 
 ROOT_URLCONF = 'tests.hub_urls'
+
+STATIC_URL = os.path.join(os.path.dirname(kobo.__file__), "hub", "static") + '/'

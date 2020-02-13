@@ -21,7 +21,7 @@ UPLOAD_STATES = Enum(
 
 
 class FileUpload(models.Model):
-    owner       = models.ForeignKey(settings.AUTH_USER_MODEL)
+    owner       = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name        = models.CharField(max_length=255)
     checksum    = models.CharField(max_length=255)
     size        = models.PositiveIntegerField()

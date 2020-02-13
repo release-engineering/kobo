@@ -16,26 +16,31 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='task',
             name='owner',
-            field=models.ForeignKey(to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='task',
             name='parent',
-            field=models.ForeignKey(blank=True, to='hub.Task', help_text='Parent task.', null=True),
+            field=models.ForeignKey(blank=True, to='hub.Task', help_text='Parent task.',
+                on_delete=models.CASCADE, null=True),
         ),
         migrations.AddField(
             model_name='task',
             name='resubmitted_by',
-            field=models.ForeignKey(related_name='resubmitted_by1', blank=True, to=settings.AUTH_USER_MODEL, null=True),
+            field=models.ForeignKey(related_name='resubmitted_by1', blank=True,
+                to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True),
         ),
         migrations.AddField(
             model_name='task',
             name='resubmitted_from',
-            field=models.ForeignKey(related_name='resubmitted_from1', blank=True, to='hub.Task', null=True),
+            field=models.ForeignKey(related_name='resubmitted_from1',
+                blank=True, to='hub.Task', on_delete=models.CASCADE, null=True),
         ),
         migrations.AddField(
             model_name='task',
             name='worker',
-            field=models.ForeignKey(blank=True, to='hub.Worker', help_text='A worker which has this task assigned.', null=True),
+            field=models.ForeignKey(blank=True, to='hub.Worker',
+                help_text='A worker which has this task assigned.',
+                on_delete=models.CASCADE, null=True),
         ),
     ]

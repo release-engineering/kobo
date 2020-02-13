@@ -124,6 +124,7 @@ TEMPLATE_DIRS = (
 INSTALLED_APPS = (
     'kobo.django.auth',   # load this app first to make sure the username length hack is applied first
     'django.contrib.auth',
+    'django.contrib.staticfiles',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
@@ -134,6 +135,8 @@ INSTALLED_APPS = (
     'kobo.hub',
     # add your apps here:
 )
+
+STATIC_URL = os.path.join(os.path.dirname(kobo.__file__), "hub", "static") + '/'
 
 # kobo XML-RPC API calls
 # If you define additional methods, you have to list them there.
