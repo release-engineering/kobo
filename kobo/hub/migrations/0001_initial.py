@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('archive', models.BooleanField(default=False, help_text="When a task is archived, it disappears from admin interface and cannot be accessed by taskd.<br />Make sure that archived tasks are finished and you won't need them anymore.")),
-                ('state', models.PositiveIntegerField(default=0, help_text='Current task state.', choices=[(0, b'FREE'), (1, b'ASSIGNED'), (2, b'OPEN'), (3, b'CLOSED'), (4, b'CANCELED'), (5, b'FAILED'), (6, b'INTERRUPTED'), (7, b'TIMEOUT'), (8, b'CREATED')])),
+                ('state', models.PositiveIntegerField(default=0, help_text='Current task state.', choices=[(0, 'FREE'), (1, 'ASSIGNED'), (2, 'OPEN'), (3, 'CLOSED'), (4, 'CANCELED'), (5, 'FAILED'), (6, 'INTERRUPTED'), (7, 'TIMEOUT'), (8, 'CREATED')])),
                 ('label', models.CharField(help_text='Label, description or any reason for this task.', max_length=255, blank=True)),
                 ('exclusive', models.BooleanField(default=False, help_text='Exclusive tasks have highest priority. They are used e.g. when shutting down a worker.')),
                 ('method', models.CharField(help_text='Method name represents appropriate task handler.', max_length=255)),
