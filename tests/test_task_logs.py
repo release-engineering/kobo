@@ -31,7 +31,7 @@ teardown_module = runner.stop
 
 TASK_ID = 123
 
-class TestTaskLogs(django.test.TestCase):
+class TestTaskLogs(django.test.TransactionTestCase):
     def cleanDataDirs(self):
         """Delete the log directory for the test task."""
         log_dir = os.path.join(django.conf.settings.TASK_DIR, '0', '0', str(TASK_ID))
@@ -44,6 +44,7 @@ class TestTaskLogs(django.test.TestCase):
         super(TestTaskLogs, self).tearDown()
 
     def setUp(self):
+        self._fixture_teardown()
         super(TestTaskLogs, self).setUp()
 
         self.cleanDataDirs()

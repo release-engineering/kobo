@@ -30,7 +30,7 @@ setup_module = runner.start
 teardown_module = runner.stop
 
 
-class TestAuthView(django.test.TestCase):
+class TestAuthView(django.test.TransactionTestCase):
 
     def setUp(self):
         self.client = django.test.Client()
@@ -59,9 +59,10 @@ class TestAuthView(django.test.TestCase):
         self.assertEquals(response.status_code, 200)
 
 
-class TestTaskView(django.test.TestCase):
+class TestTaskView(django.test.TransactionTestCase):
 
     def setUp(self):
+        self._fixture_teardown()
         user = User.objects.create(username='testuser')
         arch = Arch.objects.create(name='testarch')
         channel = Channel.objects.create(name='testchannel')
@@ -142,9 +143,10 @@ class TestTaskView(django.test.TestCase):
         self.assertTrue('#%d: %s' % (self.task1.id, self.task1.method) in str(response.content))
 
 
-class TestArchView(django.test.TestCase):
+class TestArchView(django.test.TransactionTestCase):
 
     def setUp(self):
+        self._fixture_teardown()
         self.arch1 = Arch.objects.create(name='arch-1', pretty_name='arch-1')
         self.arch2 = Arch.objects.create(name='arch-2', pretty_name='arch-2')
 
@@ -162,9 +164,10 @@ class TestArchView(django.test.TestCase):
         self.assertTrue('#%d: %s' % (self.arch1.id, self.arch1.name) in str(response.content))
 
 
-class TestChannelView(django.test.TestCase):
+class TestChannelView(django.test.TransactionTestCase):
 
     def setUp(self):
+        self._fixture_teardown()
         self.channel1 = Channel.objects.create(name='channel-1')
         self.channel2 = Channel.objects.create(name='channel-2')
 
@@ -182,9 +185,10 @@ class TestChannelView(django.test.TestCase):
         self.assertTrue('#%d: %s' % (self.channel1.id, self.channel1.name) in str(response.content))
 
 
-class TestUserView(django.test.TestCase):
+class TestUserView(django.test.TransactionTestCase):
 
     def setUp(self):
+        self._fixture_teardown()
         self.user1 = User.objects.create(username='user-1')
         self.user2 = User.objects.create(username='user-2')
 
@@ -202,9 +206,10 @@ class TestUserView(django.test.TestCase):
         self.assertTrue('#%d: %s' % (self.user1.id, self.user1.username) in str(response.content))
 
 
-class TestWorkerView(django.test.TestCase):
+class TestWorkerView(django.test.TransactionTestCase):
 
     def setUp(self):
+        self._fixture_teardown()
         self.worker1 = Worker.objects.create(
             worker_key='worker-1',
             name='worker-1',

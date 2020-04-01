@@ -92,7 +92,7 @@ def gzip_decompress(data):
     return gzfile.read()
 
 
-class TestViewLog(django.test.TestCase):
+class TestViewLog(django.test.TransactionTestCase):
     def __init__(self, *args, **kwargs):
         super(TestViewLog, self).__init__(*args, **kwargs)
         # This is cached since it is a bit slow to build
@@ -110,6 +110,7 @@ class TestViewLog(django.test.TestCase):
         super(TestViewLog, self).tearDown()
 
     def setUp(self):
+        self._fixture_teardown()
         super(TestViewLog, self).setUp()
 
         self.cleanDataDirs()

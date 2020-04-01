@@ -22,9 +22,10 @@ setup_module = runner.start
 teardown_module = runner.stop
 
 
-class TestTaskSearchForm(django.test.TestCase):
+class TestTaskSearchForm(django.test.TransactionTestCase):
 
     def setUp(self):
+        self._fixture_teardown()
         user = User.objects.create(username='testuser')
         user2 = User.objects.create(username='anothertestuser')
         arch = Arch.objects.create(name='testarch')

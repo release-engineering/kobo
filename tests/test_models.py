@@ -42,7 +42,7 @@ setup_module = runner.start
 teardown_module = runner.stop
 
 
-class TestArch(django.test.TestCase):
+class TestArch(django.test.TransactionTestCase):
 
     def test_export(self):
         arch = Arch.objects.create(name='i386', pretty_name='32 bit')
@@ -66,7 +66,7 @@ class TestArch(django.test.TestCase):
         self.assertEquals(arch.worker_count, 1)
 
 
-class TestChannel(django.test.TestCase):
+class TestChannel(django.test.TransactionTestCase):
 
     def test_export(self):
         channel = Channel.objects.create(name='test')
@@ -90,9 +90,10 @@ class TestChannel(django.test.TestCase):
 
 
 @override_settings(VERSION='1.0.0')
-class TestWorker(django.test.TestCase):
+class TestWorker(django.test.TransactionTestCase):
 
     def setUp(self):
+        self._fixture_teardown()
         self._arch = Arch.objects.create(name='i386', pretty_name='32 bit')
         self._channel = Channel.objects.create(name='test')
         self._user = User.objects.create(username='testuser')
@@ -236,9 +237,10 @@ class TestWorker(django.test.TestCase):
         self.assertEquals(data['task_count'], 0)
 
 
-class TestWorkerManager(django.test.TestCase):
+class TestWorkerManager(django.test.TransactionTestCase):
 
     def setUp(self):
+        self._fixture_teardown()
         self._arch = Arch.objects.create(name='i386', pretty_name='32 bit')
         self._channel = Channel.objects.create(name='test')
         self._user = User.objects.create(username='testuser')
@@ -273,9 +275,10 @@ class TestWorkerManager(django.test.TestCase):
         self.assertEquals(workers[0].id, worker2.id)
 
 
-class TestTaskManager(django.test.TestCase):
+class TestTaskManager(django.test.TransactionTestCase):
 
     def setUp(self):
+        self._fixture_teardown()
         self._arch = Arch.objects.create(name='test-arch', pretty_name='Test Arch')
         self._channel = Channel.objects.create(name='test-channel')
         self._user = User.objects.create(username='test-user')
@@ -488,7 +491,7 @@ class TestTaskManager(django.test.TestCase):
         self.assertEquals(tasks[2].id, t3.id)
 
 
-class TestTaskLog(django.test.TestCase):
+class TestTaskLog(django.test.TransactionTestCase):
 
     def test_get_chunk_from_cached_file(self):
         task = PropertyMock(
@@ -887,9 +890,10 @@ class TestTaskLog(django.test.TestCase):
 
 
 @override_settings(TASK_DIR='/task-dir')
-class TestTask(django.test.TestCase):
+class TestTask(django.test.TransactionTestCase):
 
     def setUp(self):
+        self._fixture_teardown()
         self._arch = Arch.objects.create(name='noarch', pretty_name='noarch')
         self._channel = Channel.objects.create(name='default')
         self._user = User.objects.create(username='testuser', is_superuser=True)

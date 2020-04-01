@@ -22,7 +22,7 @@ setup_module = runner.start
 teardown_module = runner.stop
 
 
-class TestLoginWorker(django.test.TestCase):
+class TestLoginWorker(django.test.TransactionTestCase):
 
     def test_login_worker_key_valid_worker_and_user(self):
         def login(request, user):
