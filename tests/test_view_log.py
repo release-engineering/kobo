@@ -246,7 +246,7 @@ class TestViewLog(django.test.TransactionTestCase):
         def render(*args, **kwargs):
             return HttpResponse(status=200)
 
-        with mock.patch('kobo.hub.views.render_to_response', side_effect=render) as render_mock:
+        with mock.patch('kobo.hub.views.render', side_effect=render) as render_mock:
             self.get_log('zipped_big.log')
 
         mock_call = render_mock.mock_calls[0]
@@ -255,7 +255,7 @@ class TestViewLog(django.test.TransactionTestCase):
         self.assertEqual(mock_call[0], '')
 
         call_args = mock_call[1]
-        (template_name, context) = call_args
+        (_, template_name, context) = call_args
 
         self.assertEqual(template_name, 'task/log.html')
 
