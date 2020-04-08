@@ -72,6 +72,7 @@ import os
 import base64
 import hashlib
 import ssl
+import binascii
 import six.moves.urllib.parse as urlparse
 from six.moves import xmlrpc_client as xmlrpclib
 
@@ -240,20 +241,6 @@ class HubProxy(object):
     def _login_krbv(self):
         """Login using kerberos credentials (uses python-krbV)."""
 
-        def get_server_principal(service=None, realm=None):
-            """Convert hub url to kerberos principal."""
-            hostname = urlparse.urlparse(self._hub_url)[1]
-            # remove port from hostname
-            hostname = hostname.split(":")[0]
-
-            if realm is None:
-                # guess realm: last two parts from hostname
-                realm = ".".join(hostname.split(".")[-2:]).upper()
-            if service is None:
-                service = "HTTP"
-            return '%s/%s@%s' % (service, hostname, realm)
-
-
         # read default values from settings
         principal = self._conf.get("KRB_PRINCIPAL")
         keytab = self._conf.get("KRB_KEYTAB")
@@ -282,7 +269,7 @@ class HubProxy(object):
             # connect using existing credentials
             cprinc = ccache.principal()
 
-        sprinc = krbV.Principal(name=get_server_principal(service=service, realm=realm), context=ctx)
+        sprinc = krbV.Principal(name=self.get_server_principal(service=service, realm=realm), context=ctx)
 
         ac = krbV.AuthContext(context=ctx)
         ac.flags = krbV.KRB5_AUTH_CONTEXT_DO_SEQUENCE | krbV.KRB5_AUTH_CONTEXT_DO_TIME
@@ -299,6 +286,74 @@ class HubProxy(object):
         req_enc = base64.encodestring(req)
 
         self._hub.auth.login_krbv(req_enc)
+
+    def _login_gssapi(self):
+        """Login using kerberos credentials (uses gssapi)."""
+        # read default values from settings
+        principal = self._conf.get("KRB_PRINCIPAL")
+        keytab = self._conf.get("KRB_KEYTAB")
+        service = self._conf.get("KRB_SERVICE")
+        realm = self._conf.get("KRB_REALM")
+        ccache = self._conf.get("KRB_CCACHE")
+        proxyuser = self._conf.get("KRB_PROXYUSER")
+
+        import enum
+        import gssapi
+
+        if principal is not None:
+            if keytab is None:
+                raise ImproperlyConfigured("Cannot specify a principal without a keytab")
+            name = gssapi.Name(principal, gssapi.NameType.kerberos_principal)
+            store = {'client_keytab': keytab}
+            if ccache is not None:
+                store['ccache'] = 'FILE:' + ccache
+
+            client_credentials = gssapi.Credentials(name=name, store=store, usage='initiate',
+                                                    mechs=[gssapi.MechType.kerberos])
+        else:
+            if ccache is not None:
+                store = {'ccache': 'FILE' + ccache}
+                client_credentials = gssapi.Credentials.acquire(usage='initiate', store=store,
+                                                                mechs=[gssapi.MechType.kerberos])[0]
+            else:
+                client_credentials = gssapi.Credentials.acquire(usage='initiate',
+                                                                mechs=[gssapi.MechType.kerberos])[0]
+
+        server_name = self.get_server_principal(service=service, realm=realm)
+        server_name = gssapi.Name(server_name, gssapi.NameType.kerberos_principal)
+        flags = gssapi.raw.RequirementFlag.replay_detection |\
+                gssapi.raw.RequirementFlag.out_of_sequence_detection
+        client_context = gssapi.SecurityContext(name=server_name, creds=client_credentials,
+                                                flags=flags, usage='initiate')
+        client_token = None
+
+        # GSSAPI authentication is supposed to be run in a loop in case of a multi-step handshake
+        while not client_context.complete:
+            server_token = client_context.step(client_token)
+            # We encode the token to make it transferrable via xmlrpc
+            encoded_server_token = base64.encodestring(server_token)
+            return_message = self._hub.auth.login_gssapi(encoded_server_token)
+
+            # we could have received an encoded token for the next authentication step
+            try:
+                client_token = base64.decodestring(return_message)
+            # if we got base64 error, or non-binary type error (Python 3),
+            # then we did not receive a token and the auth is complete
+            except (binascii.Error, TypeError):
+                pass
+
+    def get_server_principal(self, service=None, realm=None):
+        """Convert hub url to kerberos principal."""
+        hostname = urlparse.urlparse(self._hub_url)[1]
+        # remove port from hostname
+        hostname = hostname.split(":")[0]
+
+        if realm is None:
+            # guess realm: last two parts from hostname
+            realm = ".".join(hostname.split(".")[-2:]).upper()
+        if service is None:
+            service = "HTTP"
+        return '%s/%s@%s' % (service, hostname, realm)
 
     def upload_file(self, file_name, target_dir):
         scheme, netloc, path, params, query, fragment = urlparse.urlparse("%s/upload/" % self._hub_url)
