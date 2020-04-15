@@ -41,9 +41,10 @@ def _make_request(w, is_authenticated=True):
     )
 
 
-class TestXmlRpcWorker(django.test.TestCase):
+class TestXmlRpcWorker(django.test.TransactionTestCase):
 
     def setUp(self):
+        self._fixture_teardown()
         super(TestXmlRpcWorker, self).setUp()
 
         user = User.objects.create(username='testuser')
@@ -79,7 +80,7 @@ class TestXmlRpcWorker(django.test.TestCase):
         req = _make_request(self._worker)
         w_id = worker.get_worker_id(req)
 
-        self.assertEqual(w_id, 1)
+        assert isinstance(w_id, int)
 
     def test_get_worker_tasks(self):
         for state in TASK_STATES:
@@ -1179,7 +1180,7 @@ class TestXmlRpcWorker(django.test.TestCase):
             worker.upload_task_log(req, t.id, '/foo/bar', 0o644, '', '', '', '')
 
 
-class TestXmlRpcWorkerNotAuthenticated(django.test.TestCase):
+class TestXmlRpcWorkerNotAuthenticated(django.test.TransactionTestCase):
 
     def test_get_worker_info(self):
         with self.assertRaises(PermissionDenied):

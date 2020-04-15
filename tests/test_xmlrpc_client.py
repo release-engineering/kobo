@@ -41,9 +41,10 @@ def _make_request(user=None, is_authenticated=True, is_superuser=True, meta=None
     )
 
 
-class TestXmlRpcClient(django.test.TestCase):
+class TestXmlRpcClient(django.test.TransactionTestCase):
 
     def setUp(self):
+        self._fixture_teardown()
         super(TestXmlRpcClient, self).setUp()
 
         user = User.objects.create(username='testuser', is_superuser=True)
@@ -297,7 +298,7 @@ class TestXmlRpcClient(django.test.TestCase):
         self.assertEqual(url, 'http://srv-name/task/999/')
 
 
-class TestXmlRpcClientAuthentication(django.test.TestCase):
+class TestXmlRpcClientAuthentication(django.test.TransactionTestCase):
 
     def test_shutdown_worker_raise_if_no_auth(self):
         with self.assertRaises(PermissionDenied):

@@ -92,7 +92,7 @@ def gzip_decompress(data):
     return gzfile.read()
 
 
-class TestViewLog(django.test.TestCase):
+class TestViewLog(django.test.TransactionTestCase):
     def __init__(self, *args, **kwargs):
         super(TestViewLog, self).__init__(*args, **kwargs)
         # This is cached since it is a bit slow to build
@@ -110,6 +110,7 @@ class TestViewLog(django.test.TestCase):
         super(TestViewLog, self).tearDown()
 
     def setUp(self):
+        self._fixture_teardown()
         super(TestViewLog, self).setUp()
 
         self.cleanDataDirs()
@@ -245,7 +246,7 @@ class TestViewLog(django.test.TestCase):
         def render(*args, **kwargs):
             return HttpResponse(status=200)
 
-        with mock.patch('kobo.hub.views.render_to_response', side_effect=render) as render_mock:
+        with mock.patch('kobo.hub.views.render', side_effect=render) as render_mock:
             self.get_log('zipped_big.log')
 
         mock_call = render_mock.mock_calls[0]
@@ -254,7 +255,7 @@ class TestViewLog(django.test.TestCase):
         self.assertEqual(mock_call[0], '')
 
         call_args = mock_call[1]
-        (template_name, context) = call_args
+        (_, template_name, context) = call_args
 
         self.assertEqual(template_name, 'task/log.html')
 

@@ -107,9 +107,10 @@ class DummyExceptionTask(DummyTask):
         raise Exception()
 
 
-class TestTaskManager(django.test.TestCase):
+class TestTaskManager(django.test.TransactionTestCase):
 
     def setUp(self):
+        self._fixture_teardown()
         super(TestTaskManager, self).setUp()
 
         TaskContainer.register_plugin(DummyForegroundTask)

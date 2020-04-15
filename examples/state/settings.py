@@ -1,4 +1,5 @@
 # Django settings for foo project.
+from django import VERSION
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -65,11 +66,25 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'state.urls'
 
-TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-)
+# The way to specify the template dirs differs between newer and older versions of Django
+if VERSION[0:3] < (1, 9, 0):
+    TEMPLATE_DIRS = (
+        # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
+        # Always use forward slashes, even on Windows.
+        # Don't forget to use absolute paths, not relative paths.
+    )
+if VERSION[0:3] >= (1, 9, 0):
+    TEMPLATES = [
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'DIRS': (
+                # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
+                # Always use forward slashes, even on Windows.
+                # Don't forget to use absolute paths, not relative paths.
+            ),
+            'APP_DIRS': True
+        }
+    ]
 
 INSTALLED_APPS = (
     'django.contrib.auth',

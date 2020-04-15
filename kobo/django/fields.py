@@ -6,6 +6,8 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.core import exceptions
 from django.utils.text import capfirst
+from django.forms.widgets import Select
+from django.forms.fields import CallableChoiceIterator
 
 import kobo.django.forms
 from kobo.types import StateEnum
@@ -42,11 +44,12 @@ default value set to False.
 
 class StateEnumField(models.IntegerField):
     '''StateEnum DB encapsulation'''
-
+    widget = Select
 
     def __init__(self, state_machine, *args, **kwargs):
         super(StateEnumField, self).__init__(*args, **kwargs)
         self.state_machine = state_machine
+        self.widget = Select
         if self.has_default:
             self.state_machine.set_state(self.default)
 
@@ -98,7 +101,19 @@ class StateEnumField(models.IntegerField):
 
     def _get_choices(self):
         return tuple(self.state_machine.get_next_states_mapping(current=self.state_machine.get_state_id()))
-    choices = property(_get_choices, kobo.django.forms.StateChoiceFormField._set_choices)
+    
+    def _set_choices(self, value):
+        # Setting choices also sets the choices on the widget.
+        # choices can be any iterable, but we call list() on it because
+        # it will be consumed more than once.
+        if callable(value):
+            value = CallableChoiceIterator(value)
+        else:
+            value = list(value)
+
+        self._choices = self.widget.choices = value
+
+    choices = property(_get_choices, _set_choices)
 
 
     def get_db_prep_value(self, value, connection, prepared=False):

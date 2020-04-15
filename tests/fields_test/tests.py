@@ -3,8 +3,10 @@
 
 import json
 import unittest
+import pytest
 
 from django.core.exceptions import ValidationError
+from django import VERSION
 from .models import DummyDefaultModel, DummyModel, DummyNotHumanModel
 
 
@@ -77,7 +79,8 @@ class TestBasicJSONField(unittest.TestCase):
 
         self.assertEqual(d.field, data)
 
-
+@unittest.skipUnless(VERSION[0:3] < (1, 9, 0),
+                     "Automatic fixture loading is not possible since syncdb was removed.")
 class TestFixturesJSONField(unittest.TestCase):
     """
     DO NOT ADD ANYTHING INTO DATABASE IN THIS TESTCASE

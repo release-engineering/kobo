@@ -1,6 +1,7 @@
 # Settings for Django testcases against kobo hub
 import os
 import kobo
+from django import VERSION
 
 KOBO_DIR = os.path.normpath(
     os.path.join(os.path.dirname(__file__), '..', 'kobo')
@@ -45,10 +46,24 @@ DATABASES = {
 # - automatic lookup of templates under kobo/hub isn't working for some reason,
 #   not sure why, but might be related to use of deprecated arguments in
 #   render_to_string (FIXME)
-TEMPLATE_DIRS = (
-    os.path.join(KOBO_DIR, 'admin/templates/hub/templates'),
-    os.path.join(KOBO_DIR, 'hub/templates'),
-)
+#
+# The way to specify the template dirs differs between newer and older versions of Django
+if VERSION[0:3] < (1, 9, 0):
+    TEMPLATE_DIRS = (
+        os.path.join(KOBO_DIR, 'admin/templates/hub/templates'),
+        os.path.join(KOBO_DIR, 'hub/templates'),
+    )
+if VERSION[0:3] >= (1, 9, 0):
+    TEMPLATES = [
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'DIRS': (
+                os.path.join(KOBO_DIR, 'admin/templates/hub/templates'),
+                os.path.join(KOBO_DIR, 'hub/templates')
+            ),
+            'APP_DIRS': True
+        }
+    ]
 
 ROOT_URLCONF = 'tests.hub_urls'
 

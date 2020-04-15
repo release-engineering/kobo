@@ -21,7 +21,7 @@ if django_version_ge('1.10.0'):
 else:
     from django.core.urlresolvers import reverse
 from django.http import HttpResponse, StreamingHttpResponse, HttpResponseForbidden
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.template import RequestContext
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import RedirectView
@@ -184,7 +184,7 @@ def _rendered_log_response(request, task, log_name):
         "json_url": reverse("task/log-json", args=[task.id, log_name]),
     }
 
-    return render_to_response("task/log.html", context, context_instance=RequestContext(request))
+    return render(request, "task/log.html", context)
 
 
 def task_log(request, id, log_name):
@@ -262,8 +262,10 @@ def krb5login(request, redirect_field_name=REDIRECT_FIELD_NAME):
     middleware = 'kobo.django.auth.middleware.LimitedRemoteUserMiddleware'
     if middleware not in settings.MIDDLEWARE_CLASSES:
         raise ImproperlyConfigured("krb5login view requires '%s' middleware installed" % middleware)
-    redirect_to = request.REQUEST.get(redirect_field_name, "")
+    redirect_to = request.POST.get(redirect_field_name, "")
+    if not redirect_to:
+        redirect_to = request.GET.get(redirect_field_name, "")
     if not redirect_to:
         redirect_to = reverse("home/index")
-    return RedirectView.as_view(url=redirect_to)(request)
+    return RedirectView.as_view(url=redirect_to, permanent=True)(request)
 
