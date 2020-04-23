@@ -72,7 +72,6 @@ import os
 import base64
 import hashlib
 import ssl
-import binascii
 import six.moves.urllib.parse as urlparse
 from six.moves import xmlrpc_client as xmlrpclib
 
@@ -289,58 +288,65 @@ class HubProxy(object):
 
     def _login_gssapi(self):
         """Login using kerberos credentials (uses gssapi)."""
+
+        login_url = urlparse.urljoin(self._hub_url, "auth/krb5login/")
+
         # read default values from settings
         principal = self._conf.get("KRB_PRINCIPAL")
         keytab = self._conf.get("KRB_KEYTAB")
         service = self._conf.get("KRB_SERVICE")
         realm = self._conf.get("KRB_REALM")
         ccache = self._conf.get("KRB_CCACHE")
-        proxyuser = self._conf.get("KRB_PROXYUSER")
 
-        import enum
+        import requests
         import gssapi
+        import requests_gssapi
 
-        if principal is not None:
-            if keytab is None:
-                raise ImproperlyConfigured("Cannot specify a principal without a keytab")
-            name = gssapi.Name(principal, gssapi.NameType.kerberos_principal)
-            store = {'client_keytab': keytab}
-            if ccache is not None:
-                store['ccache'] = 'FILE:' + ccache
+        request_args = {}
 
-            client_credentials = gssapi.Credentials(name=name, store=store, usage='initiate',
-                                                    mechs=[gssapi.MechType.kerberos])
-        else:
-            if ccache is not None:
-                store = {'ccache': 'FILE' + ccache}
-                client_credentials = gssapi.Credentials.acquire(usage='initiate', store=store,
-                                                                mechs=[gssapi.MechType.kerberos])[0]
-            else:
-                client_credentials = gssapi.Credentials.acquire(usage='initiate',
-                                                                mechs=[gssapi.MechType.kerberos])[0]
+        # NOTE behavior difference from hub proxy overall:
+        # HubProxy by default DOES NOT verify https connections :(
+        # See the constructor. It could be repeated here by defaulting verify to False,
+        # but let's not do that, instead you must have an unbroken SSL setup to
+        # use this auth method.
+        if self._conf.get("CA_CERT"):
+            request_args["verify"] = self._conf["CA_CERT"]
 
         server_name = self.get_server_principal(service=service, realm=realm)
         server_name = gssapi.Name(server_name, gssapi.NameType.kerberos_principal)
-        flags = gssapi.raw.RequirementFlag.replay_detection |\
-                gssapi.raw.RequirementFlag.out_of_sequence_detection
-        client_context = gssapi.SecurityContext(name=server_name, creds=client_credentials,
-                                                flags=flags, usage='initiate')
-        client_token = None
 
-        # GSSAPI authentication is supposed to be run in a loop in case of a multi-step handshake
-        while not client_context.complete:
-            server_token = client_context.step(client_token)
-            # We encode the token to make it transferrable via xmlrpc
-            encoded_server_token = base64.encodestring(server_token)
-            return_message = self._hub.auth.login_gssapi(encoded_server_token)
+        auth_args = {
+            "target_name": server_name,
+        }
+        if principal is not None:
+            if keytab is None:
+                raise ImproperlyConfigured(
+                    "Cannot specify a principal without a keytab"
+                )
+            name = gssapi.Name(principal, gssapi.NameType.kerberos_principal)
+            store = {"client_keytab": keytab}
+            if ccache is not None:
+                store["ccache"] = "FILE:" + ccache
 
-            # we could have received an encoded token for the next authentication step
-            try:
-                client_token = base64.decodestring(return_message)
-            # if we got base64 error, or non-binary type error (Python 3),
-            # then we did not receive a token and the auth is complete
-            except (binascii.Error, TypeError):
-                pass
+            auth_args["creds"] = gssapi.Credentials(
+                name=name, store=store, usage="initiate"
+            )
+
+        # We only do one request, but a Session is used to allow requests to write
+        # the new session ID into the cookiejar.
+        with requests.Session() as s:
+            s.cookies = self._transport.cookiejar
+            response = s.get(
+                login_url,
+                auth=requests_gssapi.HTTPSPNEGOAuth(**auth_args),
+                allow_redirects=False,
+                **request_args
+            )
+
+        self._logger and self._logger.debug(
+            "Login response: %s %s", response, response.headers
+        )
+        response.raise_for_status()
 
     def get_server_principal(self, service=None, realm=None):
         """Convert hub url to kerberos principal."""
