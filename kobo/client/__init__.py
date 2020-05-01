@@ -240,20 +240,6 @@ class HubProxy(object):
     def _login_krbv(self):
         """Login using kerberos credentials (uses python-krbV)."""
 
-        def get_server_principal(service=None, realm=None):
-            """Convert hub url to kerberos principal."""
-            hostname = urlparse.urlparse(self._hub_url)[1]
-            # remove port from hostname
-            hostname = hostname.split(":")[0]
-
-            if realm is None:
-                # guess realm: last two parts from hostname
-                realm = ".".join(hostname.split(".")[-2:]).upper()
-            if service is None:
-                service = "HTTP"
-            return '%s/%s@%s' % (service, hostname, realm)
-
-
         # read default values from settings
         principal = self._conf.get("KRB_PRINCIPAL")
         keytab = self._conf.get("KRB_KEYTAB")
@@ -282,7 +268,7 @@ class HubProxy(object):
             # connect using existing credentials
             cprinc = ccache.principal()
 
-        sprinc = krbV.Principal(name=get_server_principal(service=service, realm=realm), context=ctx)
+        sprinc = krbV.Principal(name=self.get_server_principal(service=service, realm=realm), context=ctx)
 
         ac = krbV.AuthContext(context=ctx)
         ac.flags = krbV.KRB5_AUTH_CONTEXT_DO_SEQUENCE | krbV.KRB5_AUTH_CONTEXT_DO_TIME
@@ -299,6 +285,81 @@ class HubProxy(object):
         req_enc = base64.encodestring(req)
 
         self._hub.auth.login_krbv(req_enc)
+
+    def _login_gssapi(self):
+        """Login using kerberos credentials (uses gssapi)."""
+
+        login_url = urlparse.urljoin(self._hub_url, "auth/krb5login/")
+
+        # read default values from settings
+        principal = self._conf.get("KRB_PRINCIPAL")
+        keytab = self._conf.get("KRB_KEYTAB")
+        service = self._conf.get("KRB_SERVICE")
+        realm = self._conf.get("KRB_REALM")
+        ccache = self._conf.get("KRB_CCACHE")
+
+        import requests
+        import gssapi
+        import requests_gssapi
+
+        request_args = {}
+
+        # NOTE behavior difference from hub proxy overall:
+        # HubProxy by default DOES NOT verify https connections :(
+        # See the constructor. It could be repeated here by defaulting verify to False,
+        # but let's not do that, instead you must have an unbroken SSL setup to
+        # use this auth method.
+        if self._conf.get("CA_CERT"):
+            request_args["verify"] = self._conf["CA_CERT"]
+
+        server_name = self.get_server_principal(service=service, realm=realm)
+        server_name = gssapi.Name(server_name, gssapi.NameType.kerberos_principal)
+
+        auth_args = {
+            "target_name": server_name,
+        }
+        if principal is not None:
+            if keytab is None:
+                raise ImproperlyConfigured(
+                    "Cannot specify a principal without a keytab"
+                )
+            name = gssapi.Name(principal, gssapi.NameType.kerberos_principal)
+            store = {"client_keytab": keytab}
+            if ccache is not None:
+                store["ccache"] = "FILE:" + ccache
+
+            auth_args["creds"] = gssapi.Credentials(
+                name=name, store=store, usage="initiate"
+            )
+
+        # We only do one request, but a Session is used to allow requests to write
+        # the new session ID into the cookiejar.
+        with requests.Session() as s:
+            s.cookies = self._transport.cookiejar
+            response = s.get(
+                login_url,
+                auth=requests_gssapi.HTTPSPNEGOAuth(**auth_args),
+                allow_redirects=False,
+                **request_args
+            )
+
+        self._logger and self._logger.debug(
+            "Login response: %s %s", response, response.headers
+        )
+        response.raise_for_status()
+
+    def get_server_principal(self, service=None, realm=None):
+        """Convert hub url to kerberos principal."""
+        hostname = urlparse.urlparse(self._hub_url)[1]
+        # remove port from hostname
+        hostname = hostname.split(":")[0]
+
+        if realm is None:
+            # guess realm: last two parts from hostname
+            realm = ".".join(hostname.split(".")[-2:]).upper()
+        if service is None:
+            service = "HTTP"
+        return '%s/%s@%s' % (service, hostname, realm)
 
     def upload_file(self, file_name, target_dir):
         scheme, netloc, path, params, query, fragment = urlparse.urlparse("%s/upload/" % self._hub_url)

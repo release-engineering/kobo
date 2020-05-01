@@ -4,3 +4,5 @@ pytest
 pytest-env
 Django
 koji
+requests
+requests_gssapi
