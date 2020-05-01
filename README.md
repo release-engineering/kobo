@@ -31,6 +31,15 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.14.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- Introduced `gssapi` login method, for improved Python3 compatibility.
+  This login method requires the hub's `krb5login` endpoint to be enabled.
+  The default login method is unchanged.
+
 kobo 0.13.0
 -----------
 
