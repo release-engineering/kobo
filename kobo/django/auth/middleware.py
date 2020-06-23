@@ -1,5 +1,7 @@
 from django.contrib.auth.middleware import RemoteUserMiddleware
 
+from kobo.django.helpers import call_if_callable
+
 class LimitedRemoteUserMiddleware(RemoteUserMiddleware):
     '''
     Same behaviour as RemoteUserMiddleware except that it doesn't logout user
@@ -7,5 +9,5 @@ class LimitedRemoteUserMiddleware(RemoteUserMiddleware):
     Useful when you have just one authentication powered login page.
     '''
     def process_request(self, request):
-        if not hasattr(request, 'user') or not request.user.is_authenticated():
+        if not hasattr(request, 'user') or not call_if_callable(request.user.is_authenticated):
             super(LimitedRemoteUserMiddleware, self).process_request(request)

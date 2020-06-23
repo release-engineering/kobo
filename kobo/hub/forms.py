@@ -3,6 +3,7 @@
 
 import django.forms as forms
 from django.db.models import Q
+from kobo.django.helpers import call_if_callable
 from kobo.hub.models import Task
 
 
@@ -27,7 +28,7 @@ class TaskSearchForm(forms.Form):
             query |= Q(owner__username__icontains=search)
             query |= Q(label__icontains=search)
 
-        if my and request.user.is_authenticated():
+        if my and call_if_callable(request.user.is_authenticated):
             query &= Q(owner=request.user)
 
         if self.state is not None:

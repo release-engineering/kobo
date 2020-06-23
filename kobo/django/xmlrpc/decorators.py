@@ -7,6 +7,7 @@ import inspect
 
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from kobo.decorators import decorator_with_args
+from kobo.django.helpers import call_if_callable
 from kobo.shortcuts import random_string
 from kobo.tback import Traceback
 
@@ -41,7 +42,7 @@ def user_passes_test(func, test_func):
 
 def login_required(func):
     def _new_func(request, *args, **kwargs):
-        if not request.user.is_authenticated():
+        if not call_if_callable(request.user.is_authenticated):
             raise PermissionDenied("Login required.")
         return func(request, *args, **kwargs)
 
