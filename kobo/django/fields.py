@@ -108,8 +108,10 @@ class StateEnumField(models.IntegerField):
         # it will be consumed more than once.
         if callable(value):
             value = CallableChoiceIterator(value)
-        else:
+        elif value is not None:
             value = list(value)
+        else:
+            value = []
 
         self._choices = self.widget.choices = value
 
