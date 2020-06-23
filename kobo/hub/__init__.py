@@ -5,6 +5,7 @@ import os
 
 from kobo.exceptions import ImproperlyConfigured
 from django.conf import settings
+from kobo.django.django_version import django_version_ge
 
 
 for var in ["XMLRPC_METHODS", "TASK_DIR", "UPLOAD_DIR"]:
@@ -23,6 +24,11 @@ for var in ["TASK_DIR", "UPLOAD_DIR"]:
         raise ImproperlyConfigured("Invalid permissions on '%s'." % dir_path)
 
 
-for var, value in [("MIDDLEWARE_CLASSES", "kobo.hub.middleware.WorkerMiddleware")]:
+if django_version_ge("1.10.0"):
+    middleware_var = "MIDDLEWARE"
+else:
+    middleware_var = "MIDDLEWARE_CLASSES"
+
+for var, value in [(middleware_var, "kobo.hub.middleware.WorkerMiddleware")]:
     if not hasattr(settings, var) or value not in getattr(settings, var, []):
         raise ImproperlyConfigured("'%s' in '%s' is missing in project settings. It must be set to run kobo.hub app." % (value, var))

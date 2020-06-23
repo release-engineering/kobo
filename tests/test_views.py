@@ -44,7 +44,7 @@ class TestAuthView(django.test.TransactionTestCase):
         self.assertEquals(response.status_code, 301)
         self.assertIn(response['Location'], ['http://testserver/home/', '/home/'])
 
-    @override_settings(MIDDLEWARE_CLASSES=[])
+    @override_settings(MIDDLEWARE_CLASSES=[], MIDDLEWARE=[])
     def test_krb5login_missing_middleware(self):
         with self.assertRaises(ImproperlyConfigured):
             self.client.get('/auth/krb5login/')

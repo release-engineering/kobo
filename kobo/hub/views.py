@@ -260,7 +260,11 @@ else:
 def krb5login(request, redirect_field_name=REDIRECT_FIELD_NAME):
     #middleware = 'django.contrib.auth.middleware.RemoteUserMiddleware'
     middleware = 'kobo.django.auth.middleware.LimitedRemoteUserMiddleware'
-    if middleware not in settings.MIDDLEWARE_CLASSES:
+    if django_version_ge('1.10.0'):
+        middleware_setting = settings.MIDDLEWARE
+    else:
+        middleware_setting = settings.MIDDLEWARE_CLASSES
+    if middleware not in middleware_setting:
         raise ImproperlyConfigured("krb5login view requires '%s' middleware installed" % middleware)
     redirect_to = request.POST.get(redirect_field_name, "")
     if not redirect_to:
