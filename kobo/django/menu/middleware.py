@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from kobo.django.django_version import django_version_ge
+if django_version_ge('1.10.0'):
+    from django.utils.deprecation import MiddlewareMixin
 
 from kobo.django.menu import menu
 
@@ -19,7 +22,7 @@ class LazyMenu(object):
         return request._cached_menu
 
 
-class MenuMiddleware(object):
+class MenuMiddleware(MiddlewareMixin if django_version_ge('1.10.0') else object):
     """
     @summary: Middleware for menu object.
     """
