@@ -6,11 +6,12 @@ import unittest
 import pytest
 
 from django.core.exceptions import ValidationError
+from django.test import TestCase
 from django import VERSION
 from .models import DummyDefaultModel, DummyModel, DummyNotHumanModel
 
 
-class TestBasicJSONField(unittest.TestCase):
+class TestBasicJSONField(TestCase):
 
     def test_default(self):
         """

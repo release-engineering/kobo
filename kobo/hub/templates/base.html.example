@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% load i18n %}
-{% load staticfiles %}
+{% load static %}
 
 {% block css %}
   <link rel="stylesheet" href="{% static "css/style.css" %}" type="text/css" media="screen" />

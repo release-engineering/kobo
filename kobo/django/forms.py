@@ -44,7 +44,7 @@ class StateChoiceFormField(django.forms.fields.TypedChoiceField):
 
 
 class JSONWidget(django.forms.widgets.Textarea):
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         if value is None: value = ''
         final_attrs = self.build_attrs(attrs, name=name)
 
@@ -58,7 +58,7 @@ class JSONWidget(django.forms.widgets.Textarea):
 class JSONFormField(django.forms.fields.CharField):
     widget = JSONWidget
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection, context=None):
         return self.to_python(value)
 
 

@@ -23,6 +23,7 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models, connection, transaction
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_delete
+import six
 
 import kobo.django.fields
 from kobo.client.constants import TASK_STATES, FINISHED_STATES, FAILED_STATES
@@ -109,6 +110,7 @@ def _tail(fh, max_size, max_line_size):
     return b''.join(buffer), offset
 
 
+@six.python_2_unicode_compatible
 class Arch(models.Model):
     """Model for hub_arch table."""
     name        = models.CharField(max_length=16, unique=True, help_text=_("i386, ia64, ..."))
@@ -119,10 +121,8 @@ class Arch(models.Model):
         ordering = ("name", )
         verbose_name_plural = "arches"
 
-
-    def __unicode__(self):
+    def __str__(self):
         return u"%s" % self.name
-
 
     def export(self):
         """Export data for xml-rpc."""
@@ -140,14 +140,13 @@ class Arch(models.Model):
         return Worker.objects.filter(arches__id=self.id).count()
 
 
+@six.python_2_unicode_compatible
 class Channel(models.Model):
     """Model for hub_channel table."""
     name        = models.CharField(max_length=128, help_text=_("Channel name"))
 
-
-    def __unicode__(self):
+    def __str__(self):
         return u"%s" % self.name
-
 
     def export(self):
         """Export data for xml-rpc."""
@@ -177,6 +176,7 @@ class WorkerManager(models.Manager):
         return self.filter(enabled=True, ready=True)
 
 
+@six.python_2_unicode_compatible
 class Worker(models.Model):
     """Model for the hub_worker table."""
     worker_key          = models.CharField(max_length=255, unique=True, blank=True, help_text=_("Worker authentication key.<br />Leave blank to generate new key."))
@@ -196,10 +196,8 @@ class Worker(models.Model):
     # override default *objects* Manager
     objects = WorkerManager()
 
-
-    def __unicode__(self):
+    def __str__(self):
         return u"%s" % self.name
-
 
     def save(self, *args, **kwargs):
         # precompute task count, current load and ready
@@ -484,6 +482,7 @@ class TaskLogs(object):
             self._gzip_log(i)
 
 
+@six.python_2_unicode_compatible
 class Task(models.Model):
     """Model for hub_task table."""
     archive             = models.BooleanField(default=False, help_text=_("When a task is archived, it disappears from admin interface and cannot be accessed by taskd.<br />Make sure that archived tasks are finished and you won't need them anymore."))
@@ -539,7 +538,7 @@ class Task(models.Model):
 
         super(Task, self).__init__(*args, **kwargs)
 
-    def __unicode__(self):
+    def __str__(self):
         if self.parent:
             return u"#%s [method: %s, state: %s, worker: %s, parent: #%s]" % (self.id, self.method, self.get_state_display(), self.worker, self.parent.id)
         return u"#%s [method: %s, state: %s, worker: %s]" % (self.id, self.method, self.get_state_display(), self.worker)

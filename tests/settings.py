@@ -15,12 +15,21 @@ UPLOAD_DIR = '/tmp/kobo-test-dir'
 # The middleware and apps below are the bare minimum required
 # to let kobo.hub load successfully
 
-MIDDLEWARE_CLASSES = (
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'kobo.django.auth.middleware.LimitedRemoteUserMiddleware',
-    'kobo.hub.middleware.WorkerMiddleware',
-)
+if VERSION[0:3] < (1, 10, 0):
+    MIDDLEWARE_CLASSES = (
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'kobo.django.auth.middleware.LimitedRemoteUserMiddleware',
+        'kobo.hub.middleware.WorkerMiddleware',
+    )
+if VERSION[0:3] >= (1, 10, 0):
+    MIDDLEWARE = (
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'kobo.django.auth.middleware.LimitedRemoteUserMiddleware',
+        'kobo.hub.middleware.WorkerMiddleware',
+    )
+
 
 INSTALLED_APPS = (
     'django.contrib.contenttypes',

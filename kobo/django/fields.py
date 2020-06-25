@@ -59,7 +59,7 @@ class StateEnumField(models.IntegerField):
         else:
             return self.get_default()
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection, context=None):
         if value is None:
             return None
 
@@ -108,8 +108,10 @@ class StateEnumField(models.IntegerField):
         # it will be consumed more than once.
         if callable(value):
             value = CallableChoiceIterator(value)
-        else:
+        elif value is not None:
             value = list(value)
+        else:
+            value = []
 
         self._choices = self.widget.choices = value
 
@@ -173,7 +175,7 @@ class JSONField(models.TextField):
         self.human_readable = kwargs.pop('human_readable', False)
         return super(JSONField, self).__init__(*args, **kwargs)
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection, context=None):
         if not isinstance(value, six.string_types):
             return value
 

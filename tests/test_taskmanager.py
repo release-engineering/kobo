@@ -239,7 +239,7 @@ class TestTaskManager(django.test.TransactionTestCase):
             channel=self._channel,
             owner=self._user,
             method='DummyForkTask',
-            timeout=-1, # task will always timeout with negative value
+            timeout=0,
             state=TASK_STATES['FREE'],
         )
 

@@ -35,4 +35,4 @@ def form_view(request, id=None):
         else:
             form = ModifyForm()
 
-    return render_to_response('test.html', {'form': form}, context_instance = RequestContext(request))
+    return render(request, 'test.html', {'form': form})

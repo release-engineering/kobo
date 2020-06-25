@@ -13,6 +13,7 @@ from django.contrib.sessions.models import Session
 
 from kobo.django.auth.krb5 import Krb5RemoteUserBackend
 from kobo.django.django_version import django_version_ge
+from kobo.django.helpers import call_if_callable
 
 
 __all__ = (
@@ -30,7 +31,7 @@ def renew_session(request):
     """
 
     request.session.modified = True
-    return not request.user.is_authenticated()
+    return not call_if_callable(request.user.is_authenticated)
 
 
 def login_password(request, username, password):

@@ -20,6 +20,7 @@ UPLOAD_STATES = Enum(
 )
 
 
+@six.python_2_unicode_compatible
 class FileUpload(models.Model):
     owner       = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name        = models.CharField(max_length=255)
@@ -51,7 +52,7 @@ class FileUpload(models.Model):
     def get_full_path(self):
         return os.path.abspath(os.path.join(self.target_dir, self.name))
 
-    def __unicode__(self):
+    def __str__(self):
         return six.text_type(os.path.join(self.target_dir, self.name))
 
     def save(self, *args, **kwargs):

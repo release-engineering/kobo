@@ -24,7 +24,7 @@ matrix:
   - python: "3.6"
     env: TOXENV=py36-django18 DEPLOY=1
   - python: "3.7"
-    env: TOXENV=py37-django111
+    env: TOXENV=py37-django3
   - python: "3.7"
     env: TOXENV=py37-cov-travis
 

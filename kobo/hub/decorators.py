@@ -5,12 +5,13 @@ import socket
 
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from kobo.decorators import decorator_with_args
+from kobo.django.helpers import call_if_callable
 from kobo.django.xmlrpc.decorators import *
 
 
 def validate_worker(func):
     def _new_func(request, *args, **kwargs):
-        if not request.user.is_authenticated():
+        if not call_if_callable(request.user.is_authenticated):
             raise PermissionDenied("Login required.")
 
         if getattr(request, 'worker', None) is None:

@@ -5,6 +5,7 @@ from .workflow import workflow
 import six
 
 
+@six.python_2_unicode_compatible
 class SimpleState(models.Model):
     state = StateEnumField(workflow, default="NEW", null=False)
     comment = models.TextField(null=True, blank=True)
@@ -14,5 +15,5 @@ class SimpleState(models.Model):
         if self.state._to:
             self.state.change_state(None, commit=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return six.text_type(self.state._current_state)

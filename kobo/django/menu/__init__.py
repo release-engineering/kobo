@@ -90,10 +90,10 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 import six
 
 from six.moves import range
+from six import python_2_unicode_compatible
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.encoding import python_2_unicode_compatible
 from kobo.django.django_version import django_version_ge
 if django_version_ge('1.10.0'):
     from django.urls import reverse
