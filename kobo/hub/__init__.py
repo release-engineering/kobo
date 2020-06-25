@@ -30,5 +30,5 @@ else:
     middleware_var = "MIDDLEWARE_CLASSES"
 
 for var, value in [(middleware_var, "kobo.hub.middleware.WorkerMiddleware")]:
-    if not hasattr(settings, var) or value not in getattr(settings, var, []):
+    if value not in (getattr(settings, var, None) or []):
         raise ImproperlyConfigured("'%s' in '%s' is missing in project settings. It must be set to run kobo.hub app." % (value, var))
