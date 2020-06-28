@@ -24,9 +24,11 @@ for var in ["TASK_DIR", "UPLOAD_DIR"]:
         raise ImproperlyConfigured("Invalid permissions on '%s'." % dir_path)
 
 
-if django_version_ge("1.10.0"):
+if getattr(settings, "MIDDLEWARE", None) is not None:
+    # Settings defines Django>=1.10 style middleware, check that
     middleware_var = "MIDDLEWARE"
 else:
+    # Legacy
     middleware_var = "MIDDLEWARE_CLASSES"
 
 for var, value in [(middleware_var, "kobo.hub.middleware.WorkerMiddleware")]:
