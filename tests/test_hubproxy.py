@@ -156,3 +156,13 @@ def test_login_gssapi_principal_needs_keytab(requests_session):
     logger.debug.assert_called_with(
         "Failed to create new session: Cannot specify a principal without a keytab"
     )
+
+
+def test_no_auto_logout(requests_session):
+    """auto_logout argument warns of deprecation"""
+    conf = PyConfigParser()
+    conf.load_from_dict({"HUB_URL": 'https://example.com/hub'})
+
+    transport = FakeTransport()
+    with pytest.deprecated_call():
+        HubProxy(conf, transport=transport, auto_logout=True)
