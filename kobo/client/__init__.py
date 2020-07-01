@@ -72,6 +72,7 @@ import os
 import base64
 import hashlib
 import ssl
+import warnings
 import six.moves.urllib.parse as urlparse
 from six.moves import xmlrpc_client as xmlrpclib
 
@@ -117,7 +118,7 @@ class ClientCommand(kobo.cli.Command):
 class HubProxy(object):
     """A Hub client (thin ServerProxy wrapper)."""
 
-    def __init__(self, conf, client_type=None, logger=None, transport=None, auto_logout=True, **kwargs):
+    def __init__(self, conf, client_type=None, logger=None, transport=None, auto_logout=None, **kwargs):
         self._conf = kobo.conf.PyConfigParser()
         self._hub = None
 
@@ -136,9 +137,11 @@ class HubProxy(object):
         self._client_type = client_type or "client"
         self._hub_url = self._conf["HUB_URL"]
         self._auth_method = self._conf["AUTH_METHOD"]
-        self._auto_logout = auto_logout
         self._logger = logger
         self._logged_in = False
+
+        if auto_logout is not None:
+            warnings.warn("auto_logout is deprecated and has no effect", DeprecationWarning)
 
         if transport is not None:
             self._transport = transport
@@ -166,15 +169,6 @@ class HubProxy(object):
         except Exception as ex:
             self._logger and self._logger.warn("Authentication failed")
             raise
-
-    def __del__(self):
-        if hasattr(self._transport, "retry_count"):
-            self._transport.retry_count = 0
-        if getattr(self, "_auto_logout", False) and self._logged_in:
-            try:
-                self._logout()
-            except:
-                pass
 
     def __getattr__(self, name):
         try:

@@ -1,6 +1,7 @@
 import pytest
 import gssapi
 import mock
+import sys
 
 from kobo.xmlrpc import SafeCookieTransport
 from kobo.conf import PyConfigParser
@@ -25,8 +26,17 @@ class FakeTransport(SafeCookieTransport):
 
     Subclasses the real SafeCookieTransport so we get a real CookieJar.
     """
+    def __init__(self, *args, **kwargs):
+        # note: py2 transport classes do not subclass object
+        if sys.version_info[0] < 3:
+            SafeCookieTransport.__init__(self, *args, **kwargs)
+        else:
+            super().__init__(*args, **kwargs)
+
+        self.fake_transport_calls = []
 
     def request(self, host, path, request, verbose=False):
+        self.fake_transport_calls.append((path, request))
         return []
 
 
@@ -156,3 +166,28 @@ def test_login_gssapi_principal_needs_keytab(requests_session):
     logger.debug.assert_called_with(
         "Failed to create new session: Cannot specify a principal without a keytab"
     )
+
+
+def test_no_auto_logout(requests_session):
+    """auto_logout argument warns of deprecation"""
+    conf = PyConfigParser()
+    conf.load_from_dict({"HUB_URL": 'https://example.com/hub'})
+
+    transport = FakeTransport()
+    with pytest.deprecated_call():
+        HubProxy(conf, transport=transport, auto_logout=True)
+
+
+def test_proxies_to_xmlrpc(requests_session):
+    """HubProxy proxies to underlying XML-RPC ServerProxy"""
+    conf = PyConfigParser()
+    conf.load_from_dict({"HUB_URL": 'https://example.com/hub'})
+
+    transport = FakeTransport()
+    proxy = HubProxy(conf, transport=transport)
+
+    proxy.some_obj.some_method()
+
+    # Last call should have invoked the method I requested
+    (_, request_xml) = transport.fake_transport_calls[-1]
+    assert b'some_obj.some_method' in request_xml
