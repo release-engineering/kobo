@@ -31,6 +31,16 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.16.0
+-----------
+
+### REMOVED
+
+- The HubProxy auto_logout feature was removed. This feature was unreliable and
+  could occasionally result in deadlocks, due to the usage of finalizers.
+  It is recommended to call `logout()` from a `finally` block in cases where it's
+  important to ensure a logout.
+
 kobo 0.15.1
 -----------
 
