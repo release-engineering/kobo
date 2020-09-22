@@ -126,6 +126,20 @@ class TestXmlRpcClient(django.test.TransactionTestCase):
         info = client.get_worker_info(_make_request(), 'non-existent')
         self.assertEqual(info, {})
 
+    def test_get_worker_info_no_auth(self):
+        # Should be permissible if anonymous - no exception raised
+        client.get_worker_info(_make_request(
+            is_authenticated=False,
+            is_superuser=False,
+        ), 'worker')
+
+    def test_get_worker_info_if_authenticated_but_not_admin(self):
+        # Should be permissible if authenticated, but not admin - no exception raised
+        client.get_worker_info(_make_request(
+            is_authenticated=False,
+            is_superuser=False,
+        ), 'worker')
+
     def test_task_info(self):
         task_id = Task.create_task(self._user.username, 'label', 'method')
         task_info = client.task_info(_make_request(), task_id)
@@ -321,13 +335,6 @@ class TestXmlRpcClientAuthentication(django.test.TransactionTestCase):
                 is_superuser=False,
             ), 'worker')
 
-    def test_get_worker_info_raise_if_no_auth(self):
-        with self.assertRaises(PermissionDenied):
-            client.get_worker_info(_make_request(
-                is_authenticated=False,
-                is_superuser=False,
-            ), 'worker')
-
     def test_cancel_task_raise_if_no_auth(self):
         with self.assertRaises(PermissionDenied):
             client.cancel_task(_make_request(
@@ -366,13 +373,6 @@ class TestXmlRpcClientAuthentication(django.test.TransactionTestCase):
     def test_disable_worker_raise_if_authenticated_but_not_admin(self):
         with self.assertRaises(PermissionDenied):
             client.disable_worker(_make_request(
-                is_authenticated=False,
-                is_superuser=False,
-            ), 'worker')
-
-    def test_get_worker_info_raise_if_authenticated_but_not_admin(self):
-        with self.assertRaises(PermissionDenied):
-            client.get_worker_info(_make_request(
                 is_authenticated=False,
                 is_superuser=False,
             ), 'worker')
