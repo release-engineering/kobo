@@ -51,7 +51,6 @@ def disable_worker(request, worker_name):
     """
     models.Worker.objects.filter(name=worker_name).update(enabled=False)
 
-@admin_required
 def get_worker_info(request, worker_name):
     try:
         return models.Worker.objects.get(name=worker_name).export()
