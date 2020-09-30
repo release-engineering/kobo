@@ -19,6 +19,9 @@ PyConfigParser accepts following python-like syntax:
  - imports are supported:
    - from <file_without_suffix> import *
    - from <file_without_suffix> import var1, var2
+ - global variables which can be reached from imported files
+   if defined before the import.
+    - global variable
 """
 
 
@@ -80,7 +83,7 @@ class PyConfigParser(dict):
 
     get_dict_value = staticmethod(get_dict_value)
 
-    def __init__(self, config_file_suffix="conf", debug=False):
+    def __init__(self, config_file_suffix="conf", debug=False, global_variables=None):
         self._tok_number = None
         self._tok_value = None
         self._tok_begin = None
@@ -90,6 +93,8 @@ class PyConfigParser(dict):
         self._config_file_suffix = config_file_suffix
         self._debug = debug
         self._open_file = None
+        self._global_variables = list(global_variables.keys()) if global_variables else []
+        self.load_from_dict(global_variables)
         # list of config files in abspath, includes all imported config files
         self.opened_files = []
 
@@ -116,8 +121,10 @@ class PyConfigParser(dict):
         """Load data from a string."""
         if input_string:
             self._tokens = tokenize.generate_tokens(StringIO(input_string).readline)
-            for key, value in self._parse():
+            for key, value, is_global in self._parse():
                 self[key] = value
+                if is_global:
+                    self._global_variables.append(key)
 
     def load_from_dict(self, input_dict):
         """Load data from a dictionary."""
@@ -137,6 +144,13 @@ class PyConfigParser(dict):
                 self._get_from_import()
                 continue
 
+            if self._tok_value == "global":
+                is_global = True
+                # Move to next token.
+                self._get_token()
+            else:
+                is_global = False
+
             if keyword.iskeyword(self._tok_value):
                 raise SyntaxError("Cannot assign to a python keyword: %s" % self._tok_value)
 
@@ -146,11 +160,15 @@ class PyConfigParser(dict):
             self._assert_token(("NAME", ))
             key = self._tok_value
 
-            self._get_token()
-            self._assert_token(("OP", "="))
+            # For global variable, use None as a value.
+            if is_global:
+                value = None
+            else:
+                self._get_token()
+                self._assert_token(("OP", "="))
 
-            value = self._get_value()
-            yield key, value
+                value = self._get_value()
+            yield key, value, is_global
 
     def _assert_token(self, *args):
         """Check if token has proper name and value.
@@ -274,9 +292,21 @@ class PyConfigParser(dict):
             self._get_token(skip_newline=False)
             self._skip_commas(skip_newline=False)
 
-        imported_config = self.__class__(config_file_suffix=self._config_file_suffix, debug=self._debug)
+        # Prepare a dict with values of global variables so it can be
+        # passed down to imported config.
+        global_variables = dict(
+            (k, self[k]) for k in self.keys() if k in self._global_variables
+        )
+
+        imported_config = self.__class__(
+            config_file_suffix=self._config_file_suffix,
+            debug=self._debug,
+            global_variables=global_variables,
+        )
         imported_config.load_from_file(file_name)
         self.opened_files.extend(imported_config.opened_files)
+        self._global_variables.extend(imported_config._global_variables)
+        self._global_variables = list(set(self._global_variables))
 
         if "*" in imports:
             self.load_from_dict(imported_config)

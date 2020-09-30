@@ -129,6 +129,27 @@ class TestImport(unittest.TestCase):
         self.assertTrue(self.file in self.conf.opened_files)
         self.assertTrue(os.path.join(self.dir, 'base.conf') in self.conf.opened_files)
 
+    def test_global_variables(self):
+        with open(os.path.join(self.dir, 'base.conf'), 'w') as f:
+            print('a = c', file=f)
+            print('d = 5', file=f)
+            print('global x', file=f)
+            print('x = 6', file=f)
+
+        with open(self.file, 'w') as f:
+            print('global c', file=f)
+            print('global d', file=f)
+            print('global f', file=f)
+            print('c = 42', file=f)
+            print('d = 42', file=f)
+            print('from base import * # really', file=f)
+
+        self.conf.load_from_file(self.file)
+        self.assertEqual(self.conf["a"], 42)
+        self.assertEqual(self.conf["d"], 5)
+        self.assertEqual(self.conf["x"], 6)
+        self.assertEqual(self.conf["f"], None)
+
 
 class TestUndefinedVariable(unittest.TestCase):
     def setUp(self):
