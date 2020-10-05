@@ -31,6 +31,20 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.17.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- Introduced the concept of global variables to `kobo.conf.PyConfigParser`
+  This feature allows a variable to be declared in one file and overridden
+  in a subsequently imported file.
+
+### CHANGES
+
+- The `client.get_worker_info` XML-RPC method no longer requires authentication.
+  It was formerly restricted to superusers only.
+
 kobo 0.16.0
 -----------
 
