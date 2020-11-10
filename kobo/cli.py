@@ -76,7 +76,7 @@ from six.moves.xmlrpc_client import Fault
 from kobo.plugins import Plugin, PluginContainer
 from kobo.shortcuts import force_list
 import six
-
+import os.path
 
 __all__ = (
     "Command",
@@ -197,7 +197,9 @@ class CommandOptionParser(optparse.OptionParser):
             prog=None,
             command_container=None,
             default_command="help",
-            add_username_password_options=False):
+            add_username_password_options=False,
+            default_profile="",
+            configuration_directory="/etc"):
 
         usage = usage or "%prog <command> [args] [--help]"
         self.container = command_container
@@ -208,11 +210,21 @@ class CommandOptionParser(optparse.OptionParser):
         optparse.OptionParser.__init__(self, usage, option_list, option_class, version, conflict_handler, description, formatter, add_help_option, prog)
 
         if add_username_password_options:
-            option_list = [
-                optparse.Option("--username", help="specify user"),
-                optparse.Option("--password", help="specify password"),
-            ]
-            self._populate_option_list(option_list, add_help=False)
+            self._add_opts(
+                ["--username", "specify user"],
+                ["--password", "specify password"]
+            )
+
+        if default_profile:
+            self.default_profile = default_profile
+
+            self._add_opts(
+                ["--profile", "specify profile (default: {0})".format(self.default_profile)]
+            )
+        else:
+            self.default_profile = ""
+
+        self.configuration_directory = configuration_directory
 
     def print_help(self, file=None, admin=False):
         if file is None:
@@ -272,8 +284,26 @@ class CommandOptionParser(optparse.OptionParser):
         """parse arguments and run a command"""
         cmd, cmd_opts, cmd_args = self.parse_args(args, values)
         cmd_kwargs = cmd_opts.__dict__
+
+        # this block should only be evaluated if default_profile has been set at instantiation
+        if 'profile' in cmd_kwargs:
+          self._load_profile(cmd_kwargs['profile'])
+
         cmd.run(*cmd_args, **cmd_kwargs)
 
+    def _add_opts(self, *args):
+        """populates one or more options with their respective help texts"""
+        option_list = [optparse.Option(option, help=help_text) for option, help_text in args]
+
+        self._populate_option_list(option_list=option_list, add_help=False)
+
+    def _load_profile(self, profile):
+        """load configuration file under location <CONFIGURATION_DIRECTORY>/<PROFILE>.conf"""
+        if not profile:
+            profile = self.default_profile
+
+        configuration_file = os.path.join(self.configuration_directory, '{0}.conf'.format(profile))
+        self.container.conf.load_from_file(configuration_file)
 
 class Help(Command):
     """show this help message and exit"""
