@@ -97,7 +97,7 @@ class BaseClientCommandContainer(kobo.cli.CommandContainer):
     def __init__(self):
         self.conf = kobo.conf.PyConfigParser()
 
-    def load(self, conf, **kwargs):
+    def load_config_file(self, conf, **kwargs):
         self.conf.load_from_conf(conf)
         self.conf.load_from_dict(kwargs)
 
@@ -105,7 +105,7 @@ class BaseClientCommandContainer(kobo.cli.CommandContainer):
 class ClientCommandContainer(BaseClientCommandContainer):
     def __init__(self, conf, **kwargs):
         super().__init__()
-        self.load(conf, **kwargs)
+        self.load_config_file(conf, **kwargs)
 
     def set_hub(self, username=None, password=None):
         if username:
