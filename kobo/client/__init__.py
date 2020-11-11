@@ -94,18 +94,9 @@ __all__ = (
 
 
 class BaseClientCommandContainer(kobo.cli.CommandContainer):
+    """A basic CommandContainer class that implements methods needed for CommandOptionParser"""
     def __init__(self):
         self.conf = kobo.conf.PyConfigParser()
-
-    def load_config_file(self, conf, **kwargs):
-        self.conf.load_from_conf(conf)
-        self.conf.load_from_dict(kwargs)
-
-
-class ClientCommandContainer(BaseClientCommandContainer):
-    def __init__(self, conf, **kwargs):
-        super().__init__()
-        self.load_config_file(conf, **kwargs)
 
     def set_hub(self, username=None, password=None):
         if username:
@@ -116,6 +107,14 @@ class ClientCommandContainer(BaseClientCommandContainer):
             self.conf["PASSWORD"] = password
 
         self.hub = HubProxy(conf=self.conf)
+
+
+class ClientCommandContainer(BaseClientCommandContainer):
+    """A general-purpose subclass of BaseClientCommandContainer that loads configurations immediately at instantiation"""
+    def __init__(self, conf, **kwargs):
+        super().__init__()
+        self.conf.load_from_conf(conf)
+        self.conf.load_from_dict(kwargs)
 
 
 class ClientCommand(kobo.cli.Command):
