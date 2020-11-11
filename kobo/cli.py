@@ -208,10 +208,10 @@ class CommandOptionParser(optparse.OptionParser):
         optparse.OptionParser.__init__(self, usage, option_list, option_class, version, conflict_handler, description, formatter, add_help_option, prog)
 
         if add_username_password_options:
-            self.add_opts([
+            self._add_opts(
                 ["--username", "specify user"],
                 ["--password", "specify password"]
-            ])
+            )
 
     def print_help(self, file=None, admin=False):
         if file is None:
@@ -273,14 +273,10 @@ class CommandOptionParser(optparse.OptionParser):
         cmd_kwargs = cmd_opts.__dict__
         cmd.run(*cmd_args, **cmd_kwargs)
 
-    def add_opts(self, opts_list):
-        option_list = []
-        for opts in opts_list:
-            option, help_text = opts
-            option_list.append(optparse.Option(option, help=help_text))
+    def _add_opts(self, *args):
+        option_list = [optparse.Option(option, help=help_text) for option, help_text in args]
 
         self._populate_option_list(option_list=option_list, add_help=False)
-
 
 class Help(Command):
     """show this help message and exit"""
