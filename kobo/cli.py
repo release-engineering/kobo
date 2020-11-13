@@ -285,16 +285,20 @@ class CommandOptionParser(optparse.OptionParser):
         cmd, cmd_opts, cmd_args = self.parse_args(args, values)
         cmd_kwargs = cmd_opts.__dict__
 
+        # this block should only be evaluated if default_profile has been set at instantiation
         if 'profile' in cmd_kwargs:
           self._load_profile(cmd_kwargs['profile'])
+
         cmd.run(*cmd_args, **cmd_kwargs)
 
     def _add_opts(self, *args):
+        """populates one or more options with their respective help texts"""
         option_list = [optparse.Option(option, help=help_text) for option, help_text in args]
 
         self._populate_option_list(option_list=option_list, add_help=False)
 
     def _load_profile(self, profile):
+        """load configuration file under location <CONFIGURATION_DIRECTORY>/<PROFILE>.conf"""
         if not profile:
             profile = self.default_profile
 
