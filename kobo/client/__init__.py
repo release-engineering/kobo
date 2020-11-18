@@ -84,6 +84,7 @@ from kobo.exceptions import AuthenticationError, ImproperlyConfigured
 
 
 __all__ = (
+    "BaseClientCommandContainer",
     "CommandContainer",
     "CommandOptionParser",
     "ClientCommand",
@@ -112,7 +113,7 @@ class BaseClientCommandContainer(kobo.cli.CommandContainer):
 class ClientCommandContainer(BaseClientCommandContainer):
     """A general-purpose subclass of BaseClientCommandContainer that loads configurations immediately at instantiation"""
     def __init__(self, conf, **kwargs):
-        super().__init__()
+        super(ClientCommandContainer, self).__init__()
         self.conf.load_from_conf(conf)
         self.conf.load_from_dict(kwargs)
 
