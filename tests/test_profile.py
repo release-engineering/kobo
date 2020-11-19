@@ -17,7 +17,7 @@ AUTH_METHOD = "krbv"
 '''
 
 
-class Test(unittest.TestCase):
+class TestBaseClientCommandContainer(unittest.TestCase):
     def setUp(self):
         self.command_container = BaseClientCommandContainer()
 
@@ -55,7 +55,7 @@ class Test(unittest.TestCase):
         self.assertEqual(configuration_file, "/etc/client/default-profile.conf")
 
 
-class TestConfFromFile(unittest.TestCase):
+class TestClientCommandContainer(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.mkdtemp()
         self.conf = PyConfigParser()
