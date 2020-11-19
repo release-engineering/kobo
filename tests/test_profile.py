@@ -3,18 +3,23 @@
 
 import unittest2 as unittest
 import os
+import tempfile
+import shutil
 
-from kobo.client import BaseClientCommandContainer
+from kobo.client import BaseClientCommandContainer, ClientCommandContainer
 from kobo.cli import CommandOptionParser
+from kobo.conf import PyConfigParser
+
+TEST_CONFIG = '''
+HUB_URL = "https://localhost/hub/xmlrpc"
+
+AUTH_METHOD = "krbv"
+'''
 
 
-class TestCommandContainer(BaseClientCommandContainer):
-    pass
-
-
-class TestConf(unittest.TestCase):
+class Test(unittest.TestCase):
     def setUp(self):
-        self.command_container = TestCommandContainer()
+        self.command_container = BaseClientCommandContainer()
 
     def test_profile_option_unset(self):
         parser = CommandOptionParser(command_container=self.command_container)
@@ -48,3 +53,38 @@ class TestConf(unittest.TestCase):
 
         self.assertEqual(parser.configuration_directory, "/etc/client")
         self.assertEqual(configuration_file, "/etc/client/default-profile.conf")
+
+
+class TestConfFromFile(unittest.TestCase):
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.conf = PyConfigParser()
+
+        self.file = os.path.join(self.dir, 'test.conf')
+
+        with open(self.file, 'w') as f:
+            f.write(TEST_CONFIG)
+
+        self.conf.load_from_file(self.file)
+
+    def tearDown(self):
+        shutil.rmtree(self.dir)
+
+    def test_config_from_file(self):
+        container = ClientCommandContainer(self.conf)
+
+        values = {
+            'HUB_URL': 'https://localhost/hub/xmlrpc',
+            'AUTH_METHOD': 'krbv'
+        }
+        self.assertEqual(container.conf, values)
+
+    def test_config_from_kwargs(self):
+        container = ClientCommandContainer(self.conf, USERNAME='testuser')
+
+        values = {
+            'HUB_URL': 'https://localhost/hub/xmlrpc',
+            'AUTH_METHOD': 'krbv',
+            'USERNAME': 'testuser'
+        }
+        self.assertEqual(container.conf, values)
