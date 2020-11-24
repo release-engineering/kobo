@@ -93,6 +93,7 @@ class POSTTransport(object):
                 value,
             ))
         variables_data = "\r\n".join(variables)
+        variables_data = variables_data.encode()
         content_length += len(variables_data)
         content_length += 2 # '\r\n'
 
@@ -105,12 +106,14 @@ class POSTTransport(object):
                 "",
                 "", # this adds extra newline before file data
             ))
+            file_data = file_data.encode()
             files.append((file_name, file_data))
             content_length += len(file_data)
             content_length += os.path.getsize(file_name)
             content_length += 2 # '\r\n'
 
         footer_data = "\r\n".join(("--%s--" % self._boundary, ""))
+        footer_data = footer_data.encode()
         content_length += len(footer_data)
         content_type = "multipart/form-data; boundary=" + self._boundary
 
@@ -124,16 +127,16 @@ class POSTTransport(object):
         request.putheader("content-length", str(content_length))
         request.endheaders()
         request.send(variables_data)
-        request.send("\r\n")
+        request.send(b"\r\n")
         for file_name, file_data in files:
             request.send(file_data)
-            file_obj = open(file_name, "r")
+            file_obj = open(file_name, "rb")
             while 1:
                 chunk = file_obj.read(1024**2)
                 if not chunk:
                     break
                 request.send(chunk)
-            request.send("\r\n")
+            request.send(b"\r\n")
 
         request.send(footer_data)
         response = request.getresponse()
