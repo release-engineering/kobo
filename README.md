@@ -31,12 +31,28 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.18.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- The kobo client now supports a `--profile` argument to select an alternative
+  configuration file. To enable this functionality, users of kobo should provide
+  a `default_profile` and `configuration_directory` when creating a
+  `CommandOptionParser`.
+
+### BUG FIXES
+
+- Fixed a python3 compatibility issue in kobo.http.
+- Fixed a crash bug for projects using the default `XMLRPC_TEMPLATE` for the
+  XML-RPC help page with Django > 1.
+
 kobo 0.17.0
 -----------
 
 ### FEATURES & IMPROVEMENTS
 
-- Introduced the concept of global variables to `kobo.conf.PyConfigParser`
+- Introduced the concept of global variables to `kobo.conf.PyConfigParser`.
   This feature allows a variable to be declared in one file and overridden
   in a subsequently imported file.
 
