@@ -206,6 +206,8 @@ class TestXmlRpcClient(django.test.TransactionTestCase):
         new_id = client.resubmit_task(_make_request(self._user), task_id, force=False)
         self.assertTrue(new_id > 0)
         self.assertNotEqual(task_id, new_id)
+        task = Task.objects.get(id=new_id)
+        self.assertEqual(task.priority, 10)
 
     def test_resubmit_task_do_not_failed(self):
         task_id = Task.create_task(self._user.username, 'task', 'method', state=TASK_STATES['OPEN'])
@@ -222,6 +224,12 @@ class TestXmlRpcClient(django.test.TransactionTestCase):
     def test_resubmit_task_non_existent(self):
         with self.assertRaises(Task.DoesNotExist):
             client.resubmit_task(_make_request(), 999)
+
+    def test_resubmit_task_set_priority(self):
+        task_id = Task.create_task(self._user.username, 'task', 'method', state=TASK_STATES['TIMEOUT'])
+        new_id = client.resubmit_task(_make_request(self._user), task_id, force=False, priority=19)
+        task = Task.objects.get(id=new_id)
+        self.assertEqual(task.priority, 19)
 
     def test_list_workers_enabled(self):
         Worker.objects.create(

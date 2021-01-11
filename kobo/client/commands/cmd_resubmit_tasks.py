@@ -17,6 +17,7 @@ class Resubmit_Tasks(ClientCommand):
         self.parser.usage = "%%prog %s task_id [task_id...]" % self.normalized_name
         self.parser.add_option("--force", action="store_true", help="Resubmit also tasks which are closed properly.")
         self.parser.add_option("--nowait", default=False, action="store_true", help="Don't wait until tasks finish.")
+        self.parser.add_option("--priority", help="priority")
 
 
     def run(self, *args, **kwargs):
@@ -25,6 +26,8 @@ class Resubmit_Tasks(ClientCommand):
 
         username = kwargs.pop("username", None)
         password = kwargs.pop("password", None)
+        force = kwargs.pop("force", False)
+        priority = kwargs.pop("priority", None)
 
         tasks = args
 
@@ -33,7 +36,7 @@ class Resubmit_Tasks(ClientCommand):
         failed = False
         for task_id in tasks:
             try:
-                resubmitted_id = self.hub.client.resubmit_task(task_id, kwargs.pop("force", False))
+                resubmitted_id = self.hub.client.resubmit_task(task_id, force, priority)
                 resubmitted_tasks.append(resubmitted_id)
             except Exception as ex:
                 failed = True
