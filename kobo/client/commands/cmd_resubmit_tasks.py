@@ -36,7 +36,7 @@ class Resubmit_Tasks(ClientCommand):
         failed = False
         for task_id in tasks:
             try:
-                resubmitted_id = self.hub.client.resubmit_task(task_id, *[arg for arg in [force, priority] if arg])
+                resubmitted_id = self.hub.client.resubmit_task(task_id, force, *[arg for arg in [priority] if arg is not None])
                 resubmitted_tasks.append(resubmitted_id)
             except Exception as ex:
                 failed = True
