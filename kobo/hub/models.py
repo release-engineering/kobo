@@ -893,7 +893,7 @@ WHERE
         """Is the task successfuly finished? Task state must be closed."""
         return self.state in FAILED_STATES
 
-    def resubmit_task(self, user, force=False):
+    def resubmit_task(self, user, force=False, priority=None):
         """Resubmit failed/canceled top-level task."""
         if not user.is_superuser:
             if self.owner.username != user.username:
@@ -919,7 +919,7 @@ WHERE
             "worker_name": None,
             "arch_name": self.arch.name,
             "channel_name": self.channel.name,
-            "priority": self.priority,
+            "priority": priority if priority is not None else self.priority,
             "weight": self.weight,
             "exclusive": self.exclusive,
             "resubmitted_by": user,
