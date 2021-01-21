@@ -31,6 +31,22 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.19.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- The `resubmit-tasks` now supports adjusting the priority of the resubmitted task.
+  The client and server must both upgrade to kobo 0.19.0 in order to use this feature.
+
+
+### BUG FIXES
+
+- Fixed backwards-incompatible change in kobo 0.18.0: if a kobo-derived client
+  provided its own `--profile` argument, this could clash with the new argument
+  in kobo.
+
+
 kobo 0.18.0
 -----------
 
