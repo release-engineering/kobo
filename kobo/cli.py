@@ -286,7 +286,7 @@ class CommandOptionParser(optparse.OptionParser):
         cmd_kwargs = cmd_opts.__dict__
 
         # this block should only be evaluated if default_profile has been set at instantiation
-        if 'profile' in cmd_kwargs:
+        if self.default_profile and 'profile' in cmd_kwargs:
           self._load_profile(cmd_kwargs['profile'])
 
         cmd.run(*cmd_args, **cmd_kwargs)
