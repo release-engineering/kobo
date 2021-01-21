@@ -46,7 +46,8 @@ class StateChoiceFormField(django.forms.fields.TypedChoiceField):
 class JSONWidget(django.forms.widgets.Textarea):
     def render(self, name, value, attrs=None, renderer=None):
         if value is None: value = ''
-        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs = self.build_attrs(attrs)
+        final_attrs['name'] = name
 
         if not isinstance(value, six.string_types):
             value = json.dumps(value)
