@@ -309,9 +309,9 @@ class Worker(models.Model):
 class TaskManager(models.Manager):
     """Custom query manager for Task model."""
 
-    def get_query_set(self):
+    def get_queryset(self):
         """Redefine default query set to exclude archived tasks."""
-        return models.Manager.get_query_set(self).filter(archive=False)
+        return models.Manager.get_queryset(self).filter(archive=False)
 
     def get_and_verify(self, task_id, worker):
         return self.get(id=task_id, worker=worker)
