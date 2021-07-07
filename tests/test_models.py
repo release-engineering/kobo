@@ -141,6 +141,17 @@ class TestWorker(django.test.TransactionTestCase):
         self.assertEquals(data['task_count'], 0)
         self.assertEquals(data['current_load'], 0)
         self.assertEquals(data['version'], '1.0.0')
+        self.assertIsNone(data['last_seen'])
+
+    def test_export_last_seen(self):
+        worker = Worker.objects.create(worker_key='worker', name='Worker')
+
+        # Force a known value for timestamp.
+        with patch('os.stat') as mock_stat:
+            mock_stat.return_value.st_mtime = 1625695768
+            data = worker.export()
+
+        self.assertEquals(data['last_seen'], '2021-07-07T22:09:28Z')
 
     def test_export_with_arch_and_channel(self):
         worker = Worker.objects.create(worker_key='worker', name='Worker')
@@ -226,6 +237,19 @@ class TestWorker(django.test.TransactionTestCase):
 
         tasks = worker.assigned_tasks()
         self.assertEquals(len(tasks), 1)
+
+    def test_last_seen(self):
+        worker = Worker.objects.create(worker_key='worker', name='Worker')
+
+        # Initially, there should not be any last_seen.
+        self.assertIsNone(worker.last_seen)
+
+        # If I update it...
+        worker.update_last_seen()
+
+        # Now there should be a recent value (some fuzz allowed)
+        last_seen_delta = datetime.utcnow() - worker.last_seen
+        self.assertTrue(abs(last_seen_delta) < timedelta(seconds=5))
 
     @pytest.mark.xfail(reason='Check issue #68 for more info (https://git.io/fxSZ2).')
     def test_update_worker(self):
