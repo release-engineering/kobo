@@ -31,6 +31,15 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.20.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- kobo workers now maintain a `last_seen` field which may be used to monitor the
+  availability of workers.
+
+
 kobo 0.19.0
 -----------
 
