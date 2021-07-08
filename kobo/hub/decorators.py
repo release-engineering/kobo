@@ -17,6 +17,8 @@ def validate_worker(func):
         if getattr(request, 'worker', None) is None:
             raise SuspiciousOperation("User doesn't match any worker: %s" % request.user.username)
 
+        request.worker.update_last_seen()
+
         return func(request, *args, **kwargs)
 
     _new_func.__name__ = func.__name__

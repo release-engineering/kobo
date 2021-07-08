@@ -13,7 +13,14 @@ for var in ["XMLRPC_METHODS", "TASK_DIR", "UPLOAD_DIR"]:
         raise ImproperlyConfigured("'%s' is missing in project settings. It must be set to run kobo.hub app." % var)
 
 
-for var in ["TASK_DIR", "UPLOAD_DIR"]:
+if not hasattr(settings, "WORKER_DIR"):
+    # This setting introduced in 2021 can be defaulted to ensure backwards compatibility
+    # with existing config files.
+    worker_dir = os.path.join(os.path.dirname(settings.TASK_DIR), 'worker')
+    setattr(settings, "WORKER_DIR", worker_dir)
+
+
+for var in ["TASK_DIR", "UPLOAD_DIR", "WORKER_DIR"]:
     dir_path = getattr(settings, var)
     if not os.path.isdir(dir_path):
         try:

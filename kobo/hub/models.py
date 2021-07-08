@@ -2,8 +2,10 @@
 
 from __future__ import print_function
 import os
+import errno
 import sys
 import datetime
+import base64
 import gzip
 import shutil
 import logging
@@ -226,6 +228,7 @@ class Worker(models.Model):
             "ready": self.ready,
             "task_count": self.task_count,
             "current_load": self.current_load,
+            "last_seen": self.last_seen_iso8601,
 
             # Add the hub version.
             # This can be used for taskd compatibility checking everytime a worker_info is updated.
@@ -247,6 +250,48 @@ class Worker(models.Model):
         """Return list of assigned tasks to this worker."""
         return Task.objects.assigned().filter(worker=self)
 
+    @property
+    def last_seen(self):
+        """Time of this worker's last communication with hub,
+        or None if unknown.
+
+        :rtype: datetime.datetime
+        """
+
+        try:
+            stat = os.stat(self._state_path)
+        except EnvironmentError as error:
+            if error.errno == errno.ENOENT:
+                return None
+            raise
+
+        return datetime.datetime.utcfromtimestamp(stat.st_mtime)
+
+    @property
+    def last_seen_iso8601(self):
+        """Time of this worker's last communication with hub
+        as ISO8601-formatted timestamp, or None if unknown.
+
+        Example: '2007-04-05T14:30Z'
+
+        :rtype: str
+        """
+        when = self.last_seen
+        if when:
+            return when.replace(microsecond=0).isoformat() + 'Z'
+
+    def update_last_seen(self):
+        """Mark worker as having communicated with hub at the current time."""
+        with open(self._state_path, 'w'):
+            pass
+
+    @property
+    def _state_path(self):
+        # Returns path to worker's state file.
+        # We don't know what characters may have been used in the worker name here,
+        # so it's base64 encoded first.
+        safe_name = base64.urlsafe_b64encode(self.name.encode('utf-8')).decode()
+        return os.path.join(settings.WORKER_DIR, safe_name)
 
     def update_worker(self, enabled, ready, task_count):
         """Update worker attributes. Return worker_info.
