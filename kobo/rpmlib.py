@@ -379,28 +379,18 @@ def get_keys_from_header(hdr):
     @rtype: str
     """
 
-    result = []
-    head_keys = []
+    result = set()
 
-    for field in head_header_tags:
+    for field in head_header_tags + body_header_tags:
         sigkey = get_header_field(hdr, field, decode=False)
         if sigkey:
-            head_keys.append(koji.get_sigpacket_key_id(sigkey).upper())
-
-    for field in body_header_tags:
-        sigkey = get_header_field(hdr, field, decode=False)
-        if sigkey:
-            key_id = koji.get_sigpacket_key_id(sigkey).upper()
-            if key_id in head_keys:
-                result.append(key_id)
-            else:
-                raise ValueError("%s key not found in head keys: %s" % (field, key_id))
+            result.add(koji.get_sigpacket_key_id(sigkey).upper())
 
     if len(result) > 1:
         raise ValueError("More than one key found: %s" % result)
 
     if len(result) == 1:
-        return result[0]
+        return result.pop()
 
 
 def get_digest_algo_from_header(hdr):
