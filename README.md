@@ -31,6 +31,16 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+
+kobo 0.20.1
+-----------
+
+### BUG FIXES
+
+- `kobo.rpmlib.get_keys_from_header` now correctly handles RPMs using header-only signing.
+  Also fixes `pkgset.SimpleRpmWrapper.signature`.
+
+
 kobo 0.20.0
 -----------
 
