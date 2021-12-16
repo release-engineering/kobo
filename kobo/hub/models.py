@@ -23,13 +23,14 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models, connection, transaction
-from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_delete
 import six
 
 import kobo.django.fields
 from kobo.client.constants import TASK_STATES, FINISHED_STATES, FAILED_STATES
 from kobo.shortcuts import random_string, read_from_file, save_to_file, run
+from kobo.django.compat import gettext_lazy as _
+
 
 LOG_BUFFER_SIZE = 2**20
 

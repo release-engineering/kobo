@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
 
-from django.utils.translation import ugettext_lazy as _
 from django.conf.urls import url
 from kobo.django.views.generic import ExtraListView
 from kobo.hub.views import ArchDetailView
 from kobo.hub.models import Arch
+from kobo.django.compat import gettext_lazy as _
+
 
 urlpatterns = [
     url(r"^$", ExtraListView.as_view(

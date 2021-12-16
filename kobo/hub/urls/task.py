@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 
-from django.utils.translation import ugettext_lazy as _
 from django.conf.urls import url
 from kobo.hub.models import TASK_STATES
 from kobo.hub.views import TaskListView, TaskDetail
 import kobo.hub.views
+from kobo.django.compat import gettext_lazy as _
 
 
 urlpatterns = [

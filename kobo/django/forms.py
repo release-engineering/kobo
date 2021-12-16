@@ -8,14 +8,14 @@ except ImportError:
 
 import django.forms.fields
 from django.core.exceptions import ValidationError
-from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.utils.html import conditional_escape
-from django.utils.translation import ugettext_lazy as _
 try:
     from django.forms.utils import flatatt
 except ImportError:
     from django.forms.util import flatatt
+
+from kobo.django.compat import gettext_lazy as _, force_str
 
 
 class StateChoiceFormField(django.forms.fields.TypedChoiceField):
@@ -52,7 +52,7 @@ class JSONWidget(django.forms.widgets.Textarea):
             value = json.dumps(value)
 
         return mark_safe(u'<textarea%s>%s</textarea>' % (flatatt(final_attrs),
-                conditional_escape(force_text(value))))
+                conditional_escape(force_str(value))))
 
 
 class JSONFormField(django.forms.fields.CharField):

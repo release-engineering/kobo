@@ -23,12 +23,13 @@ else:
 from django.http import HttpResponse, StreamingHttpResponse, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.template import RequestContext
-from django.utils.translation import ugettext_lazy as _
 from django.views.generic import RedirectView
 
 from kobo.hub.models import Arch, Channel, Task
 from kobo.hub.forms import TaskSearchForm
 from kobo.django.views.generic import ExtraDetailView, SearchView
+from kobo.django.compat import gettext_lazy as _
+
 
 # max log size returned in HTML-embedded view
 HTML_LOG_MAX_SIZE = getattr(settings, "HTML_LOG_MAX_SIZE", (1024 ** 2) * 2)
