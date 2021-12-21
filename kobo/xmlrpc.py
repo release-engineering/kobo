@@ -695,7 +695,11 @@ def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, w
     chunk_start = int(chunk_start)
     chunk_len = int(chunk_len)
     decode_func = base64.decodebytes if hasattr(base64, "decodebytes") else base64.decodestring
-    chunk = decode_func(encoded_chunk)
+
+    if isinstance(encoded_chunk, xmlrpclib.Binary):
+        chunk = decode_func(encoded_chunk.data)
+    else:
+        chunk = decode_func(encoded_chunk)
 
     if chunk_len not in (-1, len(chunk)):
         raise ValueError("Chunk length doesn't match.")
