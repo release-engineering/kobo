@@ -31,6 +31,13 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.20.2
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- Improved Django 4.x compatibility
+
 
 kobo 0.20.1
 -----------
