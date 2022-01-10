@@ -2,9 +2,9 @@
 
 
 from django.conf.urls import url
-from django.utils.translation import ugettext_lazy as _
 from kobo.django.views.generic import ExtraListView, ExtraDetailView
 from kobo.hub.models import Worker
+from kobo.django.compat import gettext_lazy as _
 
 
 urlpatterns = [

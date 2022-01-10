@@ -3,7 +3,6 @@ from copy import copy
 import json
 import six
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
 from django.core import exceptions
 from django.utils.text import capfirst
 from django.forms.widgets import Select
@@ -11,6 +10,8 @@ from django.forms.fields import CallableChoiceIterator
 
 import kobo.django.forms
 from kobo.types import StateEnum
+from kobo.django.compat import gettext_lazy as _
+
 
 '''
 StateEnumField

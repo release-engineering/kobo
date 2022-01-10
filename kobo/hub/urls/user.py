@@ -3,9 +3,9 @@
 
 from django.contrib.auth import get_user_model
 from django.conf.urls import url
-from django.utils.translation import ugettext_lazy as _
 from kobo.django.views.generic import ExtraListView
 from kobo.hub.views import UserDetailView
+from kobo.django.compat import gettext_lazy as _
 
 
 urlpatterns = [
