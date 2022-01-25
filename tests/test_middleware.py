@@ -1,14 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import django
-
-# Only for Django >= 1.7
-if 'setup' in dir(django):
-    # This has to happen before below imports because they have a hard requirement
-    # on settings being loaded before import.
-    django.setup()
-
-import unittest2 as unittest
+import unittest
 
 from mock import Mock, PropertyMock, patch
 
@@ -70,7 +62,7 @@ class TestLazyWorker(unittest.TestCase):
 
             cached_worker = middleware.LazyWorker().__get__(req)
             self.assertIsInstance(cached_worker, DummyWorker)
-            self.assertEquals(cached_worker.name, 'cached-worker')
+            self.assertEqual(cached_worker.name, 'cached-worker')
 
             get_worker_mock.assert_not_called()
 

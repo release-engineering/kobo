@@ -3,7 +3,7 @@
 
 
 from __future__ import print_function
-import unittest2 as unittest
+import unittest
 
 import os
 import warnings
@@ -32,7 +32,8 @@ class TestFileWrapperClass(unittest.TestCase):
         self.file_path = os.path.join(self.tmp_dir, "file")
 
     def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
+        if hasattr(self, "tmp_dir"):
+            shutil.rmtree(self.tmp_dir)
 
     def test_file_name_property(self):
         open(self.file_path, "w").write("hello\n")
@@ -131,7 +132,8 @@ class TestFileCacheClass(unittest.TestCase):
         self.file2 = os.path.join(self.tmp_dir, "file_2")
 
     def tearDown(self):
-        shutil.rmtree(self.tmp_dir)
+        if hasattr(self, "tmp_dir"):
+            shutil.rmtree(self.tmp_dir)
 
     def test_add_two_same_hardlinks(self):
         open(self.file1, "w").write("hello\n")

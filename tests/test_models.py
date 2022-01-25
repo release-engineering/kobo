@@ -11,19 +11,8 @@ import six
 from datetime import datetime, timedelta
 from mock import patch, Mock, PropertyMock
 
-# Only for Django >= 1.7
-if 'setup' in dir(django):
-    # This has to happen before below imports because they have a hard requirement
-    # on settings being loaded before import.
-    django.setup()
-
 from django.contrib.auth.models import User
-
-try:
-    from django.test import override_settings
-except:
-    # Django <= 1.6
-    from django.test.utils import override_settings
+from django.test import override_settings
 
 from kobo.client.constants import TASK_STATES
 from kobo.hub import models
@@ -48,12 +37,12 @@ class TestArch(django.test.TransactionTestCase):
         arch = Arch.objects.create(name='i386', pretty_name='32 bit')
         data = arch.export()
         self.assertTrue(data['id'] > 0)
-        self.assertEquals(data['name'], 'i386')
-        self.assertEquals(data['pretty_name'], '32 bit')
+        self.assertEqual(data['name'], 'i386')
+        self.assertEqual(data['pretty_name'], '32 bit')
 
     def test_worker_count(self):
         arch = Arch.objects.create(name='i386', pretty_name='32 bit')
-        self.assertEquals(arch.worker_count, 0)
+        self.assertEqual(arch.worker_count, 0)
 
         worker = Worker.objects.create(
             worker_key='mock-worker',
@@ -63,7 +52,7 @@ class TestArch(django.test.TransactionTestCase):
         worker.arches.add(arch)
         worker.save()
 
-        self.assertEquals(arch.worker_count, 1)
+        self.assertEqual(arch.worker_count, 1)
 
 
 class TestChannel(django.test.TransactionTestCase):
@@ -72,11 +61,11 @@ class TestChannel(django.test.TransactionTestCase):
         channel = Channel.objects.create(name='test')
         data = channel.export()
         self.assertTrue(data['id'] > 0)
-        self.assertEquals(data['name'], 'test')
+        self.assertEqual(data['name'], 'test')
 
     def test_worker_count(self):
         channel = Channel.objects.create(name='test')
-        self.assertEquals(channel.worker_count, 0)
+        self.assertEqual(channel.worker_count, 0)
 
         worker = Worker.objects.create(
             worker_key='mock-worker',
@@ -86,7 +75,7 @@ class TestChannel(django.test.TransactionTestCase):
         worker.channels.add(channel)
         worker.save()
 
-        self.assertEquals(channel.worker_count, 1)
+        self.assertEqual(channel.worker_count, 1)
 
 
 @override_settings(VERSION='1.0.0')
@@ -101,15 +90,15 @@ class TestWorker(django.test.TransactionTestCase):
     def test_save_creates_worker_key_if_empty(self):
         worker = Worker.objects.create(name='Worker')
         self.assertIsNotNone(worker.worker_key)
-        self.assertEquals(len(worker.worker_key), 64)
+        self.assertEqual(len(worker.worker_key), 64)
 
     def test_save_update_fields(self):
         worker = Worker.objects.create(worker_key='worker', name='Worker')
         worker.save()
 
-        self.assertEquals(worker.task_count, 0)
-        self.assertEquals(worker.current_load, 0)
-        self.assertEquals(worker.ready, True)
+        self.assertEqual(worker.task_count, 0)
+        self.assertEqual(worker.current_load, 0)
+        self.assertEqual(worker.ready, True)
 
         Task.objects.create(
             worker=worker,
@@ -123,24 +112,24 @@ class TestWorker(django.test.TransactionTestCase):
 
         worker.save()
         worker = Worker.objects.get(id=worker.id)
-        self.assertEquals(worker.task_count, 1)
-        self.assertEquals(worker.current_load, 100)
-        self.assertEquals(worker.ready, False)
+        self.assertEqual(worker.task_count, 1)
+        self.assertEqual(worker.current_load, 100)
+        self.assertEqual(worker.ready, False)
 
     def test_export(self):
         worker = Worker.objects.create(worker_key='worker', name='Worker')
         data = worker.export()
 
         self.assertTrue(data['id'] > 0)
-        self.assertEquals(data['name'], 'Worker')
-        self.assertEquals(data['arches'], [])
-        self.assertEquals(data['channels'], [])
-        self.assertEquals(data['enabled'], True)
-        self.assertEquals(data['max_load'], 1)
-        self.assertEquals(data['ready'], True)
-        self.assertEquals(data['task_count'], 0)
-        self.assertEquals(data['current_load'], 0)
-        self.assertEquals(data['version'], '1.0.0')
+        self.assertEqual(data['name'], 'Worker')
+        self.assertEqual(data['arches'], [])
+        self.assertEqual(data['channels'], [])
+        self.assertEqual(data['enabled'], True)
+        self.assertEqual(data['max_load'], 1)
+        self.assertEqual(data['ready'], True)
+        self.assertEqual(data['task_count'], 0)
+        self.assertEqual(data['current_load'], 0)
+        self.assertEqual(data['version'], '1.0.0')
         self.assertIsNone(data['last_seen'])
 
     def test_export_last_seen(self):
@@ -151,7 +140,7 @@ class TestWorker(django.test.TransactionTestCase):
             mock_stat.return_value.st_mtime = 1625695768
             data = worker.export()
 
-        self.assertEquals(data['last_seen'], '2021-07-07T22:09:28Z')
+        self.assertEqual(data['last_seen'], '2021-07-07T22:09:28Z')
 
     def test_export_with_arch_and_channel(self):
         worker = Worker.objects.create(worker_key='worker', name='Worker')
@@ -162,15 +151,15 @@ class TestWorker(django.test.TransactionTestCase):
         data = worker.export()
 
         self.assertTrue(data['id'] > 0)
-        self.assertEquals(data['name'], 'Worker')
-        self.assertEquals(data['arches'][0]['name'], 'i386')
-        self.assertEquals(data['channels'][0]['name'], 'test')
-        self.assertEquals(data['enabled'], True)
-        self.assertEquals(data['max_load'], 1)
-        self.assertEquals(data['ready'], True)
-        self.assertEquals(data['task_count'], 0)
-        self.assertEquals(data['current_load'], 0)
-        self.assertEquals(data['version'], '1.0.0')
+        self.assertEqual(data['name'], 'Worker')
+        self.assertEqual(data['arches'][0]['name'], 'i386')
+        self.assertEqual(data['channels'][0]['name'], 'test')
+        self.assertEqual(data['enabled'], True)
+        self.assertEqual(data['max_load'], 1)
+        self.assertEqual(data['ready'], True)
+        self.assertEqual(data['task_count'], 0)
+        self.assertEqual(data['current_load'], 0)
+        self.assertEqual(data['version'], '1.0.0')
 
     def test_running_tasks(self):
         worker = Worker.objects.create(worker_key='worker', name='Worker')
@@ -203,7 +192,7 @@ class TestWorker(django.test.TransactionTestCase):
         )
 
         tasks = worker.running_tasks()
-        self.assertEquals(len(tasks), 1)
+        self.assertEqual(len(tasks), 1)
 
     def test_assigned_tasks(self):
         worker = Worker.objects.create(worker_key='worker', name='Worker')
@@ -236,7 +225,7 @@ class TestWorker(django.test.TransactionTestCase):
         )
 
         tasks = worker.assigned_tasks()
-        self.assertEquals(len(tasks), 1)
+        self.assertEqual(len(tasks), 1)
 
     def test_last_seen(self):
         worker = Worker.objects.create(worker_key='worker', name='Worker')
@@ -258,7 +247,7 @@ class TestWorker(django.test.TransactionTestCase):
 
         self.assertFalse(data['enabled'])
         self.assertFalse(data['ready'])
-        self.assertEquals(data['task_count'], 0)
+        self.assertEqual(data['task_count'], 0)
 
 
 class TestWorkerManager(django.test.TransactionTestCase):
@@ -274,8 +263,8 @@ class TestWorkerManager(django.test.TransactionTestCase):
         worker = Worker.objects.create(worker_key='worker-enabled', name='Worker enabled', enabled=True)
 
         workers = Worker.objects.enabled()
-        self.assertEquals(len(workers), 1)
-        self.assertEquals(workers[0].id, worker.id)
+        self.assertEqual(len(workers), 1)
+        self.assertEqual(workers[0].id, worker.id)
 
     def test_ready(self):
         worker1 = Worker.objects.create(worker_key='worker-1', name='Worker 1', enabled=True)
@@ -295,8 +284,8 @@ class TestWorkerManager(django.test.TransactionTestCase):
         worker2 = Worker.objects.create(worker_key='worker-2', name='Worker 2', enabled=True)
 
         workers = Worker.objects.ready()
-        self.assertEquals(len(workers), 1)
-        self.assertEquals(workers[0].id, worker2.id)
+        self.assertEqual(len(workers), 1)
+        self.assertEqual(workers[0].id, worker2.id)
 
 
 class TestTaskManager(django.test.TransactionTestCase):
@@ -355,7 +344,7 @@ class TestTaskManager(django.test.TransactionTestCase):
 
         tasks = Task.objects.all()
 
-        self.assertEquals(len(tasks), 2)
+        self.assertEqual(len(tasks), 2)
 
     def test_get_and_verify(self):
         task1 = Task.objects.create(
@@ -369,7 +358,7 @@ class TestTaskManager(django.test.TransactionTestCase):
 
         task2 = Task.objects.get_and_verify(task1.id, self._worker)
 
-        self.assertEquals(task2.id, task1.id)
+        self.assertEqual(task2.id, task1.id)
 
     def test_get_and_verify_fails_if_different_worker(self):
         task1 = Task.objects.create(
@@ -392,10 +381,10 @@ class TestTaskManager(django.test.TransactionTestCase):
 
         tasks = Task.objects.running()
 
-        self.assertEquals(len(tasks), 3)
-        self.assertEquals(tasks[0].id, t4.id)
-        self.assertEquals(tasks[1].id, t2.id)
-        self.assertEquals(tasks[2].id, t3.id)
+        self.assertEqual(len(tasks), 3)
+        self.assertEqual(tasks[0].id, t4.id)
+        self.assertEqual(tasks[1].id, t2.id)
+        self.assertEqual(tasks[2].id, t3.id)
 
     def test_free(self):
         self._create_task(worker=self._worker, state=TASK_STATES['ASSIGNED'])
@@ -405,10 +394,10 @@ class TestTaskManager(django.test.TransactionTestCase):
 
         tasks = Task.objects.free()
 
-        self.assertEquals(len(tasks), 3)
-        self.assertEquals(tasks[0].id, t4.id)
-        self.assertEquals(tasks[1].id, t2.id)
-        self.assertEquals(tasks[2].id, t3.id)
+        self.assertEqual(len(tasks), 3)
+        self.assertEqual(tasks[0].id, t4.id)
+        self.assertEqual(tasks[1].id, t2.id)
+        self.assertEqual(tasks[2].id, t3.id)
 
     def test_assigned(self):
         self._create_task(worker=self._worker, state=TASK_STATES['FREE'])
@@ -418,10 +407,10 @@ class TestTaskManager(django.test.TransactionTestCase):
 
         tasks = Task.objects.assigned()
 
-        self.assertEquals(len(tasks), 3)
-        self.assertEquals(tasks[0].id, t4.id)
-        self.assertEquals(tasks[1].id, t2.id)
-        self.assertEquals(tasks[2].id, t3.id)
+        self.assertEqual(len(tasks), 3)
+        self.assertEqual(tasks[0].id, t4.id)
+        self.assertEqual(tasks[1].id, t2.id)
+        self.assertEqual(tasks[2].id, t3.id)
 
     def test_opened(self):
         self._create_task(worker=self._worker, state=TASK_STATES['FREE'])
@@ -431,10 +420,10 @@ class TestTaskManager(django.test.TransactionTestCase):
 
         tasks = Task.objects.opened()
 
-        self.assertEquals(len(tasks), 3)
-        self.assertEquals(tasks[0].id, t4.id)
-        self.assertEquals(tasks[1].id, t2.id)
-        self.assertEquals(tasks[2].id, t3.id)
+        self.assertEqual(len(tasks), 3)
+        self.assertEqual(tasks[0].id, t4.id)
+        self.assertEqual(tasks[1].id, t2.id)
+        self.assertEqual(tasks[2].id, t3.id)
 
     def test_closed(self):
         self._create_task(worker=self._worker, state=TASK_STATES['FREE'])
@@ -444,10 +433,10 @@ class TestTaskManager(django.test.TransactionTestCase):
 
         tasks = Task.objects.closed()
 
-        self.assertEquals(len(tasks), 3)
-        self.assertEquals(tasks[0].id, t4.id)
-        self.assertEquals(tasks[1].id, t2.id)
-        self.assertEquals(tasks[2].id, t3.id)
+        self.assertEqual(len(tasks), 3)
+        self.assertEqual(tasks[0].id, t4.id)
+        self.assertEqual(tasks[1].id, t2.id)
+        self.assertEqual(tasks[2].id, t3.id)
 
     def test_canceled(self):
         self._create_task(worker=self._worker, state=TASK_STATES['FREE'])
@@ -457,10 +446,10 @@ class TestTaskManager(django.test.TransactionTestCase):
 
         tasks = Task.objects.canceled()
 
-        self.assertEquals(len(tasks), 3)
-        self.assertEquals(tasks[0].id, t4.id)
-        self.assertEquals(tasks[1].id, t2.id)
-        self.assertEquals(tasks[2].id, t3.id)
+        self.assertEqual(len(tasks), 3)
+        self.assertEqual(tasks[0].id, t4.id)
+        self.assertEqual(tasks[1].id, t2.id)
+        self.assertEqual(tasks[2].id, t3.id)
 
     def test_failed(self):
         self._create_task(worker=self._worker, state=TASK_STATES['FREE'])
@@ -470,10 +459,10 @@ class TestTaskManager(django.test.TransactionTestCase):
 
         tasks = Task.objects.failed()
 
-        self.assertEquals(len(tasks), 3)
-        self.assertEquals(tasks[0].id, t4.id)
-        self.assertEquals(tasks[1].id, t2.id)
-        self.assertEquals(tasks[2].id, t3.id)
+        self.assertEqual(len(tasks), 3)
+        self.assertEqual(tasks[0].id, t4.id)
+        self.assertEqual(tasks[1].id, t2.id)
+        self.assertEqual(tasks[2].id, t3.id)
 
     def test_interrupted(self):
         self._create_task(worker=self._worker, state=TASK_STATES['FREE'])
@@ -483,10 +472,10 @@ class TestTaskManager(django.test.TransactionTestCase):
 
         tasks = Task.objects.interrupted()
 
-        self.assertEquals(len(tasks), 3)
-        self.assertEquals(tasks[0].id, t4.id)
-        self.assertEquals(tasks[1].id, t2.id)
-        self.assertEquals(tasks[2].id, t3.id)
+        self.assertEqual(len(tasks), 3)
+        self.assertEqual(tasks[0].id, t4.id)
+        self.assertEqual(tasks[1].id, t2.id)
+        self.assertEqual(tasks[2].id, t3.id)
 
     def test_timeout(self):
         self._create_task(worker=self._worker, state=TASK_STATES['FREE'])
@@ -496,10 +485,10 @@ class TestTaskManager(django.test.TransactionTestCase):
 
         tasks = Task.objects.timeout()
 
-        self.assertEquals(len(tasks), 3)
-        self.assertEquals(tasks[0].id, t4.id)
-        self.assertEquals(tasks[1].id, t2.id)
-        self.assertEquals(tasks[2].id, t3.id)
+        self.assertEqual(len(tasks), 3)
+        self.assertEqual(tasks[0].id, t4.id)
+        self.assertEqual(tasks[1].id, t2.id)
+        self.assertEqual(tasks[2].id, t3.id)
 
     def test_created(self):
         self._create_task(worker=self._worker, state=TASK_STATES['FREE'])
@@ -509,10 +498,10 @@ class TestTaskManager(django.test.TransactionTestCase):
 
         tasks = Task.objects.created()
 
-        self.assertEquals(len(tasks), 3)
-        self.assertEquals(tasks[0].id, t4.id)
-        self.assertEquals(tasks[1].id, t2.id)
-        self.assertEquals(tasks[2].id, t3.id)
+        self.assertEqual(len(tasks), 3)
+        self.assertEqual(tasks[0].id, t4.id)
+        self.assertEqual(tasks[1].id, t2.id)
+        self.assertEqual(tasks[2].id, t3.id)
 
 
 class TestTaskLog(django.test.TransactionTestCase):
@@ -532,7 +521,7 @@ class TestTaskLog(django.test.TransactionTestCase):
 
         s = task_log.get_chunk(log_file, 0, 1024)
 
-        self.assertEquals(s, log_msg)
+        self.assertEqual(s, log_msg)
 
     def test_get_chunk_gz_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log.gz', text=True)
@@ -554,7 +543,7 @@ class TestTaskLog(django.test.TransactionTestCase):
         s = task_log.get_chunk(filename, 0, 1024)
         os.remove(filepath)
 
-        self.assertEquals(s, content)
+        self.assertEqual(s, content)
 
     def test_get_chunk_small_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log', text=True)
@@ -575,7 +564,7 @@ class TestTaskLog(django.test.TransactionTestCase):
         s = task_log.get_chunk(filename, 0, 1024)
         os.remove(filepath)
 
-        self.assertEquals(s, content)
+        self.assertEqual(s, content)
 
     def test_get_chunk_long_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log', text=True)
@@ -599,7 +588,7 @@ class TestTaskLog(django.test.TransactionTestCase):
         s = task_log.get_chunk(filename, 0, len(lines[0]) + len(lines[1]))
         os.remove(filepath)
 
-        self.assertEquals(s, lines[0] + lines[1])
+        self.assertEqual(s, lines[0] + lines[1])
 
     def test_get_chunk_invalid_file(self):
         task = PropertyMock(
@@ -633,8 +622,8 @@ class TestTaskLog(django.test.TransactionTestCase):
         s, n = task_log.tail(filename, 1024, 1024)
         os.remove(filepath)
 
-        self.assertEquals(s, content)
-        self.assertEquals(n, len(content))
+        self.assertEqual(s, content)
+        self.assertEqual(n, len(content))
 
     def test_tail_small_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log', text=True)
@@ -655,8 +644,8 @@ class TestTaskLog(django.test.TransactionTestCase):
         s, n = task_log.tail(filename, 1024, 1024)
         os.remove(filepath)
 
-        self.assertEquals(s, content)
-        self.assertEquals(n, len(content))
+        self.assertEqual(s, content)
+        self.assertEqual(n, len(content))
 
     def test_tail_long_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log', text=True)
@@ -680,8 +669,8 @@ class TestTaskLog(django.test.TransactionTestCase):
         s, n = task_log.tail(filename, 50, 1024)
         os.remove(filepath)
 
-        self.assertEquals(s, lines[-1])
-        self.assertEquals(n, sum([len(line) for line in lines]))
+        self.assertEqual(s, lines[-1])
+        self.assertEqual(n, sum([len(line) for line in lines]))
 
     def test_tail_invalid_file(self):
         task = PropertyMock(
@@ -712,9 +701,9 @@ class TestTaskLog(django.test.TransactionTestCase):
             files = task_log.list
 
             mock_walk.assert_called_once_with(tempfile.tempdir + '/')
-            self.assertEquals(len(files), 2)
-            self.assertEquals(files[0], 'file1.log')
-            self.assertEquals(files[1], 'file2.log')
+            self.assertEqual(len(files), 2)
+            self.assertEqual(files[0], 'file1.log')
+            self.assertEqual(files[1], 'file2.log')
 
     def test_list_include_cached_files(self):
         task = PropertyMock(
@@ -729,8 +718,8 @@ class TestTaskLog(django.test.TransactionTestCase):
             filename = os.path.basename(tf.name)
             task_log[filename] = 'This is a log message.'
             files = task_log.list
-            self.assertEquals(len(files), 1)
-            self.assertEquals(files[0], filename)
+            self.assertEqual(len(files), 1)
+            self.assertEqual(files[0], filename)
 
     def test_gzip_logs(self):
         task = PropertyMock(
@@ -847,9 +836,9 @@ class TestTaskLog(django.test.TransactionTestCase):
         task_log = TaskLogs(task)
         content = task_log[filename]
 
-        self.assertEquals(content, '')
-        self.assertEquals(task_log.cache[filename], '')
-        self.assertEquals(task_log.changed[filename], False)
+        self.assertEqual(content, '')
+        self.assertEqual(task_log.cache[filename], '')
+        self.assertEqual(task_log.changed[filename], False)
 
     def test_get_item_non_existing_for_unsaved_task(self):
         task = PropertyMock(
@@ -863,7 +852,7 @@ class TestTaskLog(django.test.TransactionTestCase):
         task_log = TaskLogs(task)
         content = task_log[filename]
 
-        self.assertEquals(content, '')
+        self.assertEqual(content, '')
         self.assertFalse(filename in task_log.cache)
         self.assertFalse(filename in task_log.changed)
 
@@ -885,9 +874,9 @@ class TestTaskLog(django.test.TransactionTestCase):
         file_content = task_log[filename]
         os.remove(filepath)
 
-        self.assertEquals(file_content, content)
-        self.assertEquals(task_log.cache[filename], content)
-        self.assertEquals(task_log.changed[filename], False)
+        self.assertEqual(file_content, content)
+        self.assertEqual(task_log.cache[filename], content)
+        self.assertEqual(task_log.changed[filename], False)
 
     def test_get_item_gz_file(self):
         _, filepath = tempfile.mkstemp(prefix='kobo-test-', suffix='.log.gz', text=True)
@@ -908,9 +897,9 @@ class TestTaskLog(django.test.TransactionTestCase):
         file_content = task_log[filename]
         os.remove(filepath)
 
-        self.assertEquals(file_content, content)
-        self.assertEquals(task_log.cache[filename], content)
-        self.assertEquals(task_log.changed[filename], False)
+        self.assertEqual(file_content, content)
+        self.assertEqual(task_log.cache[filename], content)
+        self.assertEqual(task_log.changed[filename], False)
 
 
 @override_settings(TASK_DIR='/task-dir')
@@ -925,26 +914,26 @@ class TestTask(django.test.TransactionTestCase):
 
     def test_get_task_dir(self):
         path = Task.get_task_dir(100, create=False)
-        self.assertEquals(path, '/task-dir/0/0/100')
+        self.assertEqual(path, '/task-dir/0/0/100')
 
     def test_get_task_dir_creates_if_not_exists(self):
         with patch.object(models.os.path, 'isdir', return_value=False):
             with patch.object(models.os, 'makedirs') as mkdir_mock:
                 path = Task.get_task_dir(100, create=True)
                 mkdir_mock.assert_called_once_with('/task-dir/0/0/100', mode=0o755)
-                self.assertEquals(path, '/task-dir/0/0/100')
+                self.assertEqual(path, '/task-dir/0/0/100')
 
     def test_get_task_dir_do_not_creates_if_exists(self):
         with patch.object(models.os.path, 'isdir', return_value=True):
             with patch.object(models.os, 'makedirs') as mkdir_mock:
                 path = Task.get_task_dir(100, create=True)
                 mkdir_mock.assert_not_called()
-                self.assertEquals(path, '/task-dir/0/0/100')
+                self.assertEqual(path, '/task-dir/0/0/100')
 
     def test_task_dir(self):
         task = Task(id=100)
         path = task.task_dir(create=False)
-        self.assertEquals(path, '/task-dir/0/0/100')
+        self.assertEqual(path, '/task-dir/0/0/100')
 
     def test_export_flat(self):
         t = Task.objects.create(
@@ -959,12 +948,12 @@ class TestTask(django.test.TransactionTestCase):
 
         data = t.export(flat=True)
 
-        self.assertEquals(data['id'], t.id)
-        self.assertEquals(data['owner'], t.owner.username)
-        self.assertEquals(data['worker'], t.worker.id)
-        self.assertEquals(data['arch'], t.arch.id)
-        self.assertEquals(data['channel'], t.channel.id)
-        self.assertEquals(data['state'], t.state)
+        self.assertEqual(data['id'], t.id)
+        self.assertEqual(data['owner'], t.owner.username)
+        self.assertEqual(data['worker'], t.worker.id)
+        self.assertEqual(data['arch'], t.arch.id)
+        self.assertEqual(data['channel'], t.channel.id)
+        self.assertEqual(data['state'], t.state)
 
     def test_export_not_flat(self):
         t = Task.objects.create(
@@ -979,13 +968,13 @@ class TestTask(django.test.TransactionTestCase):
 
         data = t.export(flat=False)
 
-        self.assertEquals(data['id'], t.id)
-        self.assertEquals(data['owner'], t.owner.username)
-        self.assertEquals(data['worker']['id'], t.worker.id)
-        self.assertEquals(data['arch']['id'], t.arch.id)
-        self.assertEquals(data['channel']['id'], t.channel.id)
-        self.assertEquals(data['state'], t.state)
-        self.assertEquals(data['subtask_id_list'], [])
+        self.assertEqual(data['id'], t.id)
+        self.assertEqual(data['owner'], t.owner.username)
+        self.assertEqual(data['worker']['id'], t.worker.id)
+        self.assertEqual(data['arch']['id'], t.arch.id)
+        self.assertEqual(data['channel']['id'], t.channel.id)
+        self.assertEqual(data['state'], t.state)
+        self.assertEqual(data['subtask_id_list'], [])
 
     def test_subtasks(self):
         t_parent = Task.objects.create(
@@ -1008,11 +997,11 @@ class TestTask(django.test.TransactionTestCase):
         )
 
         subtasks = t_parent.subtasks()
-        self.assertEquals(len(subtasks), 1)
-        self.assertEquals(subtasks[0].id, t_child.id)
+        self.assertEqual(len(subtasks), 1)
+        self.assertEqual(subtasks[0].id, t_child.id)
 
         subtasks = t_child.subtasks()
-        self.assertEquals(len(subtasks), 0)
+        self.assertEqual(len(subtasks), 0)
 
     def test_time_task_not_started(self):
         t = Task(dt_started=None, dt_finished=None)
@@ -1022,33 +1011,33 @@ class TestTask(django.test.TransactionTestCase):
         t = Task(dt_started=datetime(2000, 1, 1, 0, 0), dt_finished=None)
 
         with patch('kobo.hub.models.datetime.datetime', now=Mock(return_value=datetime(2000, 1, 1, 12, 0))):
-            self.assertEquals(t.time, timedelta(hours=12))
+            self.assertEqual(t.time, timedelta(hours=12))
 
     def test_time_task_finished(self):
         t = Task(dt_started=datetime(2000, 1, 1, 0, 0), dt_finished=datetime(2000, 1, 1, 12, 0))
-        self.assertEquals(t.time, timedelta(hours=12))
+        self.assertEqual(t.time, timedelta(hours=12))
 
     def test_get_time_display_task_not_started(self):
         t = Task(dt_started=None, dt_finished=None)
-        self.assertEquals(t.get_time_display(), '')
+        self.assertEqual(t.get_time_display(), '')
 
     def test_get_time_display_task_running(self):
         t = Task(dt_started=datetime(2000, 1, 1, 0, 0), dt_finished=None)
 
         with patch('kobo.hub.models.datetime.datetime', now=Mock(return_value=datetime(2000, 1, 1, 12, 0))):
-            self.assertEquals(t.get_time_display(), '12:00:00')
+            self.assertEqual(t.get_time_display(), '12:00:00')
 
     def test_get_time_display_task_finished(self):
         t = Task(dt_started=datetime(2000, 1, 1, 0, 0), dt_finished=datetime(2000, 1, 1, 12, 0))
-        self.assertEquals(t.get_time_display(), '12:00:00')
+        self.assertEqual(t.get_time_display(), '12:00:00')
 
     def test_get_time_display_task_finished_after_24_hours(self):
         t = Task(dt_started=datetime(2000, 1, 1, 0, 0), dt_finished=datetime(2000, 1, 2, 0, 0))
-        self.assertEquals(t.get_time_display(), '1 days, 00:00:00')
+        self.assertEqual(t.get_time_display(), '1 days, 00:00:00')
 
     def test_get_time_display_task_finished_after_31_days(self):
         t = Task(dt_started=datetime(2000, 1, 1, 0, 0), dt_finished=datetime(2000, 2, 1, 12, 0))
-        self.assertEquals(t.get_time_display(), '31 days, 12:00:00')
+        self.assertEqual(t.get_time_display(), '31 days, 12:00:00')
 
     def test_set_weight(self):
         t = Task.objects.create(
@@ -1061,9 +1050,9 @@ class TestTask(django.test.TransactionTestCase):
             weight=0,
         )
 
-        self.assertEquals(t.weight, 0)
+        self.assertEqual(t.weight, 0)
         t.set_weight(100)
-        self.assertEquals(t.weight, 100)
+        self.assertEqual(t.weight, 100)
 
     def test_create_task(self):
         parent = Task.objects.create(
@@ -1085,25 +1074,25 @@ class TestTask(django.test.TransactionTestCase):
         self.assertTrue(task_id > 0)
 
         task = Task.objects.get(id=task_id)
-        self.assertEquals(task.owner.id, self._user.id)
-        self.assertEquals(task.worker.id, self._worker.id)
-        self.assertEquals(task.parent.id, parent.id)
-        self.assertEquals(task.state, TASK_STATES['ASSIGNED'])
-        self.assertEquals(task.label, 'label')
-        self.assertEquals(task.method, 'MethodName')
-        self.assertEquals(task.args['key'], 'value')
+        self.assertEqual(task.owner.id, self._user.id)
+        self.assertEqual(task.worker.id, self._worker.id)
+        self.assertEqual(task.parent.id, parent.id)
+        self.assertEqual(task.state, TASK_STATES['ASSIGNED'])
+        self.assertEqual(task.label, 'label')
+        self.assertEqual(task.method, 'MethodName')
+        self.assertEqual(task.args['key'], 'value')
 
     def test_create_shutdown_task(self):
         task_id = Task.create_shutdown_task(self._user.username, self._worker.name, True)
         self.assertTrue(task_id > 0)
 
         task = Task.objects.get(id=task_id)
-        self.assertEquals(task.owner.id, self._user.id)
-        self.assertEquals(task.worker.id, self._worker.id)
-        self.assertEquals(task.exclusive, True)
-        self.assertEquals(task.weight, 0)
-        self.assertEquals(task.method, 'ShutdownWorker')
-        self.assertEquals(task.args['kill'], True)
+        self.assertEqual(task.owner.id, self._user.id)
+        self.assertEqual(task.worker.id, self._worker.id)
+        self.assertEqual(task.exclusive, True)
+        self.assertEqual(task.weight, 0)
+        self.assertEqual(task.method, 'ShutdownWorker')
+        self.assertEqual(task.args['kill'], True)
 
     def test_free_task(self):
         task = Task.objects.create(
@@ -1118,7 +1107,7 @@ class TestTask(django.test.TransactionTestCase):
         task.free_task()
 
         task = Task.objects.get(id=task.id)
-        self.assertEquals(task.state, TASK_STATES['FREE'])
+        self.assertEqual(task.state, TASK_STATES['FREE'])
 
     @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_free_task_with_invalid_initial_state(self):
@@ -1147,7 +1136,7 @@ class TestTask(django.test.TransactionTestCase):
         task.assign_task()
 
         task = Task.objects.get(id=task.id)
-        self.assertEquals(task.state, TASK_STATES['ASSIGNED'])
+        self.assertEqual(task.state, TASK_STATES['ASSIGNED'])
 
     @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_assign_task_with_invalid_initial_state(self):
@@ -1176,7 +1165,7 @@ class TestTask(django.test.TransactionTestCase):
         task.open_task()
 
         task = Task.objects.get(id=task.id)
-        self.assertEquals(task.state, TASK_STATES['OPEN'])
+        self.assertEqual(task.state, TASK_STATES['OPEN'])
 
     @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_open_task_with_invalid_initial_state(self):
@@ -1205,7 +1194,7 @@ class TestTask(django.test.TransactionTestCase):
         task.close_task()
 
         task = Task.objects.get(id=task.id)
-        self.assertEquals(task.state, TASK_STATES['CLOSED'])
+        self.assertEqual(task.state, TASK_STATES['CLOSED'])
 
     @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_close_task_with_invalid_initial_state(self):
@@ -1234,7 +1223,7 @@ class TestTask(django.test.TransactionTestCase):
         task.cancel_task()
 
         task = Task.objects.get(id=task.id)
-        self.assertEquals(task.state, TASK_STATES['CANCELED'])
+        self.assertEqual(task.state, TASK_STATES['CANCELED'])
 
     def test_interrupt_task(self):
         task = Task.objects.create(
@@ -1249,7 +1238,7 @@ class TestTask(django.test.TransactionTestCase):
         task.interrupt_task()
 
         task = Task.objects.get(id=task.id)
-        self.assertEquals(task.state, TASK_STATES['INTERRUPTED'])
+        self.assertEqual(task.state, TASK_STATES['INTERRUPTED'])
 
     @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_interrupt_task_with_invalid_initial_state(self):
@@ -1278,7 +1267,7 @@ class TestTask(django.test.TransactionTestCase):
         task.timeout_task()
 
         task = Task.objects.get(id=task.id)
-        self.assertEquals(task.state, TASK_STATES['TIMEOUT'])
+        self.assertEqual(task.state, TASK_STATES['TIMEOUT'])
 
     @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_timeout_task_with_invalid_initial_state(self):
@@ -1307,7 +1296,7 @@ class TestTask(django.test.TransactionTestCase):
         task.fail_task()
 
         task = Task.objects.get(id=task.id)
-        self.assertEquals(task.state, TASK_STATES['FAILED'])
+        self.assertEqual(task.state, TASK_STATES['FAILED'])
 
     @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_fail_task_with_invalid_initial_state(self):
@@ -1357,8 +1346,8 @@ class TestTask(django.test.TransactionTestCase):
         child1 = Task.objects.get(id=child1.id)
         child2 = Task.objects.get(id=child2.id)
 
-        self.assertEquals(child1.state, TASK_STATES['CANCELED'])
-        self.assertEquals(child2.state, TASK_STATES['CANCELED'])
+        self.assertEqual(child1.state, TASK_STATES['CANCELED'])
+        self.assertEqual(child2.state, TASK_STATES['CANCELED'])
 
     def test_resubmit_task(self):
         task = Task.objects.create(
@@ -1374,9 +1363,9 @@ class TestTask(django.test.TransactionTestCase):
         self.assertTrue(task_id > 0)
 
         new_task = Task.objects.get(id=task_id)
-        self.assertEquals(new_task.owner.id, task.owner.id)
-        self.assertEquals(new_task.method, task.method)
-        self.assertEquals(new_task.resubmitted_from.id, task.id)
+        self.assertEqual(new_task.owner.id, task.owner.id)
+        self.assertEqual(new_task.method, task.method)
+        self.assertEqual(new_task.resubmitted_from.id, task.id)
 
     def test_resubmit_task_that_is_not_failed(self):
         task = Task.objects.create(
@@ -1405,9 +1394,9 @@ class TestTask(django.test.TransactionTestCase):
         self.assertTrue(task_id > 0)
 
         new_task = Task.objects.get(id=task_id)
-        self.assertEquals(new_task.owner.id, task.owner.id)
-        self.assertEquals(new_task.method, task.method)
-        self.assertEquals(new_task.resubmitted_from.id, task.id)
+        self.assertEqual(new_task.owner.id, task.owner.id)
+        self.assertEqual(new_task.method, task.method)
+        self.assertEqual(new_task.resubmitted_from.id, task.id)
 
     def test_resubmit_task_that_is_exclusive(self):
         task = Task.objects.create(
@@ -1437,9 +1426,9 @@ class TestTask(django.test.TransactionTestCase):
         self.assertTrue(task_id > 0)
 
         new_task = Task.objects.get(id=task_id)
-        self.assertEquals(new_task.owner.id, task.owner.id)
-        self.assertEquals(new_task.method, task.method)
-        self.assertEquals(new_task.resubmitted_from.id, task.id)
+        self.assertEqual(new_task.owner.id, task.owner.id)
+        self.assertEqual(new_task.method, task.method)
+        self.assertEqual(new_task.resubmitted_from.id, task.id)
 
     def test_clone_task_if_not_superuser(self):
         user = User.objects.create(username='user-non-admin')
@@ -1515,14 +1504,14 @@ class TestTask(django.test.TransactionTestCase):
         child1 = Task.objects.get(id=child1.id)
         child2 = Task.objects.get(id=child2.id)
 
-        self.assertEquals(parent.waiting, True)
-        self.assertEquals(parent.awaited, False)
+        self.assertEqual(parent.waiting, True)
+        self.assertEqual(parent.awaited, False)
 
-        self.assertEquals(child1.waiting, False)
-        self.assertEquals(child1.awaited, True)
+        self.assertEqual(child1.waiting, False)
+        self.assertEqual(child1.awaited, True)
 
-        self.assertEquals(child2.waiting, False)
-        self.assertEquals(child2.awaited, False)
+        self.assertEqual(child2.waiting, False)
+        self.assertEqual(child2.awaited, False)
 
     def test_check_wait_subtasks_finished(self):
         parent = Task.objects.create(

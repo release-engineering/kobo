@@ -3,7 +3,7 @@
 
 
 import mock
-import unittest2 as unittest
+import unittest
 import pytest
 
 import os
@@ -21,15 +21,15 @@ class TestShortcuts(unittest.TestCase):
         self.assertEqual(force_list("a"), ["a"])
         self.assertEqual(force_list(["a"]), ["a"])
         self.assertEqual(force_list(["a", "b"]), ["a", "b"])
-        self.assertItemsEqual(force_list({'a': True, 'b': True}.keys()), ["a", "b"])
-        self.assertItemsEqual(force_list(set(["a", "b"])), ["a", "b"])
+        self.assertCountEqual(force_list({'a': True, 'b': True}.keys()), ["a", "b"])
+        self.assertCountEqual(force_list(set(["a", "b"])), ["a", "b"])
 
     def test_force_tuple(self):
-        self.assertItemsEqual(force_tuple("a"), ("a",))
-        self.assertItemsEqual(force_tuple(("a",)), ("a",))
-        self.assertItemsEqual(force_tuple(("a", "b")), ("a", "b"))
-        self.assertItemsEqual(force_tuple({'a': True, 'b': True}.keys()), ("a", "b"))
-        self.assertItemsEqual(force_tuple(set(["a", "b"])), ("a", "b"))
+        self.assertEqual(force_tuple("a"), ("a",))
+        self.assertEqual(force_tuple(("a",)), ("a",))
+        self.assertEqual(force_tuple(("a", "b")), ("a", "b"))
+        self.assertCountEqual(force_tuple({'a': True, 'b': True}.keys()), ("a", "b"))
+        self.assertCountEqual(force_tuple(set(["a", "b"])), ("a", "b"))
 
     def test_allof(self):
         self.assertEqual(allof(), True)

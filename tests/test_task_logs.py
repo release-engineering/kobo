@@ -7,18 +7,10 @@ import pytest
 
 from shutil import rmtree
 
-import django
 import django.conf
 import django.test
 from django.test.utils import get_runner
 from django.shortcuts import get_object_or_404
-
-
-# Only for Django >= 1.7
-if 'setup' in dir(django):
-    # This has to happen before below imports because they have a hard requirement
-    # on settings being loaded before import.
-    django.setup()
 
 from kobo.hub.models import Task, Arch, Channel
 from django.contrib.auth.models import User

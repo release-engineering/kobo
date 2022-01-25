@@ -85,8 +85,8 @@ class TestTaskSearchForm(django.test.TransactionTestCase):
 
         req = PropertyMock(spec=['user'], user=self._user)
         tasks = form.get_query(req)
-        self.assertEquals(len(tasks), 1)
-        self.assertEquals(tasks[0].id, task.id)
+        self.assertEqual(len(tasks), 1)
+        self.assertEqual(tasks[0].id, task.id)
 
     def test_get_query_search_filter_not_authenticated(self):
         task1 = Task.objects.create(
@@ -127,9 +127,9 @@ class TestTaskSearchForm(django.test.TransactionTestCase):
 
         req = PropertyMock(spec=['user'], user=Mock(is_authenticated=Mock(return_value=False)))
         tasks = form.get_query(req)
-        self.assertEquals(len(tasks), 2)
-        self.assertEquals(tasks[0].id, task3.id)
-        self.assertEquals(tasks[1].id, task1.id)
+        self.assertEqual(len(tasks), 2)
+        self.assertEqual(tasks[0].id, task3.id)
+        self.assertEqual(tasks[1].id, task1.id)
 
     def test_get_query_search_filter_authenticated_not_mine(self):
         task1 = Task.objects.create(
@@ -170,9 +170,9 @@ class TestTaskSearchForm(django.test.TransactionTestCase):
 
         req = PropertyMock(spec=['user'], user=self._user)
         tasks = form.get_query(req)
-        self.assertEquals(len(tasks), 2)
-        self.assertEquals(tasks[0].id, task3.id)
-        self.assertEquals(tasks[1].id, task1.id)
+        self.assertEqual(len(tasks), 2)
+        self.assertEqual(tasks[0].id, task3.id)
+        self.assertEqual(tasks[1].id, task1.id)
 
     def test_get_query_search_filter_authenticated_without_state_filter(self):
         task1 = Task.objects.create(
@@ -213,9 +213,9 @@ class TestTaskSearchForm(django.test.TransactionTestCase):
 
         req = PropertyMock(spec=['user'], user=self._user)
         tasks = form.get_query(req)
-        self.assertEquals(len(tasks), 2)
-        self.assertEquals(tasks[0].id, task2.id)
-        self.assertEquals(tasks[1].id, task1.id)
+        self.assertEqual(len(tasks), 2)
+        self.assertEqual(tasks[0].id, task2.id)
+        self.assertEqual(tasks[1].id, task1.id)
 
     def test_get_query_search_no_filter_authenticated(self):
         task1 = Task.objects.create(
@@ -256,9 +256,9 @@ class TestTaskSearchForm(django.test.TransactionTestCase):
 
         req = PropertyMock(spec=['user'], user=self._user)
         tasks = form.get_query(req)
-        self.assertEquals(len(tasks), 2)
-        self.assertEquals(tasks[0].id, task2.id)
-        self.assertEquals(tasks[1].id, task1.id)
+        self.assertEqual(len(tasks), 2)
+        self.assertEqual(tasks[0].id, task2.id)
+        self.assertEqual(tasks[1].id, task1.id)
 
     def test_get_query_search_no_filter_not_authenticated(self):
         task1 = Task.objects.create(
@@ -299,7 +299,7 @@ class TestTaskSearchForm(django.test.TransactionTestCase):
 
         req = PropertyMock(spec=['user'], user=Mock(is_authenticated=Mock(return_value=False)))
         tasks = form.get_query(req)
-        self.assertEquals(len(tasks), 3)
-        self.assertEquals(tasks[0].id, task3.id)
-        self.assertEquals(tasks[1].id, task2.id)
-        self.assertEquals(tasks[2].id, task1.id)
+        self.assertEqual(len(tasks), 3)
+        self.assertEqual(tasks[0].id, task3.id)
+        self.assertEqual(tasks[1].id, task2.id)
+        self.assertEqual(tasks[2].id, task1.id)

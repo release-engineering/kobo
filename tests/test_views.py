@@ -2,12 +2,6 @@
 
 import django
 
-# Only for Django >= 1.7
-if 'setup' in dir(django):
-    # This has to happen before below imports because they have a hard requirement
-    # on settings being loaded before import.
-    django.setup()
-
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.models import User
 from django.core.exceptions import ImproperlyConfigured
@@ -37,11 +31,11 @@ class TestAuthView(django.test.TransactionTestCase):
 
     def test_login(self):
         response = self.client.get('/auth/login/')
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
     def test_krb5login(self):
         response = self.client.get('/auth/krb5login/')
-        self.assertEquals(response.status_code, 301)
+        self.assertEqual(response.status_code, 301)
         self.assertIn(response['Location'], ['http://testserver/home/', '/home/'])
 
     @override_settings(MIDDLEWARE_CLASSES=[], MIDDLEWARE=[])
@@ -51,12 +45,12 @@ class TestAuthView(django.test.TransactionTestCase):
 
     def test_krb5login_redirect_to(self):
         response = self.client.get('/auth/krb5login/', {REDIRECT_FIELD_NAME: '/auth/login/'})
-        self.assertEquals(response.status_code, 301)
+        self.assertEqual(response.status_code, 301)
         self.assertIn(response['Location'], ['http://testserver/auth/login/', '/auth/login/'])
 
     def test_logout(self):
         response = self.client.get('/auth/logout/')
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
 
 class TestTaskView(django.test.TransactionTestCase):
@@ -115,7 +109,7 @@ class TestTaskView(django.test.TransactionTestCase):
 
     def test_list(self):
         response = self.client.get('/task/')
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue(self.task1.method in str(response.content))
         self.assertTrue(self.task2.method in str(response.content))
         self.assertTrue(self.task3.method in str(response.content))
@@ -123,7 +117,7 @@ class TestTaskView(django.test.TransactionTestCase):
 
     def test_list_running(self):
         response = self.client.get('/task/running/')
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue(self.task1.method in str(response.content))
         self.assertTrue(self.task2.method in str(response.content))
         self.assertTrue(self.task3.method not in str(response.content))
@@ -131,7 +125,7 @@ class TestTaskView(django.test.TransactionTestCase):
 
     def test_list_finished(self):
         response = self.client.get('/task/finished/')
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue(self.task1.method not in str(response.content))
         self.assertTrue(self.task2.method not in str(response.content))
         self.assertTrue(self.task3.method in str(response.content))
@@ -139,7 +133,7 @@ class TestTaskView(django.test.TransactionTestCase):
 
     def test_detail(self):
         response = self.client.get('/task/%d/' % self.task1.id)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue('#%d: %s' % (self.task1.id, self.task1.method) in str(response.content))
 
 
@@ -154,13 +148,13 @@ class TestArchView(django.test.TransactionTestCase):
 
     def test_list(self):
         response = self.client.get('/info/arch/')
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue(self.arch1.name in str(response.content))
         self.assertTrue(self.arch2.name in str(response.content))
 
     def test_detail(self):
         response = self.client.get('/info/arch/%d/' % self.arch1.id)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue('#%d: %s' % (self.arch1.id, self.arch1.name) in str(response.content))
 
 
@@ -175,13 +169,13 @@ class TestChannelView(django.test.TransactionTestCase):
 
     def test_list(self):
         response = self.client.get('/info/channel/')
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue(self.channel1.name in str(response.content))
         self.assertTrue(self.channel2.name in str(response.content))
 
     def test_detail(self):
         response = self.client.get('/info/channel/%d/' % self.channel1.id)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue('#%d: %s' % (self.channel1.id, self.channel1.name) in str(response.content))
 
 
@@ -196,13 +190,13 @@ class TestUserView(django.test.TransactionTestCase):
 
     def test_list(self):
         response = self.client.get('/info/user/')
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue(self.user1.username in str(response.content))
         self.assertTrue(self.user2.username in str(response.content))
 
     def test_detail(self):
         response = self.client.get('/info/user/%d/' % self.user1.id)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue('#%d: %s' % (self.user1.id, self.user1.username) in str(response.content))
 
 
@@ -224,11 +218,11 @@ class TestWorkerView(django.test.TransactionTestCase):
 
     def test_list(self):
         response = self.client.get('/info/worker/')
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue(self.worker1.name in str(response.content))
         self.assertTrue(self.worker2.name in str(response.content))
 
     def test_detail(self):
         response = self.client.get('/info/worker/%d/' % self.worker1.id)
-        self.assertEquals(response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue('#%d: %s' % (self.worker1.id, self.worker1.name) in str(response.content))
