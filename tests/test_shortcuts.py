@@ -172,10 +172,9 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(open(log_file, "r").read(), "XXX\n")
         os.chdir(cwd)
 
+        self.assertRaises(RuntimeError, run, "commanddoesnotexists")
+
         # bashism - output redirection to subshells
-        # fails in default shell (/bin/sh)
-        self.assertRaises(RuntimeError, run, "echo foo | tee >(md5sum -b) >/dev/null")
-        # passes in bash
         run("echo foo | tee >(md5sum -b) >/dev/null", executable="/bin/bash")
 
     @pytest.mark.xfail(sys.version_info < (3, 7), reason="python3.7 api changes")
