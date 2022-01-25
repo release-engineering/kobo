@@ -62,7 +62,8 @@ def login_krbv(request, krb_request, proxy_user=None):
     auth_context.addrs = (socket.gethostbyname(request.META["HTTP_HOST"]), 0, request.META["REMOTE_ADDR"], 0)
 
     # decode and read the authentication request
-    decoded_request = base64.decodestring(krb_request)
+    decode_func = base64.decodebytes if hasattr(base64, "decodebytes") else base64.decodestring
+    decoded_request = decode_func(krb_request)
     auth_context, opts, server_principal, cache_credentials = context.rd_req(decoded_request, server=server_principal, keytab=server_keytab, auth_context=auth_context, options=krbV.AP_OPTS_MUTUAL_REQUIRED)
     cprinc = cache_credentials[2]
 
