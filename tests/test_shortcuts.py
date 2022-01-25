@@ -355,6 +355,7 @@ class TestUtils(unittest.TestCase):
         destdir = tmpdir + '.moved'
         run(['mv', '-v', tmpdir, destdir], logfile=logfile, show_cmd=True)
         self.assertTrue(os.path.isfile(os.path.join(destdir, 'file.log')))
+        shutil.rmtree(destdir)
 
     def test_read_checksum_file(self):
         data = r"""01186fcf04b4b447f393e552964c08c7b419c1ad7a25c342a0b631b1967d3a27 *test-data/a b
