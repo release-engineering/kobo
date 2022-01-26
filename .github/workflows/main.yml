@@ -19,7 +19,7 @@ jobs:
       uses: fedora-python/tox-github-action@master
       with:
         tox_env: ${{ matrix.tox_env }}
-        dnf_install: python3-rpm
+        dnf_install: python3-rpm /usr/bin/gcc /usr/bin/krb5-config /etc/mime.types
     strategy:
       matrix:
         tox_env: [
