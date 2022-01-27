@@ -1,6 +1,7 @@
 # Settings for Django testcases against kobo hub
 import os
 import kobo
+import tempfile
 from django import VERSION
 
 KOBO_DIR = os.path.normpath(
@@ -9,8 +10,15 @@ KOBO_DIR = os.path.normpath(
 
 SECRET_KEY = "key"
 XMLRPC_METHODS = []
-TASK_DIR = '/tmp/kobo-test-tasks'
-UPLOAD_DIR = '/tmp/kobo-test-dir'
+# When the following objects are destroyed
+# the temporary directories are deleted.
+TASK_DIR_OBJ = tempfile.TemporaryDirectory(prefix="kobo-test-tasks-")
+UPLOAD_DIR_OBJ = tempfile.TemporaryDirectory(prefix="kobo-test-dir-")
+WORKER_DIR_OBJ = tempfile.TemporaryDirectory(prefix="kobo-worker-")
+
+TASK_DIR = TASK_DIR_OBJ.name
+UPLOAD_DIR = UPLOAD_DIR_OBJ.name
+WORKER_DIR = WORKER_DIR_OBJ.name
 
 # The middleware and apps below are the bare minimum required
 # to let kobo.hub load successfully

@@ -283,7 +283,8 @@ class HubProxy(object):
                 ex.message += ". Make sure you correctly set KRB_REALM (current value: %s)." % realm
                 ex.args = (ex.err_code, ex.message)
             raise ex
-        req_enc = base64.encodestring(req)
+        encode_func = base64.encodebytes if hasattr(base64, "encodebytes") else base64.encodestring
+        req_enc = encode_func(req)
 
         self._hub.auth.login_krbv(req_enc)
 

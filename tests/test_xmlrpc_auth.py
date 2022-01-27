@@ -2,12 +2,6 @@
 
 import django
 
-# Only for Django >= 1.7
-if 'setup' in dir(django):
-    # This has to happen before below imports because they have a hard requirement
-    # on settings being loaded before import.
-    django.setup()
-
 from django.core.exceptions import PermissionDenied
 from mock import Mock, patch
 
@@ -44,7 +38,7 @@ class TestLoginWorker(django.test.TransactionTestCase):
             krb_mock.authenticate.assert_called_once_with(None, 'worker/name')
         else:
             krb_mock.authenticate.assert_called_once_with('worker/name')
-        self.assertEquals(session_key, '1234567890')
+        self.assertEqual(session_key, '1234567890')
 
     def test_login_worker_key_valid_worker_invalid_user(self):
         Worker.objects.create(worker_key='key', name='name')

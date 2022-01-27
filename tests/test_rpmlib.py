@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-import unittest2 as unittest
+import unittest
 
 # tolerate and skip in absence of rpm since it's not installable to virtualenv
 try:

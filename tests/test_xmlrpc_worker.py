@@ -3,17 +3,11 @@
 import base64
 import hashlib
 import tempfile
-import unittest2 as unittest
+import unittest
 
 import django
 import pytest
 import six
-
-# Only for Django >= 1.7
-if 'setup' in dir(django):
-    # This has to happen before below imports because they have a hard requirement
-    # on settings being loaded before import.
-    django.setup()
 
 from datetime import datetime, timedelta
 
@@ -1107,7 +1101,8 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
         with tempfile.NamedTemporaryFile(delete=True) as tf:
             msg = b'this is a text message'
             checksum = hashlib.sha256(msg).hexdigest()
-            chunk = base64.encodestring(msg)
+            encode_func = base64.encodebytes if hasattr(base64, "encodebytes") else base64.encodestring
+            chunk = encode_func(msg)
             chunk_start = 0
             chunk_size = len(msg)
 
@@ -1136,7 +1131,8 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
         with tempfile.NamedTemporaryFile(delete=True) as tf:
             msg = b'this is a text message'
             checksum = 'invalid-checksum'
-            chunk = base64.encodestring(msg)
+            encode_func = base64.encodebytes if hasattr(base64, "encodebytes") else base64.encodestring
+            chunk = encode_func(msg)
             chunk_start = 0
             chunk_size = len(msg)
 

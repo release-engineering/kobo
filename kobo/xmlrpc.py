@@ -77,7 +77,8 @@ class TimeoutHTTPProxyConnection(TimeoutHTTPConnection):
         if not self.proxy_user:
             return
         userpass = "%s:%s" % (self.proxy_user, self.proxy_password)
-        enc_userpass = base64.encodestring(userpass).strip()
+        encode_func = base64.encodebytes if hasattr(base64, "encodebytes") else base64.encodestring
+        enc_userpass = encode_func(userpass).strip()
         self.putheader("Proxy-Authorization", "Basic %s" % enc_userpass)
 
     def set_host_and_port(self, host, port):
@@ -663,7 +664,8 @@ def encode_xmlrpc_chunks_iterator(file_obj):
         if not chunk:
             break
         checksum.update(chunk)
-        encoded_chunk = base64.encodestring(chunk)
+        encode_func = base64.encodebytes if hasattr(base64, "encodebytes") else base64.encodestring
+        encoded_chunk = encode_func(chunk)
         yield (str(chunk_start), str(len(chunk)), hashlib.sha256(chunk).hexdigest().lower(), encoded_chunk)
         chunk_start += len(chunk)
 
@@ -692,7 +694,8 @@ def decode_xmlrpc_chunk(chunk_start, chunk_len, chunk_checksum, encoded_chunk, w
 
     chunk_start = int(chunk_start)
     chunk_len = int(chunk_len)
-    chunk = base64.decodestring(encoded_chunk)
+    decode_func = base64.decodebytes if hasattr(base64, "decodebytes") else base64.decodestring
+    chunk = decode_func(encoded_chunk)
 
     if chunk_len not in (-1, len(chunk)):
         raise ValueError("Chunk length doesn't match.")

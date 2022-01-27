@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 
-import unittest2 as unittest
+import unittest
 import tempfile
 import shutil
 import os
@@ -167,8 +167,8 @@ class TestUndefinedVariable(unittest.TestCase):
         with self.assertRaises(SyntaxError) as ctx:
             self.conf.load_from_string(cfg)
 
-        self.assertRegexpMatches(str(ctx.exception),
-                                 "Undefined variable 'missing': .+")
+        self.assertRegex(str(ctx.exception),
+                         "Undefined variable 'missing': .+")
 
 
 class TestDuplicateKeys(unittest.TestCase):

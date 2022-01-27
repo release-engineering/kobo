@@ -9,12 +9,6 @@ import django
 import pytest
 import six
 
-# Only for Django >= 1.7
-if 'setup' in dir(django):
-    # This has to happen before below imports because they have a hard requirement
-    # on settings being loaded before import.
-    django.setup()
-
 from datetime import datetime, timedelta
 
 from django.contrib.auth.models import User

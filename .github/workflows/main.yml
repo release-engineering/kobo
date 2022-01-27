@@ -1,0 +1,39 @@
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+
+name: Run Tox tests
+
+jobs:
+  tox_test:
+    name: Tox test
+    steps:
+    - name: Checkout kobo
+      uses: actions/checkout@v2
+    - name: Run Tox tests
+      id: test
+      uses: fedora-python/tox-github-action@master
+      with:
+        tox_env: ${{ matrix.tox_env }}
+        dnf_install: python3-rpm /usr/bin/gcc /usr/bin/krb5-config /etc/mime.types
+    strategy:
+      matrix:
+        tox_env: [
+          # This list has to be maintained manually :(
+          # You can get it from `tox -l | sed "s/$/,/"`
+          py36-django2,
+          py36-django3,
+          py38-django2,
+          py38-django3,
+          py39-django2,
+          py39-django3,
+          py310-django2,
+          py310-django3,
+        ]
+
+    # Use GitHub's Linux Docker host
+    runs-on: ubuntu-latest

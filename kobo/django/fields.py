@@ -176,7 +176,7 @@ class JSONField(models.TextField):
         self.human_readable = kwargs.pop('human_readable', False)
         return super(JSONField, self).__init__(*args, **kwargs)
 
-    def from_db_value(self, value, expression, connection, context=None):
+    def from_db_value(self, value, expression, connection):
         if not isinstance(value, six.string_types):
             return value
 

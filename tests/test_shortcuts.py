@@ -3,7 +3,7 @@
 
 
 import mock
-import unittest2 as unittest
+import unittest
 import pytest
 
 import os
@@ -21,15 +21,15 @@ class TestShortcuts(unittest.TestCase):
         self.assertEqual(force_list("a"), ["a"])
         self.assertEqual(force_list(["a"]), ["a"])
         self.assertEqual(force_list(["a", "b"]), ["a", "b"])
-        self.assertItemsEqual(force_list({'a': True, 'b': True}.keys()), ["a", "b"])
-        self.assertItemsEqual(force_list(set(["a", "b"])), ["a", "b"])
+        self.assertCountEqual(force_list({'a': True, 'b': True}.keys()), ["a", "b"])
+        self.assertCountEqual(force_list(set(["a", "b"])), ["a", "b"])
 
     def test_force_tuple(self):
-        self.assertItemsEqual(force_tuple("a"), ("a",))
-        self.assertItemsEqual(force_tuple(("a",)), ("a",))
-        self.assertItemsEqual(force_tuple(("a", "b")), ("a", "b"))
-        self.assertItemsEqual(force_tuple({'a': True, 'b': True}.keys()), ("a", "b"))
-        self.assertItemsEqual(force_tuple(set(["a", "b"])), ("a", "b"))
+        self.assertEqual(force_tuple("a"), ("a",))
+        self.assertEqual(force_tuple(("a",)), ("a",))
+        self.assertEqual(force_tuple(("a", "b")), ("a", "b"))
+        self.assertCountEqual(force_tuple({'a': True, 'b': True}.keys()), ("a", "b"))
+        self.assertCountEqual(force_tuple(set(["a", "b"])), ("a", "b"))
 
     def test_allof(self):
         self.assertEqual(allof(), True)
@@ -172,10 +172,9 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(open(log_file, "r").read(), "XXX\n")
         os.chdir(cwd)
 
+        self.assertRaises(RuntimeError, run, "commanddoesnotexists")
+
         # bashism - output redirection to subshells
-        # fails in default shell (/bin/sh)
-        self.assertRaises(RuntimeError, run, "echo foo | tee >(md5sum -b) >/dev/null")
-        # passes in bash
         run("echo foo | tee >(md5sum -b) >/dev/null", executable="/bin/bash")
 
     @pytest.mark.xfail(sys.version_info < (3, 7), reason="python3.7 api changes")
@@ -356,6 +355,7 @@ class TestUtils(unittest.TestCase):
         destdir = tmpdir + '.moved'
         run(['mv', '-v', tmpdir, destdir], logfile=logfile, show_cmd=True)
         self.assertTrue(os.path.isfile(os.path.join(destdir, 'file.log')))
+        shutil.rmtree(destdir)
 
     def test_read_checksum_file(self):
         data = r"""01186fcf04b4b447f393e552964c08c7b419c1ad7a25c342a0b631b1967d3a27 *test-data/a b
