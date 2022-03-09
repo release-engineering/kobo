@@ -389,7 +389,7 @@ class TaskManager(kobo.log.LoggingBase):
         task = TaskClass(hub, self.conf, task_info["id"], task_info["args"])
 
         # redirect stdout and stderr
-        thread = kobo.worker.logger.LoggingThread(hub, task_info["id"])
+        thread = kobo.worker.logger.LoggingThread(hub, task_info["id"], logger=self)
         sys.stdout = kobo.worker.logger.LoggingIO(open(os.devnull, "w"), thread)
         sys.stderr = sys.stdout
         thread.start()

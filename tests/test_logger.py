@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 
 import time
+import logging
 
 import unittest
 
-from six import BytesIO
+from six import BytesIO, StringIO
 
 from mock import Mock
 
 from kobo.worker.logger import LoggingThread, LoggingIO
+from kobo.log import LoggingBase
 from .utils import ArgumentIsInstanceOf
 
 
@@ -52,6 +54,33 @@ class TestLoggingThread(unittest.TestCase):
         thread.stop()
         self.assertFalse(thread.is_alive())
         self.assertFalse(thread._running)
+
+    def test_logs_on_fatal_error(self):
+        # Set up a logger whose output we'll be able to inspect.
+        logs = StringIO()
+        logger = logging.getLogger('TestLoggingThread')
+        logger.addHandler(logging.StreamHandler(logs))
+        kobo_logger = LoggingBase(logger)
+
+        # Set up hub to raise some exception other than an XML-RPC fault.
+        mock_hub = Mock()
+        mock_hub.upload_task_log.side_effect = RuntimeError("Simulated error")
+
+        thread = LoggingThread(mock_hub, 9999, logger=kobo_logger)
+        thread.daemon = True
+        thread.start()
+
+        thread.write('This is a log message!')
+
+        # Since we set up a fatal error, we expect the thread to die soon
+        # despite not calling stop().
+        thread.join(10.0)
+        self.assertFalse(thread.is_alive())
+
+        # Before dying, it should have written something useful to the logs.
+        captured = logs.getvalue()
+        assert 'Fatal error in LoggingThread' in captured
+        assert 'RuntimeError: Simulated error' in captured
 
 
 class TestLoggingIO(unittest.TestCase):

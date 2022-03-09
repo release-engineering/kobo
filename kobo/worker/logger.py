@@ -9,6 +9,8 @@ from six.moves import queue
 from six.moves.xmlrpc_client import Fault
 from six import BytesIO
 
+import kobo.tback
+
 
 __all__ = (
     "LoggingThread",
@@ -20,6 +22,7 @@ class LoggingThread(threading.Thread):
     """Send stdout data to hub in a background thread."""
 
     def __init__(self, hub, task_id, *args, **kwargs):
+        self._logger = kwargs.pop('logger', None)
         threading.Thread.__init__(self, *args, **kwargs)
         self._hub = hub
         self._task_id = task_id
@@ -58,6 +61,18 @@ class LoggingThread(threading.Thread):
                 self._send_data = ""
             except Fault:
                 continue
+            except Exception:
+                # Any exception other than XML-RPC fault is fatal. Since
+                # upload_task_log is apparently not working, we can't get this
+                # into the task logs, but it should at least be possible for
+                # this to get into the worker's local log file.
+                if self._logger:
+                    msg = "\n".join([
+                        "Fatal error in LoggingThread",
+                        kobo.tback.Traceback().get_traceback().decode(),
+                    ])
+                    self._logger.log_critical(msg)
+                raise
 
     def write(self, data):
         """Add data to the queue and set the event for sending queue content."""
