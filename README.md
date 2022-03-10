@@ -31,6 +31,15 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.20.3
+-----------
+
+### BUG FIXES
+
+- Many compatibility fixes for modern Python and Django versions.
+- Fixed loss of error details when `LoggingThread` fails.
+
+
 kobo 0.20.2
 -----------
 
