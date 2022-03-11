@@ -30,7 +30,18 @@ class LoggingThread(threading.Thread):
         self._event = threading.Event()
         self._running = True
         self._send_time = 0
-        self._send_data = ""
+        self._send_data = b""
+
+    def read_queue(self):
+        out = self._queue.get_nowait()
+
+        # We do not know whether we're being sent bytes or text.
+        # The hub API always wants bytes.
+        # Ensure we safely convert everything to bytes as we go.
+        if isinstance(out, six.text_type):
+            out = out.encode('utf-8', errors='replace')
+
+        return out
 
     def run(self):
         """Send queue content to hub."""
@@ -41,7 +52,7 @@ class LoggingThread(threading.Thread):
             self._event.clear()
             while True:
                 try:
-                    self._send_data += self._queue.get_nowait()
+                    self._send_data += self.read_queue()
                 except queue.Empty:
                     break
 
@@ -52,13 +63,10 @@ class LoggingThread(threading.Thread):
             if self._running and len(self._send_data) < 1200 and now - self._send_time < 5:
                 continue
 
-            if isinstance(self._send_data, six.text_type):
-                self._send_data = self._send_data.encode('utf-8')
-
             try:
                 self._hub.upload_task_log(BytesIO(self._send_data), self._task_id, "stdout.log", append=True)
                 self._send_time = now
-                self._send_data = ""
+                self._send_data = b""
             except Fault:
                 continue
             except Exception:
