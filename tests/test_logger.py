@@ -82,6 +82,38 @@ class TestLoggingThread(unittest.TestCase):
         assert 'Fatal error in LoggingThread' in captured
         assert 'RuntimeError: Simulated error' in captured
 
+    def test_mixed_writes(self):
+        uploaded = []
+
+        # Used as a side-effect to keep whatever's uploaded
+        def mock_upload(io, *args, **kwargs):
+            uploaded.append(io.read())
+
+        mock_hub = Mock()
+        mock_hub.upload_task_log.side_effect = mock_upload
+
+        thread = LoggingThread(mock_hub, 9999)
+        thread.daemon = True
+
+        thread.start()
+
+        # Mixing text, ascii-safe bytes, ascii-unsafe bytes here
+        # as is possible with sys.stdout at least on py2.
+        thread.write('Some text!')
+        thread.write(b'Some bytes!')
+        thread.write(u'Some 文!')
+        thread.write(b'Some \xe2 wacky bytes!')
+
+        # It should be able to stop normally
+        thread.stop()
+        self.assertFalse(thread.is_alive())
+
+        # It should have uploaded exactly the expected bytes.
+        assert b''.join(uploaded) == (
+            b'Some text!Some bytes!'
+            b'Some \xe6\x96\x87!Some \xe2 wacky bytes!'
+        )
+
 
 class TestLoggingIO(unittest.TestCase):
 
