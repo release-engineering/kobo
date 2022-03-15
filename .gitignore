@@ -7,3 +7,5 @@ MANIFEST
 .tox/
 **/.pytest_cache/
 /testdatabase
+*egg-info/
+.idea/
