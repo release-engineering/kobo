@@ -183,6 +183,23 @@ class HubProxy(object):
         except:
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
 
+    @property
+    def is_logged_in(self):
+        return self._logged_in
+
+    def login(self):
+        """Login to the hub.
+        
+        If the hub is already logged in this method does not reattempt it.
+
+        Raises:
+            AuthenticationError when login fails.
+        """
+        if not self.is_logged_in:
+            self._login(force=True)
+            if not self.is_logged_in:
+                raise AuthenticationError("Login attempt failed.")
+
     def _login(self, force=False, verbose=False):
         """Login to the hub.
         - self._hub instance is created in this method
