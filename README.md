@@ -31,6 +31,17 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.21.0
+-----------
+
+### BUG FIXES
+
+- Fixed a crash bug in `LoggingThread` when mixing bytes and text.
+
+### FEATURES & IMPROVEMENTS
+
+- Added methods to `HubProxy` for explicitly logging into hub.
+
 kobo 0.20.3
 -----------
 
