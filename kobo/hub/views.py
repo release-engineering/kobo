@@ -274,3 +274,12 @@ def krb5login(request, redirect_field_name=REDIRECT_FIELD_NAME):
         redirect_to = reverse("home/index")
     return RedirectView.as_view(url=redirect_to, permanent=True)(request)
 
+def oidclogin(request):
+    middleware = 'kobo.django.auth.middleware.LimitedRemoteUserMiddleware'
+    if django_version_ge('1.10.0'):
+        middleware_setting = settings.MIDDLEWARE
+    else:
+        middleware_setting = settings.MIDDLEWARE_CLASSES
+    if middleware not in middleware_setting:
+        raise ImproperlyConfigured("oidclogin view requires '%s' middleware installed" % middleware)
+    return RedirectView.as_view(url=reverse("home/index"), permanent=False)(request)
