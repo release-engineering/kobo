@@ -31,6 +31,17 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.22.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- hub: added an endpoint for OIDC login. Note that kobo itself does not
+  implement any OIDC workflow, which may instead be implemented by the
+  hosting web server.
+- `HubProxy` will now retry on additional cases of XML-RPC error.
+
+
 kobo 0.21.0
 -----------
 
