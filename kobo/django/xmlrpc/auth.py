@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 
-import datetime
 import base64
 import socket
+import time
+import json
 
 import django.contrib.auth
 from django.conf import settings
@@ -20,6 +21,7 @@ __all__ = (
     "renew_session",
     "login_krbv",
     "login_password",
+    "login_oidc",
     "logout",
 )
 
@@ -78,6 +80,44 @@ def login_krbv(request, krb_request, proxy_user=None):
         raise PermissionDenied()
     user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
     django.contrib.auth.login(request, user)
+    return request.session.session_key
+
+
+def login_oidc(request, json_web_token):
+    import jwcrypto.jwk
+    import jwcrypto.jwt
+    import requests_cache
+
+    session = requests_cache.CachedSession("public-keys")
+    response = session.get(settings.OIDC_PUBLIC_KEY_URL)
+    keys = [jwcrypto.jwk.JWK(**key) for key in response.json()["keys"]]
+
+    decoded_jwt = None
+    for key in keys:
+        try:
+            decoded_jwt = json.loads(jwcrypto.jwt.JWT(jwt=json_web_token, key=key).claims)
+        except:
+            pass
+        else:
+            break
+
+    if not decoded_jwt:
+        raise PermissionDenied("JWT's signature couldn't be verified with any public key")
+    if decoded_jwt.get("exp", 0) <= int(time.time()):
+        raise PermissionDenied("Authentication was attempted with an expired JWT")
+    if decoded_jwt.get("aud") != settings.OIDC_PUBLIC_CLIENT_ID:
+        raise PermissionDenied("JWT was generated for a different recipient")
+
+    backend = Krb5RemoteUserBackend()
+    if django_version_ge("1.11.0"):
+        user = backend.authenticate(None, decoded_jwt["sub"])
+    else:
+        user = backend.authenticate(decoded_jwt["sub"])
+    if user is None:
+        raise PermissionDenied()
+    user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
+    django.contrib.auth.login(request, user)
+
     return request.session.session_key
 
 

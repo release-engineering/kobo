@@ -85,3 +85,6 @@ if VERSION[0:3] >= (1, 9, 0):
 ROOT_URLCONF = 'tests.hub_urls'
 
 STATIC_URL = os.path.join(os.path.dirname(kobo.__file__), "hub", "static") + '/'
+
+OIDC_PUBLIC_KEY_URL = "https://key-url.com/"
+OIDC_PUBLIC_CLIENT_ID = "some-client"

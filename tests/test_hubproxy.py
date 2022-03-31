@@ -39,6 +39,11 @@ class FakeTransport(SafeCookieTransport):
         self.fake_transport_calls.append((path, request))
         return []
 
+class FakeResponse:
+    def __init__(self, headers, text):
+        self.headers = headers
+        self.text = text
+
 
 def test_login_gssapi(requests_session):
     """Login with gssapi method obtains session cookie via SPNEGO & krb5login."""
@@ -166,6 +171,66 @@ def test_login_gssapi_principal_needs_keytab(requests_session):
     logger.debug.assert_called_with(
         "Failed to create new session: Cannot specify a principal without a keytab"
     )
+
+
+@mock.patch("requests_kerberos.HTTPKerberosAuth")
+def test_login_oidc(mock_kerberos, requests_session):
+    hub_url = "https://hub.example.com/myapp/endpoint"
+
+    conf = PyConfigParser()
+    conf.load_from_dict(
+        {
+            "HUB_URL": hub_url,
+            "AUTH_METHOD": "oidc",
+            "OIDC_CLIENT": "some-client",
+            "OIDC_REDIRECT": "https://some-redirect.com/",
+            "OIDC_BASE_URL": "https://some-auth.com"
+        }
+    )
+
+    transport = FakeTransport()
+    logger = mock.Mock()
+    proxy = HubProxy(conf, transport=transport, logger=logger)
+    requests_session.return_value.get.return_value = FakeResponse(
+        {"Location": "abc&code=some-code"},
+        "",
+    )
+    requests_session.return_value.post.return_value = FakeResponse(
+        "",
+        '{"access_token": "some-token"}',
+    )
+
+    proxy._login(force=True)
+
+    requests_session.return_value.get.assert_called_once_with(
+            "https://some-auth.com/auth",
+            allow_redirects=False,
+            auth=mock_kerberos.return_value,
+            params={
+                "client_id": "some-client",
+                "response_type": "code",
+                "scope": "openid",
+                "redirect_uri": "https://some-redirect.com/",
+            },
+            verify=False,
+        )
+    requests_session.return_value.post.assert_called_once_with(
+            "https://some-auth.com/token",
+            {
+                "code": "some-code",
+                "grant_type": "authorization_code",
+                "client_id": "some-client",
+                "redirect_uri": "https://some-redirect.com/",
+            },
+            allow_redirects=False,
+            verify=False,
+        )   
+    assert any(
+            [
+                b"auth.login_oidc" in c[1] and b"some-token" in c[1]
+                for c in transport.fake_transport_calls
+            ]
+        )
 
 
 def test_no_auto_logout(requests_session):

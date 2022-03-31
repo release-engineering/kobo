@@ -72,6 +72,9 @@ import os
 import base64
 import hashlib
 import ssl
+import re
+import json
+import urllib3
 import warnings
 import six.moves.urllib.parse as urlparse
 from six.moves import xmlrpc_client as xmlrpclib
@@ -366,6 +369,58 @@ class HubProxy(object):
             "Login response: %s %s", response, response.headers
         )
         response.raise_for_status()
+
+    def _login_oidc(self):
+        """Login using OIDC credentials (uses Kerberos to authenticate)."""
+        client = self._conf.get("OIDC_CLIENT")
+        redirect = self._conf.get("OIDC_REDIRECT")
+        base_url = self._conf.get("OIDC_BASE_URL")
+        auth_uri = "/auth"
+        token_uri = "/token"
+        userinfo_url = "/userinfo"
+
+        import requests
+        import requests_kerberos
+
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+        # authenticate via Kerberos and get code
+        with requests.Session() as session:
+            kerberos_auth = requests_kerberos.HTTPKerberosAuth(
+                mutual_authentication=requests_kerberos.OPTIONAL, force_preemptive=True
+            )
+            access_code_params = {
+                "client_id": client,
+                "response_type": "code",
+                "scope": "openid",
+                "redirect_uri": redirect,
+            }
+            get_auth_response = session.get(
+                base_url + auth_uri,
+                params=access_code_params,
+                verify=False,
+                auth=kerberos_auth,
+                allow_redirects=False,
+            )
+
+            matches = re.search("&code=(.*?)$", get_auth_response.headers["Location"])
+            code = matches.group(1)
+            # exchange code for token
+            token_params = {
+                "code": code,
+                "grant_type": "authorization_code",
+                "client_id": client,
+                "redirect_uri": redirect,
+            }
+            token_response = session.post(
+                base_url + token_uri,
+                token_params,
+                allow_redirects=False,
+                verify=False,
+            )
+
+        # authenticate with hub using JWT
+        self._hub.auth.login_oidc(json.loads(token_response.text)["access_token"])
 
     def get_server_principal(self, service=None, realm=None):
         """Convert hub url to kerberos principal."""

@@ -5,3 +5,6 @@ Django
 koji
 requests
 requests_gssapi
+requests-kerberos
+jwcrypto
+requests_cache
