@@ -132,6 +132,7 @@ def test_login_gssapi_krb_opts(requests_session):
     # server principal
     mock_auth.assert_called_once_with(
         creds=mock_creds.return_value,
+        mutual_authentication=2,
         target_name=gssapi.Name(
             "SVC/hub.example.com@REALM.EXAMPLE.COM", gssapi.NameType.kerberos_principal
         ),

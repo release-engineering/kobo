@@ -309,6 +309,21 @@ class HubProxy(object):
         """Login using kerberos credentials (uses gssapi)."""
 
         login_url = urlparse.urljoin(self._hub_url, "auth/krb5login/")
+        return self._login_gssapi_common(login_url, force_service=True, allow_redirects=False)
+    
+    def _login_oidc(self):
+        """Login using oidc endpoint (with gssapi)."""
+        login_url = urlparse.urljoin(self._hub_url, "auth/oidclogin/")
+        return self._login_gssapi_common(login_url, force_service=False, allow_redirects=True)
+
+    def _login_gssapi_common(self, login_url, force_service, allow_redirects):
+        """Common authentication logic for auth methods using gssapi.
+        - if force_service is True, client always calculates a service principal up-front
+          even if no KRB_SERVICE was set in config. Breaks OIDC since we are not actually
+          doing gssapi with the kobo hub.
+        - if allow_redirects is True, authentication is allowed to follow redirects. Required
+          in the OIDC case.
+        """
 
         # read default values from settings
         principal = self._conf.get("KRB_PRINCIPAL")
@@ -331,12 +346,13 @@ class HubProxy(object):
         if self._conf.get("CA_CERT"):
             request_args["verify"] = self._conf["CA_CERT"]
 
-        server_name = self.get_server_principal(service=service, realm=realm)
-        server_name = gssapi.Name(server_name, gssapi.NameType.kerberos_principal)
+        auth_args = {"mutual_authentication": requests_gssapi.OPTIONAL}
 
-        auth_args = {
-            "target_name": server_name,
-        }
+        if service or force_service:
+            server_name = self.get_server_principal(service=service, realm=realm)
+            server_name = gssapi.Name(server_name, gssapi.NameType.kerberos_principal)
+            auth_args["target_name"] = server_name
+
         if principal is not None:
             if keytab is None:
                 raise ImproperlyConfigured(
@@ -358,7 +374,7 @@ class HubProxy(object):
             response = s.get(
                 login_url,
                 auth=requests_gssapi.HTTPSPNEGOAuth(**auth_args),
-                allow_redirects=False,
+                allow_redirects=allow_redirects,
                 **request_args
             )
 
