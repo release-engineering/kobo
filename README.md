@@ -31,6 +31,17 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.23.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- Introduced `AUTH_METHOD=oidc` for XML-RPC clients. If this authentication method
+  is enabled, the OIDC endpoint introduced by kobo 0.22.0 will be used.
+- `HubProxy` now respects the system configuration for kerberos realm when
+  `KRB_REALM` has not been set.
+
+
 kobo 0.22.0
 -----------
 
