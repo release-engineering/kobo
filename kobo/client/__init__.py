@@ -349,8 +349,15 @@ class HubProxy(object):
         auth_args = {"mutual_authentication": requests_gssapi.OPTIONAL}
 
         if service or force_service:
-            server_name = self.get_server_principal(service=service, realm=realm)
-            server_name = gssapi.Name(server_name, gssapi.NameType.kerberos_principal)
+            if realm is None:
+                # let gssapi select the correct realm (according to system configuration)
+                if service is None:
+                    service = "HTTP"
+                server_name = '%s@%s' % (service, self.get_hub_hostname()) 
+                server_name = gssapi.Name(server_name, gssapi.NameType.hostbased_service)
+            else:
+                server_name = self.get_server_principal(service=service, realm=realm)
+                server_name = gssapi.Name(server_name, gssapi.NameType.kerberos_principal)
             auth_args["target_name"] = server_name
 
         if principal is not None:
@@ -383,12 +390,15 @@ class HubProxy(object):
         )
         response.raise_for_status()
 
-    def get_server_principal(self, service=None, realm=None):
-        """Convert hub url to kerberos principal."""
+    def get_hub_hostname(self):
+        """Get hub hostname out of hub url."""
         hostname = urlparse.urlparse(self._hub_url)[1]
         # remove port from hostname
-        hostname = hostname.split(":")[0]
+        return hostname.split(":")[0]
 
+    def get_server_principal(self, service=None, realm=None):
+        """Convert hub url to kerberos principal."""
+        hostname = self.get_hub_hostname()
         if realm is None:
             # guess realm: last two parts from hostname
             realm = ".".join(hostname.split(".")[-2:]).upper()
