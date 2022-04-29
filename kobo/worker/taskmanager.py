@@ -46,6 +46,7 @@ Struct: task_info
 
 from __future__ import absolute_import
 
+import abc
 import datetime
 import errno
 import os
@@ -87,7 +88,30 @@ class TaskContainer(PluginContainer):
     pass
 
 
-class TaskManager(kobo.log.LoggingBase):
+@six.add_metaclass(abc.ABCMeta)
+class TaskManagerBase(kobo.log.LoggingBase):
+    """Abstract class for a task manager defining which methods must be implemented."""
+    @abc.abstractmethod
+    def update_worker_info(self):
+        pass
+
+    @abc.abstractmethod
+    def update_tasks(self):
+        pass
+    
+    @abc.abstractmethod
+    def get_next_task(self):
+        pass
+    
+    @abc.abstractmethod
+    def sleep(self):
+        pass
+    
+    @abc.abstractmethod
+    def shutdown(self):
+        pass
+
+class TaskManager(TaskManagerBase):
     """Task manager takes and executes new tasks."""
 
     def __init__(self, conf, logger=None, **kwargs):
