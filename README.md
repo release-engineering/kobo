@@ -31,6 +31,16 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.24.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- It is now possible to provide a custom task manager implementation into the kobo
+  worker's main loop. This can be used to alter the worker's task scheduling or
+  execution behavior.
+
+
 kobo 0.23.0
 -----------
 
