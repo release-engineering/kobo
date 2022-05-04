@@ -22,7 +22,7 @@ def daemon_shutdown(*args, **kwargs):
     raise ShutdownException()
 
 
-def main_loop(conf, foreground=False):
+def main_loop(conf, foreground=False, task_manager_class=None):
     """infinite daemon loop"""
 
     # define custom signal handlers
@@ -37,7 +37,10 @@ def main_loop(conf, foreground=False):
             log_level = logging.getLevelName(conf.get("LOG_LEVEL", "DEBUG").upper())
             kobo.log.add_rotating_file_logger(logger, log_file, log_level=log_level)
 
-        tm = TaskManager(conf=conf, logger=logger)
+        if not task_manager_class:
+            tm = TaskManager(conf=conf, logger=logger)
+        else:
+            tm = task_manager_class(conf=conf, logger=logger)
     except Exception as ex:
         raise
         sys.stderr.write("Error initializing TaskManager: %s\n" % ex)
@@ -79,7 +82,7 @@ def main_loop(conf, foreground=False):
             tm.sleep()
 
 
-def main(conf, argv=None):
+def main(conf, argv=None, task_manager_class=None):
     parser = optparse.OptionParser()
     parser.add_option(
         "-f", "--foreground",
@@ -112,6 +115,12 @@ def main(conf, argv=None):
         sys.exit(0)
 
     if opts.foreground:
-        main_loop(conf, foreground=True)
+        main_loop(conf, foreground=True, task_manager_class=task_manager_class)
     else:
-        kobo.process.daemonize(main_loop, conf=conf, daemon_pid_file=pid_file, foreground=False)
+        kobo.process.daemonize(
+            main_loop,
+            conf=conf,
+            daemon_pid_file=pid_file,
+            foreground=False,
+            task_manager_class=task_manager_class,
+        )

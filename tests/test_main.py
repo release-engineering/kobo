@@ -234,6 +234,7 @@ class TestMain(unittest.TestCase):
                         conf=conf,
                         daemon_pid_file='/tmp/pid',
                         foreground=False,
+                        task_manager_class=None,
                     )
 
     def test_main_foreground_command(self):
@@ -248,7 +249,11 @@ class TestMain(unittest.TestCase):
                         exit_mock.assert_not_called()
                         kill_mock.assert_not_called()
                         daemonize_mock.assert_not_called()
-                        main_loop_mock.assert_called_once_with(conf, foreground=True)
+                        main_loop_mock.assert_called_once_with(
+                            conf, 
+                            foreground=True, 
+                            task_manager_class=None
+                        )
 
     def test_main_pid_file_command(self):
         with patch.object(main.kobo.process, 'daemonize') as daemonize_mock:
@@ -263,6 +268,7 @@ class TestMain(unittest.TestCase):
                         conf={},
                         daemon_pid_file='/tmp/pid',
                         foreground=False,
+                        task_manager_class=None,
                     )
 
     def test_main_kill_command(self):
