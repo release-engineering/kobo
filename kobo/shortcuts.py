@@ -287,7 +287,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
     # new args added in py3 for Popen
     text = kwargs.get('text', False)
     encoding = kwargs.get('encoding', None)
-    errors = kwargs.get('errors', None)
+    errors = kwargs.get('errors', 'backslashreplace')
 
     # any of these args is passed, text mode will be enabled.
     is_text_mode = any([universal_newlines, text, encoding, errors])
