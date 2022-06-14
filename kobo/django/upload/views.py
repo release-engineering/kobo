@@ -50,7 +50,6 @@ def file_upload(request):
         return HttpResponseServerError("File already exists.")
 
     # TODO: check size
-    # TODO: check target_dir? create it?
     # don't re-upload FINISHED or STARTED
 
     tmp_dir = tempfile.mkdtemp()
