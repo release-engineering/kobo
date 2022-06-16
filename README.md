@@ -31,6 +31,14 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.24.1
+-----------
+
+### BUG FIXES
+
+- Fixed an encoding error when using a python 2 XML-RPC client 
+  against a python 3 kobo hub.
+
 kobo 0.24.0
 -----------
 
