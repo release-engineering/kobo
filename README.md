@@ -31,6 +31,13 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.24.2
+-----------
+
+### BUG FIXES
+
+- Fixed a crash from Django dumpdata command when using Django 2 and later.
+
 kobo 0.24.1
 -----------
 
