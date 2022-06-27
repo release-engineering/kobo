@@ -11,6 +11,7 @@ from django.forms.fields import CallableChoiceIterator
 import kobo.django.forms
 from kobo.types import StateEnum
 from kobo.django.compat import gettext_lazy as _
+from kobo.django.django_version import django_version_ge
 
 
 '''
@@ -209,7 +210,10 @@ class JSONField(models.TextField):
             raise exceptions.ValidationError(_("Cannot serialize JSON data."))
 
     def value_to_string(self, obj):
-        value = self._get_val_from_obj(obj)
+        if django_version_ge('2.0'):
+            value = self.value_from_object(obj)
+        else:
+            value = self._get_val_from_obj(obj)
         return self.get_db_prep_value(value)
 
     def value_from_object(self, obj):
