@@ -155,12 +155,12 @@ class TestMainLoop(unittest.TestCase):
                     with patch.object(main.sys, 'exit') as exit_mock:
                         main.main_loop({
                             'max_runs': max_runs,
-                            'LOG_FILE': '/tmp/log.txt',
+                            'LOG_FILE': '/test/log.txt',
                         }, foreground=False)
 
                         log_mock.add_rotating_file_logger.assert_called_once_with(
                             self.task_manager._logger,
-                            '/tmp/log.txt',
+                            '/test/log.txt',
                             log_level=10,
                         )
 
@@ -190,12 +190,12 @@ class TestMainLoop(unittest.TestCase):
                     with patch.object(main.sys, 'exit') as exit_mock:
                         main.main_loop({
                             'max_runs': max_runs,
-                            'LOG_FILE': '/tmp/log.txt',
+                            'LOG_FILE': '/test/log.txt',
                         }, foreground=True)
 
                         log_mock.add_rotating_file_logger.assert_called_once_with(
                             self.task_manager._logger,
-                            '/tmp/log.txt',
+                            '/test/log.txt',
                             log_level=10,
                         )
 
@@ -220,7 +220,7 @@ class TestMainLoop(unittest.TestCase):
 class TestMain(unittest.TestCase):
 
     def test_main_with_no_commands(self):
-        conf = {'PID_FILE': '/tmp/pid'}
+        conf = {'PID_FILE': '/test/pid'}
 
         with patch.object(main.kobo.process, 'daemonize') as daemonize_mock:
             with patch.object(main.os, 'kill') as kill_mock:
@@ -232,13 +232,13 @@ class TestMain(unittest.TestCase):
                     daemonize_mock.assert_called_once_with(
                         main.main_loop,
                         conf=conf,
-                        daemon_pid_file='/tmp/pid',
+                        daemon_pid_file='/test/pid',
                         foreground=False,
                         task_manager_class=None,
                     )
 
     def test_main_foreground_command(self):
-        conf = {'PID_FILE': '/tmp/pid'}
+        conf = {'PID_FILE': '/test/pid'}
 
         with patch('kobo.worker.main.main_loop') as main_loop_mock:
             with patch.object(main.kobo.process, 'daemonize') as daemonize_mock:
@@ -259,14 +259,14 @@ class TestMain(unittest.TestCase):
         with patch.object(main.kobo.process, 'daemonize') as daemonize_mock:
             with patch.object(main.os, 'kill') as kill_mock:
                 with patch.object(main.sys, 'exit') as exit_mock:
-                    main.main({}, argv=['--pid-file', '/tmp/pid'])
+                    main.main({}, argv=['--pid-file', '/test/pid'])
 
                     exit_mock.assert_not_called()
                     kill_mock.assert_not_called()
                     daemonize_mock.assert_called_once_with(
                         main.main_loop,
                         conf={},
-                        daemon_pid_file='/tmp/pid',
+                        daemon_pid_file='/test/pid',
                         foreground=False,
                         task_manager_class=None,
                     )

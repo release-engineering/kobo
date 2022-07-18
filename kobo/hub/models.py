@@ -25,6 +25,7 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models, connection, transaction
 from django.db.models.signals import post_delete
 import six
+from textwrap import dedent
 
 import kobo.django.fields
 from kobo.client.constants import TASK_STATES, FINISHED_STATES, FAILED_STATES
@@ -775,20 +776,23 @@ class Task(models.Model):
 
         # it is safe to pass initial_states directly to query,
         # because these values are checked in the code above
-        query = """
-UPDATE
-  hub_task
-SET
-  state=%%s,
-  worker_id=%%s,
-  dt_started=%%s,
-  dt_finished=%%s,
-  waiting=%%s
-WHERE
-  id=%%s
-  and state in (%(initial_states)s)
-  and (worker_id is null or worker_id=%%s)
-""" % { "initial_states": ",".join(( "'%s'" % i for i in initial_states )), }
+        query = dedent(  # nosec B608
+                """
+                UPDATE
+                  hub_task
+                SET
+                  state=%%s,
+                  worker_id=%%s,
+                  dt_started=%%s,
+                  dt_finished=%%s,
+                  waiting=%%s
+                WHERE
+                  id=%%s
+                  and state in (%(initial_states)s)
+                  and (worker_id is null or worker_id=%%s)
+                """) % {
+            "initial_states": ",".join(( "'%s'" % i for i in initial_states))
+        }
 
         dt_started = self.dt_started
         if new_state == TASK_STATES["OPEN"]:

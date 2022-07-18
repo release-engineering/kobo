@@ -99,7 +99,7 @@ if django_version_ge('1.10.0'):
     from django.urls import reverse
 else:
     from django.core.urlresolvers import reverse
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 try:
     from django.utils.encoding import smart_unicode as smart_text
@@ -157,11 +157,11 @@ class MenuItem(object):
 
     def __str__(self):
         if self.title == "":
-            return mark_safe(u"<li class='divider'></li>")
+            return format_html(u"<li class='divider'></li>")
         result = ""
         if self.items:
             result = u"<ul>%s</ul>" % u"".join([six.text_type(i) for i in self.items])
-        return mark_safe(u"<li>%s%s</li>" % (self.as_a(), result))
+        return format_html(u"<li>%s%s</li>", self.as_a(), result)
 
     @property
     def url(self):
@@ -184,7 +184,7 @@ class MenuItem(object):
         else:
             result = six.text_type(self.title)
 
-        return mark_safe(result)
+        return format_html(result)
 
     @property
     def items(self):

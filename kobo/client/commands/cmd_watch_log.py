@@ -59,8 +59,11 @@ class Watch_Log(ClientCommand):
         # altered it should work.
         url = self.conf['HUB_URL'].replace('/xmlrpc', '') + '/task/%d/log-json/%s?offset=%d'
         offset = 0
+        assert url.startswith(("http:", "https:"))
         while True:
-            data = json.loads(urllib2.urlopen(url % (task_id, kwargs['type'], offset)).read())
+            data = json.loads(
+                urllib2.urlopen(url % # nosec B310
+                                (task_id, kwargs['type'], offset)).read())
             if data['content']:
                 sys.stdout.write(data['content'])
                 sys.stdout.flush()

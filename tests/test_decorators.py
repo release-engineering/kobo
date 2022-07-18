@@ -12,7 +12,7 @@ from kobo.decorators import log_traceback
 
 class TestDecoratorsModule(unittest.TestCase):
     def setUp(self):
-        self.tmp_file = tempfile.mktemp()
+        fd, self.tmp_file = tempfile.mkstemp()
 
     def tearDown(self):
         os.remove(self.tmp_file)

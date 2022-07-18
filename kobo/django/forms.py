@@ -8,8 +8,8 @@ except ImportError:
 
 import django.forms.fields
 from django.core.exceptions import ValidationError
-from django.utils.safestring import mark_safe
-from django.utils.html import conditional_escape
+from django.utils.html import format_html
+
 try:
     from django.forms.utils import flatatt
 except ImportError:
@@ -51,8 +51,8 @@ class JSONWidget(django.forms.widgets.Textarea):
         if not isinstance(value, six.string_types):
             value = json.dumps(value)
 
-        return mark_safe(u'<textarea%s>%s</textarea>' % (flatatt(final_attrs),
-                conditional_escape(force_str(value))))
+        return format_html(u'<textarea{}>{}</textarea>',
+                           flatatt(final_attrs), force_str(value))
 
 
 class JSONFormField(django.forms.fields.CharField):

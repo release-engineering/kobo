@@ -687,7 +687,7 @@ class TestTaskLog(django.test.TransactionTestCase):
     def test_list_walks_task_dir(self):
         task = PropertyMock(
             id=100,
-            task_dir=Mock(return_value=tempfile.tempdir),
+            task_dir=Mock(return_value="/test"),
             spec=['id', 'task_dir'],
         )
 
@@ -695,12 +695,12 @@ class TestTaskLog(django.test.TransactionTestCase):
 
         with patch.object(models.os, 'walk') as mock_walk:
             mock_walk.return_value = [
-                ('/tmp', (), ('file1.log.gz', 'file2.log.gz',),),
+                ('/test', (), ('file1.log.gz', 'file2.log.gz',),),
             ]
 
             files = task_log.list
 
-            mock_walk.assert_called_once_with(tempfile.tempdir + '/')
+            mock_walk.assert_called_once_with("/test/")
             self.assertEqual(len(files), 2)
             self.assertEqual(files[0], 'file1.log')
             self.assertEqual(files[1], 'file2.log')
