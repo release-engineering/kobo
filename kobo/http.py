@@ -118,7 +118,7 @@ class POSTTransport(object):
         content_type = "multipart/form-data; boundary=" + self._boundary
 
         if secure:
-            request = httplib.HTTPSConnection(host, port)
+            request = httplib.HTTPSConnection(host, port) # nosec B309
         else:
             request = httplib.HTTPConnection(host, port)
 

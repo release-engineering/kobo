@@ -323,7 +323,7 @@ def run(cmd, show_cmd=False, stdout=False, logfile=None, can_fail=False, workdir
         if stdin_data is not None:
             stdin = subprocess.PIPE
 
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, # nosec B602
                                 stderr=subprocess.STDOUT, stdin=stdin,
                                 cwd=workdir, **kwargs)
 

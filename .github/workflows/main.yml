@@ -33,6 +33,7 @@ jobs:
           py39-django3,
           py310-django2,
           py310-django3,
+          py39-bandit,
         ]
 
     # Use GitHub's Linux Docker host
