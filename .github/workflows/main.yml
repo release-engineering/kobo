@@ -33,6 +33,8 @@ jobs:
           py39-django3,
           py310-django2,
           py310-django3,
+          py38-django4,
+          py310-django4,
           py39-bandit,
         ]
 
