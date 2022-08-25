@@ -1,8 +1,15 @@
 # -*- coding: utf-8 -*-
 
-
-from django.utils.translation import ugettext_lazy as _
-from django.conf.urls import url
+try:
+    from django.utils.translation import ugettext_lazy as _
+except ImportError:
+    from django.utils.translation import gettext_lazy as _
+from kobo.django.django_version import django_version_ge
+if django_version_ge("2.0"):
+    from django.urls import re_path as url
+    
+else:
+    from django.conf.urls import url
 from kobo.django.views.generic import ExtraListView
 from kobo.hub.views import DetailViewWithWorkers
 from kobo.hub.models import Channel

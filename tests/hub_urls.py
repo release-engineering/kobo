@@ -1,4 +1,10 @@
-from django.conf.urls import url, include
+from kobo.django.django_version import django_version_ge
+if django_version_ge("2.0"):
+    from django.urls import re_path as url
+    from django.urls import include
+    
+else:
+    from django.conf.urls import url, include
 from django.contrib import admin
 from django.http import HttpResponse
 

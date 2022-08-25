@@ -104,7 +104,7 @@ from django.utils.html import format_html
 try:
     from django.utils.encoding import smart_unicode as smart_text
 except ImportError:
-    from django.utils.encoding import smart_text
+    from django.utils.encoding import smart_str as smart_text
 
 
 __all__ = (
@@ -161,7 +161,7 @@ class MenuItem(object):
         result = ""
         if self.items:
             result = u"<ul>%s</ul>" % u"".join([six.text_type(i) for i in self.items])
-        return format_html(u"<li>%s%s</li>", self.as_a(), result)
+        return format_html(u"<li>%s%s</li>" % (self.as_a(), result))
 
     @property
     def url(self):
@@ -250,8 +250,8 @@ class MenuItem(object):
     def as_li(self):
         """Render menu item as a list item."""
         if not self.title:
-            return mark_safe('<li class="divider"></li>')
-        return mark_safe('<li>%s</li>' % self.as_a())
+            return format_html('<li class="divider"></li>')
+        return format_html('<li>%s</li>' % self.as_a())
 
     def as_bootstrap_navbar_dropdown_menu(self):
         """
@@ -267,7 +267,7 @@ class MenuItem(object):
             sub = '<ul class="dropdown-menu" role="menu">%s</ul>' % sub
             cls = ' class="dropdown"'
 
-        return mark_safe('<li%s>%s%s</li>' % (cls, link, sub))
+        return format_html('<li%s>%s%s</li>' % (cls, link, sub))
 
 
 @python_2_unicode_compatible
@@ -289,7 +289,7 @@ class MainMenu(MenuItem):
 
     def __str__(self):
         """Return menu as printable <ul> list."""
-        return mark_safe(u"<ul>%s</ul>" % "".join([six.text_type(i) for i in self.items]))
+        return format_html(u"<ul>%s</ul>" % "".join([six.text_type(i) for i in self.items]))
 
     def as_bootstrap_navbar_dropdown_menu(self):
         """
@@ -298,7 +298,7 @@ class MainMenu(MenuItem):
         rendered as dropdown menus.
         """
         content = ''.join([i.as_bootstrap_navbar_dropdown_menu() for i in self.items])
-        return mark_safe('<ul class="nav navbar-nav">%s</ul>' % content)
+        return format_html('<ul class="nav navbar-nav">%s</ul>' % content)
 
     def __getattr__(self, name):
         # get specified submenu level in active menu
