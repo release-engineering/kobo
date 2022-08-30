@@ -2,7 +2,12 @@
 
 
 from django.contrib.auth import get_user_model
-from django.conf.urls import url
+from kobo.django.django_version import django_version_ge
+if django_version_ge("2.0"):
+    from django.urls import re_path as url
+    
+else:
+    from django.conf.urls import url
 from kobo.django.views.generic import ExtraListView
 from kobo.hub.views import UserDetailView
 from kobo.django.compat import gettext_lazy as _

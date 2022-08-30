@@ -69,7 +69,7 @@ XMLRPC_TEMPLATE = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//
   <h2>Details</h2>
   {% for method in method_list %}
     <h3><a name="{{ method.name|lower }}">{{ method.name|escape }}</a></h3>
-    {% ifnotequal method.signature "signatures not supported" %}<strong>Signature: </strong>{{ method.signature|escape }}<br />{% endifnotequal %}
+    {% if method.signature != "signatures not supported" %}<strong>Signature: </strong>{{ method.signature|escape }}<br />{% endif %}
     <pre>{% for line in method.help %}{{ line|escape }}<br />{% endfor %}</pre>
   {% endfor %}
 </body>

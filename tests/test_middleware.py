@@ -74,7 +74,7 @@ class TestWorkerMiddleware(unittest.TestCase):
             req = DummyRequest()
             req.user = PropertyMock(username='foo/bar')
 
-            middleware.WorkerMiddleware().process_request(req)
+            middleware.WorkerMiddleware(lambda x: x).process_request(req)
             self.assertIsInstance(req.worker, DummyWorker)
             get_worker_mock.assert_called_once_with(req)
 
@@ -82,4 +82,4 @@ class TestWorkerMiddleware(unittest.TestCase):
         req = DummyRequest()
 
         with self.assertRaises(AssertionError):
-            middleware.WorkerMiddleware().process_request(req)
+            middleware.WorkerMiddleware(lambda x: x).process_request(req)
