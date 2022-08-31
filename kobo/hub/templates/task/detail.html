@@ -16,7 +16,7 @@
   </tr>
   <tr>
     <th>{% trans "Args" %}</th>
-    <td>{% for arg in task.get_args_display.iteritems %}<b>{{ arg.0 }}:</b> {{ arg.1 }}<br />{% endfor %}</td>
+    <td>{% for arg in task.get_args_display.items %}<b>{{ arg.0 }}:</b> {{ arg.1 }}<br />{% endfor %}</td>
   </tr>
   <tr>
     <th>{% trans "Label" %}</th>
