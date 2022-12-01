@@ -592,6 +592,7 @@ class Task(models.Model):
 
     def save(self, *args, **kwargs):
         # save to db to precalculate subtask counts and obtain an ID (on insert) for stdout and traceback
+        super(self.__class__, self).save()
         self.subtask_count = self.subtasks().count()
         super(self.__class__, self).save()
         self.logs.save()
