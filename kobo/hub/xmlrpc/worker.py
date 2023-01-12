@@ -234,7 +234,7 @@ def get_awaited_tasks(request, awaited_task_list):
 
 
 @validate_worker
-def create_subtask(request, label, method, args, parent_id):
+def create_subtask(request, label, method, args, parent_id, subtask_priority = None):
     parent_task = Task.objects.get_and_verify(task_id=parent_id, worker=request.worker)
 
     return Task.create_task(
@@ -245,6 +245,7 @@ def create_subtask(request, label, method, args, parent_id):
         parent_id=parent_id,
         arch_name=parent_task.arch.name,
         channel_name=parent_task.channel.name,
+        priority=subtask_priority or parent_task.priority
     )
 
 
