@@ -380,7 +380,7 @@ class Help_RST(Command):
             if usage:
                 print(usage, end="\n\n")
 
-            for opt in sorted(parser.option_list, lambda x, y: cmp(str(x), str(y))):
+            for opt in sorted(parser.option_list, key=str):
                 if "-h/--help" in str(opt):
                     continue
                 if opt.nargs:
