@@ -14,7 +14,6 @@ import random
 import re
 import hashlib
 import threading
-import locale
 import six
 from six.moves import range
 from six.moves import shlex_quote
@@ -222,7 +221,7 @@ def save_to_file(filename, text, append=False, mode=0o644):
     else:
         fd = os.open(filename, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
     if not isinstance(text, bytes):
-        text = bytes(text, encoding=locale.getpreferredencoding())
+        text = bytes(text, encoding="utf-8")
     os.write(fd, text)
     os.close(fd)
 

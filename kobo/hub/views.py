@@ -3,7 +3,6 @@
 import mimetypes
 import os
 import six
-import locale
 from kobo.django.django_version import django_version_ge
 
 try:
@@ -232,7 +231,7 @@ def task_log_json(request, id, log_name):
         next_poll = LOG_WATCHER_INTERVAL
 
     if six.PY3:
-        content = str(content, encoding=locale.getpreferredencoding())
+        content = str(content, encoding="utf-8")
 
     result = {
         "new_offset": offset + len(content),
