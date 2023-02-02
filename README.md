@@ -31,6 +31,19 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.26.0
+-----------
+
+### BUG FIXES
+
+- Fixed calculating the number of task's subtasks in new Django versions
+- Fixed cli/help_RST compatibility with Python 3
+- fixed encoding errors by forcing the usage of UTF-8 in str and bytes functions
+
+### FEATURES & IMPROVEMENTS
+
+- Added an option to make subtask inherit parents priority and make it configurable
+
 kobo 0.25.0
 -----------
 
