@@ -6,6 +6,8 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.models import User
 
 from mock import PropertyMock
+import pytest
+import logging
 
 from kobo.client.constants import TASK_STATES
 from kobo.hub.models import Arch, Channel, Task, Worker
@@ -316,72 +318,137 @@ class TestXmlRpcClient(django.test.TransactionTestCase):
 
 class TestXmlRpcClientAuthentication(django.test.TransactionTestCase):
 
+    @pytest.fixture(autouse=True)
+    def inject_fixtures(self, caplog):
+        self._caplog = caplog
+
     def test_shutdown_worker_raise_if_no_auth(self):
+        self._caplog.set_level(logging.INFO)
+        meta = {"REMOTE_ADDR": "127.0.0.1"}
         with self.assertRaises(PermissionDenied):
-            client.shutdown_worker(_make_request(
-                is_authenticated=False,
-                is_superuser=False,
-            ), 'worker')
+            client.shutdown_worker(
+                _make_request(
+                    is_authenticated=False,
+                    is_superuser=False,
+                    meta=meta,
+                ),
+                "worker",
+            )
+        exp_msg = "User testuser with IP 127.0.0.1 attempted admin access to method shutdown_worker."
+        assert exp_msg in self._caplog.text
 
     def test_enable_worker_raise_if_no_auth(self):
+        meta = {"REMOTE_ADDR": "127.0.0.1"}
         with self.assertRaises(PermissionDenied):
-            client.enable_worker(_make_request(
-                is_authenticated=False,
-                is_superuser=False,
-            ), 'worker')
+            client.enable_worker(
+                _make_request(
+                    is_authenticated=False,
+                    is_superuser=False,
+                    meta=meta,
+                ),
+                "worker",
+            )
 
     def test_disable_worker_raise_if_no_auth(self):
+        meta = {"REMOTE_ADDR": "127.0.0.1"}
         with self.assertRaises(PermissionDenied):
-            client.disable_worker(_make_request(
-                is_authenticated=False,
-                is_superuser=False,
-            ), 'worker')
+            client.disable_worker(
+                _make_request(
+                    is_authenticated=False,
+                    is_superuser=False,
+                    meta=meta,
+                ),
+                "worker",
+            )
 
     def test_cancel_task_raise_if_no_auth(self):
+        self._caplog.set_level(logging.INFO)
+        meta = {"REMOTE_ADDR": "127.0.0.1"}
         with self.assertRaises(PermissionDenied):
-            client.cancel_task(_make_request(
-                is_authenticated=False,
-                is_superuser=False,
-            ), 999)
+            client.cancel_task(
+                _make_request(
+                    is_authenticated=False,
+                    is_superuser=False,
+                    meta=meta,
+                ),
+                999,
+            )
+        exp_msg = (
+            "Unauthenticated user with IP 127.0.0.1 attempted to use authenticated method cancel_task"
+        )
+        assert exp_msg in self._caplog.text
 
     def test_resubmit_task_raise_if_no_auth(self):
+        meta = {"REMOTE_ADDR": "127.0.0.1"}
         with self.assertRaises(PermissionDenied):
-            client.resubmit_task(_make_request(
-                is_authenticated=False,
-                is_superuser=False,
-            ), 999)
+            client.resubmit_task(
+                _make_request(
+                    is_authenticated=False,
+                    is_superuser=False,
+                    meta=meta,
+                ),
+                999,
+            )
 
     def test_create_task_raise_if_no_auth(self):
+        meta = {"REMOTE_ADDR": "127.0.0.1"}
         with self.assertRaises(PermissionDenied):
-            client.create_task(_make_request(
-                is_authenticated=False,
-                is_superuser=False,
-            ), {})
+            client.create_task(
+                _make_request(
+                    is_authenticated=False,
+                    is_superuser=False,
+                    meta=meta,
+                ),
+                {},
+            )
 
     def test_shutdown_worker_raise_if_authenticated_but_not_admin(self):
+        meta = {"REMOTE_ADDR": "127.0.0.1"}
         with self.assertRaises(PermissionDenied):
-            client.shutdown_worker(_make_request(
-                is_authenticated=False,
-                is_superuser=False,
-            ), 'worker')
+            client.shutdown_worker(
+                _make_request(
+                    is_authenticated=True,
+                    is_superuser=False,
+                    meta=meta,
+                ),
+                "worker",
+            )
 
     def test_enable_worker_raise_if_authenticated_but_not_admin(self):
+        meta = {"REMOTE_ADDR": "127.0.0.1"}
         with self.assertRaises(PermissionDenied):
-            client.enable_worker(_make_request(
-                is_authenticated=False,
-                is_superuser=False,
-            ), 'worker')
+            client.enable_worker(
+                _make_request(
+                    is_authenticated=True,
+                    is_superuser=False,
+                    meta=meta,
+                ),
+                "worker",
+            )
 
     def test_disable_worker_raise_if_authenticated_but_not_admin(self):
+        meta = {"REMOTE_ADDR": "127.0.0.1"}
         with self.assertRaises(PermissionDenied):
-            client.disable_worker(_make_request(
-                is_authenticated=False,
-                is_superuser=False,
-            ), 'worker')
+            client.disable_worker(
+                _make_request(
+                    is_authenticated=True,
+                    is_superuser=False,
+                    meta=meta,
+                ),
+                "worker",
+            )
 
     def test_create_task_raise_if_authenticated_but_not_admin(self):
+        self._caplog.set_level(logging.INFO)
+        meta = {"REMOTE_ADDR": "127.0.0.1"}
         with self.assertRaises(PermissionDenied):
-            client.create_task(_make_request(
-                is_authenticated=False,
-                is_superuser=False,
-            ), {})
+            client.create_task(
+                _make_request(
+                    is_authenticated=True,
+                    is_superuser=False,
+                    meta=meta,
+                ),
+                {},
+            )
+        exp_msg = "User testuser with IP 127.0.0.1 attempted admin access to method create_task."
+        assert exp_msg in self._caplog.text

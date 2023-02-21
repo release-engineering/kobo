@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
+import logging
 import os
 import datetime
 import inspect
@@ -25,6 +26,15 @@ __all__ = (
     "log_traceback",
 )
 
+LOG = logging.getLogger(__name__)
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(",")[0]
+    else:
+        ip = request.META.get("REMOTE_ADDR")
+    return ip
 
 @decorator_with_args
 def user_passes_test(func, test_func):
@@ -43,6 +53,12 @@ def user_passes_test(func, test_func):
 def login_required(func):
     def _new_func(request, *args, **kwargs):
         if not call_if_callable(request.user.is_authenticated):
+            user_ip = get_client_ip(request)
+            LOG.info(
+                "Unauthenticated user with IP %s attempted to use authenticated method %s.",
+                user_ip,
+                func.__name__,
+            )
             raise PermissionDenied("Login required.")
         return func(request, *args, **kwargs)
 
@@ -55,6 +71,14 @@ def login_required(func):
 def admin_required(func):
     def _new_func(request, *args, **kwargs):
         if not request.user.is_superuser:
+            user_ip = get_client_ip(request)
+            username = request.user.username or "*anonymous*"
+            LOG.info(
+                "User %s with IP %s attempted admin access to method %s.",
+                username,
+                user_ip,
+                func.__name__,
+            )
             raise PermissionDenied("Admin only.")
         return func(request, *args, **kwargs)
 
@@ -67,6 +91,14 @@ def admin_required(func):
 def validate_user(func):
     def _new_func(request, user_id, *args, **kwargs):
         if request.user.id != user_id:
+            user_ip = get_client_ip(request)
+            username = request.user.username or "*anonymous*"
+            LOG.info(
+                "User %s with IP %s has mismatching id while accessing method %s.",
+                username,
+                user_ip,
+                func.__name__,
+            )
             raise SuspiciousOperation("UserID doesn't match logged in user.")
         return func(request, user_id, *args, **kwargs)
 
