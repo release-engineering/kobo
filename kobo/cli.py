@@ -198,6 +198,7 @@ class CommandOptionParser(optparse.OptionParser):
             command_container=None,
             default_command="help",
             add_username_password_options=False,
+            add_hub_option=False,
             default_profile="",
             configuration_directory="/etc"):
 
@@ -214,6 +215,9 @@ class CommandOptionParser(optparse.OptionParser):
                 ["--username", "specify user"],
                 ["--password", "specify password"]
             )
+
+        if add_hub_option:
+            self._add_opts(["--hub", "specify URL of XML-RPC interface on hub"])
 
         if default_profile:
             self.default_profile = default_profile
