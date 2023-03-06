@@ -30,10 +30,11 @@ class Add_User(ClientCommand):
 
         username = kwargs.pop("username", None)
         password = kwargs.pop("password", None)
+        hub = kwargs.pop("hub", None)
         admin = kwargs.pop("admin", False)
         user = args[0]
 
-        self.set_hub(username, password)
+        self.set_hub(username, password, hub)
         try:
             self.hub.admin.add_user(user, admin)
         except Exception as ex:

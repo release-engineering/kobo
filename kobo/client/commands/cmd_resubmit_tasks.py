@@ -26,12 +26,13 @@ class Resubmit_Tasks(ClientCommand):
 
         username = kwargs.pop("username", None)
         password = kwargs.pop("password", None)
+        hub = kwargs.pop("hub", None)
         force = kwargs.pop("force", False)
         priority = kwargs.pop("priority", None)
 
         tasks = args
 
-        self.set_hub(username, password)
+        self.set_hub(username, password, hub)
         resubmitted_tasks = []
         failed = False
         for task_id in tasks:

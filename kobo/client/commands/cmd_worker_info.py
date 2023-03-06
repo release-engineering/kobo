@@ -28,9 +28,10 @@ class Worker_Info(ClientCommand):
 
         username = kwargs.pop("username", None)
         password = kwargs.pop("password", None)
+        hub = kwargs.pop("hub", None)
         worker_name = args[0]
 
-        self.set_hub(username, password)
+        self.set_hub(username, password, hub)
         result = self.hub.client.get_worker_info(worker_name)
         if kwargs.pop("oneline"):
             print(result)

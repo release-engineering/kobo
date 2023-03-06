@@ -31,8 +31,9 @@ class Disable_Worker(ClientCommand):
 
         username = kwargs.pop("username", None)
         password = kwargs.pop("password", None)
+        hub = kwargs.pop("hub", None)
 
-        self.set_hub(username, password)
+        self.set_hub(username, password, hub)
         if kwargs['all']:
             try:
                 workers = self.hub.client.list_workers(True)
