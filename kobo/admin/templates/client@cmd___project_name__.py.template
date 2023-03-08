@@ -28,12 +28,13 @@ class {{ project_name|camel_cmd }}(kobo.client.ClientCommand):
         # optparser output is passed via *args (args) and **kwargs (opts)
         username = kwargs.pop("username", None)
         password = kwargs.pop("password", None)
+        hub = kwargs.pop("hub", None)
 
         # if not args:
         #     self.parser.error("please specify at least one argument")
 
         # login to the hub
-        self.set_hub(username, password)
+        self.set_hub(username, password, hub)
 
         # call hub XML-RPC calls or do whatever you want
         #self.hub.client.some_method(kwargs)

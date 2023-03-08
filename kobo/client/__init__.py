@@ -62,8 +62,9 @@ class Add_User(kobo.client.ClientCommand):
     def run(self, *args, **kwargs):
         username = kwargs.pop("username", None)
         password = kwargs.pop("password", None)
+        hub = kwargs.pop("hub", None)
 
-        self.set_hub(username, password)
+        self.set_hub(username, password, hub)
         # self.hub.client.add_user(...)
 """
 
@@ -99,13 +100,16 @@ class BaseClientCommandContainer(kobo.cli.CommandContainer):
     def __init__(self):
         self.conf = kobo.conf.PyConfigParser()
 
-    def set_hub(self, username=None, password=None):
+    def set_hub(self, username=None, password=None, hub=None):
         if username:
             if password is None:
                 password = kobo.cli.password_prompt(default_value=password)
             self.conf["AUTH_METHOD"] = "password"
             self.conf["USERNAME"] = username
             self.conf["PASSWORD"] = password
+
+        if hub:
+            self.conf["HUB_URL"] = hub
 
         self.hub = HubProxy(conf=self.conf)
 

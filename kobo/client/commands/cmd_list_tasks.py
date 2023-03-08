@@ -50,6 +50,7 @@ class List_Tasks(ClientCommand):
     def run(self, *args, **kwargs):
         username = kwargs.pop("username", None)
         password = kwargs.pop("password", None)
+        hub = kwargs.pop("hub", None)
         verbose = kwargs.pop("verbose", False)
         use_json = kwargs.pop("json", False)
 
@@ -65,7 +66,7 @@ class List_Tasks(ClientCommand):
         if not filters:
             self.parser.error("Use at least one from --free or --running options.")
 
-        self.set_hub(username, password)
+        self.set_hub(username, password, hub)
         result = sorted(self.hub.client.get_tasks([], filters), key=lambda x: x["id"])
         if use_json:
             print(json.dumps(result, indent=2, sort_keys=True))

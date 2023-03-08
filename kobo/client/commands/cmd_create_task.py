@@ -43,6 +43,7 @@ class Create_Task(ClientCommand):
     def run(self, *args, **kwargs):
         username = kwargs.pop("username", None)
         password = kwargs.pop("password", None)
+        hub = kwargs.pop("hub", None)
 
         task_args = kwargs.get("args", None)
         if task_args != None:
@@ -58,5 +59,5 @@ class Create_Task(ClientCommand):
             if value is None:
                 del kwargs[key]
 
-        self.set_hub(username, password)
+        self.set_hub(username, password, hub)
         self.hub.client.create_task(kwargs)

@@ -32,9 +32,10 @@ class Shutdown_Worker(ClientCommand):
 
         username = kwargs.pop("username", None)
         password = kwargs.pop("password", None)
+        hub = kwargs.pop("hub", None)
         workers = args
 
-        self.set_hub(username, password)
+        self.set_hub(username, password, hub)
         for worker in workers:
             try:
                 self.hub.client.shutdown_worker(worker, kill)
