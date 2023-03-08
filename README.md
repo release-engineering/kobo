@@ -31,6 +31,14 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.27.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- Added logging for authN/authZ events
+- Added `--hub` option to client
+
 kobo 0.26.0
 -----------
 
