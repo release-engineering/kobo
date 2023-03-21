@@ -465,6 +465,7 @@ class HubProxy(object):
 
 
 from six.moves.xmlrpc_client import Fault
+import sys
 
 
 # default implementation of Fault.__repr__ is:
@@ -472,6 +473,12 @@ from six.moves.xmlrpc_client import Fault
 # repr of string does not escape newlines ('\n') and produces very ugly output
 # so using direct string is much nicer for users
 def fault_repr(self):
-    return "<Fault %s: %s>" % (self.faultCode, str(self.faultString))
+    fault = self.faultString
+    if sys.version_info[0] > 2 and fault.startswith("b\'Traceback"):
+        # properly deserialize tracebacks
+        import ast
+        fault = ast.literal_eval(fault).decode("unicode-escape")
+
+    return "<Fault %s: %s>" % (self.faultCode, str(fault))
 
 Fault.__repr__ = fault_repr
