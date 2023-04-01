@@ -312,7 +312,6 @@ class TestTaskManager(django.test.TransactionTestCase):
 
         return Task.objects.create(**params)
 
-    @pytest.mark.xfail(reason='Check issue #88 for more info (https://git.io/fpzNc).')
     def test_custom_query_set_filter_achieved(self):
         Task.objects.create(
             worker=self._worker,
