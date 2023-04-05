@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-try:
-    from django.utils.translation import ugettext_lazy as _
-except ImportError:
-    from django.utils.translation import gettext_lazy as _
+from kobo.django.compat import gettext_lazy as _
 from kobo.django.django_version import django_version_ge
 if django_version_ge("2.0"):
     from django.urls import re_path as url
