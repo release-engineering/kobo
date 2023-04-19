@@ -61,7 +61,7 @@ class FileUpload(models.Model):
         if self.state == UPLOAD_STATES['FINISHED']:
             if FileUpload.objects.filter(state = UPLOAD_STATES['FINISHED'], name = self.name).exclude(id = self.id).count() != 0:
                 # someone created same upload faster
-                self.state == UPLOAD_STATES['FAILED']
+                self.state = UPLOAD_STATES['FAILED']
         super(FileUpload, self).save(*args, **kwargs)
 
     def delete(self):
