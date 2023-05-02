@@ -72,6 +72,7 @@ class Add_User(kobo.client.ClientCommand):
 import os
 import base64
 import hashlib
+import json
 import ssl
 import warnings
 import six.moves.urllib.parse as urlparse
@@ -308,6 +309,29 @@ class HubProxy(object):
         req_enc = encode_func(req)
 
         self._hub.auth.login_krbv(req_enc)
+    
+    def _login_oidc_bot(self):
+        """Login using OIDC client credentials flow."""
+        client_id = self._conf.get("OIDC_CLIENT_ID")
+        client_secret = self._conf.get("OIDC_CLIENT_SECRET")
+        base_url = self._conf.get("OIDC_BASE_URL")
+        token_uri = "token"
+
+        import requests
+
+        token_data = {
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "scope": "openid"
+        }
+        token_response = requests.post(
+            base_url + token_uri,
+            data=token_data
+        )
+
+        # authenticate with hub using JWT
+        self._hub.auth.login_oidc(json.loads(token_response.text)["access_token"])
 
     def _login_gssapi(self):
         """Login using kerberos credentials (uses gssapi)."""

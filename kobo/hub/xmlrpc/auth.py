@@ -23,6 +23,7 @@ __all__ = (
     "login_krbv",
     "login_password",
     "login_worker_key",
+    "login_oidc",
     "logout",
 )
 
