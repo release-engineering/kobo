@@ -901,7 +901,7 @@ class Task(models.Model):
     def interrupt_task(self, recursive=True):
         """Set the task state to interrupted."""
         try:
-            self.__lock(self.worker_id, new_state=TASK_STATES["INTERRUPTED"], initial_states=(TASK_STATES["OPEN"], ))
+            self.__lock(self.worker_id, new_state=TASK_STATES["INTERRUPTED"], initial_states=(TASK_STATES["ASSIGNED"], TASK_STATES["OPEN"]))
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot interrupt task %d, state is %s" % (self.id, self.get_state_display()))
 
