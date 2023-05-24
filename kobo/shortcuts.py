@@ -221,7 +221,7 @@ def save_to_file(filename, text, append=False, mode=0o644):
     else:
         fd = os.open(filename, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
     if not isinstance(text, bytes):
-        text = bytes(text, encoding="utf-8")
+        text = bytes(text, encoding="utf-8", errors="replace")
     os.write(fd, text)
     os.close(fd)
 

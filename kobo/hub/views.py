@@ -231,7 +231,7 @@ def task_log_json(request, id, log_name):
         next_poll = LOG_WATCHER_INTERVAL
 
     if six.PY3:
-        content = str(content, encoding="utf-8")
+        content = str(content, encoding="utf-8", errors="replace")
 
     result = {
         "new_offset": offset + len(content),
