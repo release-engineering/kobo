@@ -308,6 +308,48 @@ class HubProxy(object):
         req_enc = encode_func(req)
 
         self._hub.auth.login_krbv(req_enc)
+    
+    def _login_token_oidc(self):
+        """Login using OIDC endpoint (with Client Credentials Flow - using tokens)"""
+        login_url = urlparse.urljoin(self._hub_url, "auth/tokenoidclogin/")
+        client_id = self._conf.get("OIDC_CLIENT_ID")
+        client_secret = self._conf.get("OIDC_CLIENT_SECRET")
+        auth_server_token_url = self._conf.get("OIDC_AUTH_SERVER_TOKEN_URL")
+        request_args = {}
+
+        import requests
+
+        token_data = {
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "scope": "openid"
+        }
+        token_response = requests.post(auth_server_token_url, data=token_data, timeout=30)
+        token_response.raise_for_status()
+        headers = {"Authorization": f"Bearer {token_response.json()['access_token']}"}
+
+        # NOTE behavior difference from hub proxy overall:
+        # HubProxy by default DOES NOT verify https connections :(
+        # See the constructor. It could be repeated here by defaulting verify to False,
+        # but let's not do that, instead you must have an unbroken SSL setup to
+        # use this auth method.
+        if self._conf.get("CA_CERT"):
+            request_args["verify"] = self._conf["CA_CERT"]
+
+        with requests.Session() as s:
+            s.cookies = self._transport.cookiejar
+            response = s.get(
+                login_url,
+                headers=headers,
+                **request_args
+            )
+        
+        self._logger and self._logger.debug(
+            "Login response: %s %s", response, response.headers
+        )
+        response.raise_for_status()
+
 
     def _login_gssapi(self):
         """Login using kerberos credentials (uses gssapi)."""

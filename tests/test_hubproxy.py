@@ -40,6 +40,55 @@ class FakeTransport(SafeCookieTransport):
         return []
 
 
+def test_login_token_oidc(requests_session):
+    """Login with OIDC client credentials flow."""
+
+    hub_url = "https://example.com/myapp/endpoint"
+    login_url = "https://example.com/myapp/auth/tokenoidclogin/"
+    token_url = "https://sso.example.com/protocol/openid-connect/token"
+
+    conf = PyConfigParser()
+    conf.load_from_dict(
+        {
+            "HUB_URL": hub_url,
+            "AUTH_METHOD": "token_oidc",
+            "OIDC_CLIENT_ID": "test-client",
+            "OIDC_CLIENT_SECRET": "secret-token",
+            "OIDC_AUTH_SERVER_TOKEN_URL": token_url,
+            "CA_CERT": "/path/to/ca-bundle.crt"
+        }
+    )
+
+    transport = FakeTransport()
+    proxy = HubProxy(conf, transport=transport)
+
+    with mock.patch("requests.post") as mock_post:
+        mock_post.return_value.json.return_value = {"access_token": "secret-token"}
+
+        # Force a login
+        proxy._login(force=True)
+
+        mock_post.assert_called_once_with(
+            "https://sso.example.com/protocol/openid-connect/token",
+            data={
+                "grant_type": "client_credentials",
+                "client_id": "test-client",
+                "client_secret": "secret-token",
+                "scope": "openid"
+            },
+            timeout=30
+        )
+
+    # Cookies should have been shared between session and transport
+    assert requests_session.return_value.cookies is transport.cookiejar
+
+    requests_session.return_value.get.assert_called_once_with(
+        "https://example.com/myapp/auth/tokenoidclogin/",
+        headers={"Authorization": "Bearer secret-token"},
+        verify="/path/to/ca-bundle.crt"
+    )
+
+
 def test_login_gssapi(requests_session):
     """Login with gssapi method obtains session cookie via SPNEGO & krb5login."""
 
