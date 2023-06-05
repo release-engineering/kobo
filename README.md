@@ -31,6 +31,23 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.28.0
+-----------
+
+### BUG FIXES
+
+- Renamed deprecated get_query_set to get_queryset
+- Changed repr to properly deserialize tracebacks sent over XML-RPC
+- Fixed remaining Django 3 deprecations
+- Fixed reporting of failed uploads
+- Changed behavior that log decoding failure doesn't raise an error
+- Made it possible to interrupt assigned tasks
+
+### FEATURES & IMPROVEMENTS
+
+- Retired python 2 support
+- Added Client Credentials Flow OIDC authentication
+
 kobo 0.27.0
 -----------
 
