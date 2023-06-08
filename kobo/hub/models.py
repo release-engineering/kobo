@@ -210,11 +210,16 @@ class Worker(models.Model):
         self.current_load = sum(( task.weight for task in tasks if not task.waiting ))
         self.ready = self.enabled and (self.current_load < self.max_load and self.task_count < 3*self.max_load)
 
+        if "update_fields" in kwargs:
+                kwargs["update_fields"] = {"task_count", "current_load", "ready"}.union(kwargs["update_fields"])
+
         while not self.worker_key:
             # if worker_key is empty, generate a new one
             key = random_string(64)
             if Worker.objects.filter(worker_key=key).count() == 0:
                 self.worker_key = key
+                if "update_fields" in kwargs:
+                    kwargs["update_fields"] = {"worker_key"}.union(kwargs["update_fields"])
         super(self.__class__, self).save(*args, **kwargs)
 
 
