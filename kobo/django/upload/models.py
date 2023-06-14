@@ -58,10 +58,14 @@ class FileUpload(models.Model):
     def save(self, *args, **kwargs):
         if not self.upload_key:
             self.upload_key = random_string(64)
+            if "update_fields" in kwargs:
+                kwargs["update_fields"] = {"upload_key"}.union(kwargs["update_fields"])
         if self.state == UPLOAD_STATES['FINISHED']:
             if FileUpload.objects.filter(state = UPLOAD_STATES['FINISHED'], name = self.name).exclude(id = self.id).count() != 0:
                 # someone created same upload faster
                 self.state = UPLOAD_STATES['FAILED']
+                if "update_fields" in kwargs:
+                    kwargs["update_fields"] = {"state"}.union(kwargs["update_fields"])
         super(FileUpload, self).save(*args, **kwargs)
 
     def delete(self):
