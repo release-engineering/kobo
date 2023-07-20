@@ -21,11 +21,7 @@ __all__ = (
 
 class DjangoXMLRPCDispatcher(SimpleXMLRPCDispatcher):
     def __init__(self, allow_none=True, encoding=None):
-        if sys.version_info[:2] == (2, 4):
-            # doesn't support extra args in python 2.4
-            SimpleXMLRPCDispatcher.__init__(self)
-        else:
-            SimpleXMLRPCDispatcher.__init__(self, allow_none, encoding)
+        SimpleXMLRPCDispatcher.__init__(self, allow_none, encoding)
 
         self.allow_none = allow_none
         self.encoding = encoding
