@@ -309,7 +309,13 @@ class Worker(models.Model):
             self.save()
 
         return self.export()
-
+    @classmethod
+    def create_worker(cls, worker_name):
+        new_worker = Worker()
+        new_worker.name = worker_name
+        # This would automatically generate a worker key
+        new_worker.save()
+        return new_worker
 
 class TaskManager(models.Manager):
     """Custom query manager for Task model."""
