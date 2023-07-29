@@ -568,6 +568,9 @@ class Task(models.Model):
     resubmitted_from    = models.ForeignKey("self", null=True, blank=True, related_name="resubmitted_from1", on_delete=models.CASCADE)
 
     subtask_count       = models.PositiveIntegerField(default=0, help_text=_("Subtask count.<br />This is a generated field."))
+    retention_applied   = models.BooleanField(default=False, help_text=_("Field to determine if the retention policy "
+                                                                         "has been applied to the log results of this "
+                                                                         "task."))
 
     # override default *objects* Manager
     objects = TaskManager()
@@ -731,6 +734,7 @@ class Task(models.Model):
             "state_label": self.get_state_display(),
             "is_finished": self.is_finished(),
             "is_failed": self.is_failed(),
+            "retention_applied": self.retention_applied,
         }
 
         if not flat:
