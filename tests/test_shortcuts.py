@@ -140,7 +140,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(out, b"\" ' \n")
 
         # test a longer output that needs to be read in several chunks
-        ret, out = run("echo -n '%s'; sleep 0.2; echo -n '%s'" % (10000 * "x", 10 * "a"), logfile=self.tmp_file, can_fail=True)
+        ret, out = run("printf '%s'; sleep 0.2; printf '%s'" % (10000 * "x", 10 * "a"), logfile=self.tmp_file, can_fail=True)
         self.assertEqual(ret, 0)
         self.assertEqual(out, 10000 * b"x" + 10 * b"a")
         # check if log file is written properly; it is supposed to append data to existing content
@@ -152,7 +152,7 @@ class TestUtils(unittest.TestCase):
         self.assertRaises(RuntimeError, run, "exit 1")
 
         # stdin test
-        ret, out = run("xargs -0 echo -n", stdin_data=b"\0".join([str(i).encode() for i in range(10000)]))
+        ret, out = run("xargs -0 -n 10000 -- echo -n", stdin_data=b"\0".join([str(i).encode() for i in range(10000)]))
         self.assertEqual(out, b" ".join([str(i).encode() for i in range(10000)]))
 
         # return None
