@@ -38,7 +38,7 @@ class Enable_Worker(ClientCommand):
             try:
                 workers = self.hub.client.list_workers(True)
             except Fault as ex:
-                sys.stderr.write("%s\n" % ex.faultString)
+                print(repr(ex), file=sys.stderr)
                 sys.exit(1)
         else:
             workers = args
@@ -46,4 +46,4 @@ class Enable_Worker(ClientCommand):
             try:
                 self.hub.client.enable_worker(worker)
             except Fault as ex:
-                sys.stderr.write("%s\n" % ex.faultString)
+                print(repr(ex), file=sys.stderr)
