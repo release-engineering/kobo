@@ -390,7 +390,7 @@ class TaskLogs(object):
             return io.open(log_path, 'rb', LOG_BUFFER_SIZE)
         elif os.path.isfile(log_path + ".gz"):
             out = gzip.open(log_path + ".gz", "rb")
-
+            out = io.BufferedReader(out, LOG_BUFFER_SIZE)
             return out
         else:
             raise Exception('Cannot find log %s' % name)
