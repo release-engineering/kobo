@@ -10,7 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from kobo.hub import models
 from kobo.django.xmlrpc.decorators import admin_required, login_required
-
+from django.core.exceptions import ObjectDoesNotExist
 
 __all__ = (
     "enable_worker",
@@ -24,6 +24,7 @@ __all__ = (
     "list_workers",
     "create_task",
     "task_url",
+    "create_worker",
 )
 
 
@@ -158,3 +159,15 @@ def task_url(request, task_id):
         server_name = request.META["SERVER_NAME"]
 
     return prefix + server_name + reverse("task/detail", args=[task_id])
+
+@admin_required
+def create_worker(self, worker_name):
+    """create_worker(worker_name): none
+    """
+    # Check if a worker with this name already exists
+    try:
+        existing_worker = models.Worker.objects.get(name=worker_name)
+        return existing_worker
+    except ObjectDoesNotExist:
+        pass
+    return models.Worker.create_worker(worker_name)
