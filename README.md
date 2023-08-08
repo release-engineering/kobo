@@ -31,6 +31,16 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.29.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- Introduced `create-worker` command
+- Improved compatibility with Django 4.2
+- Improved output from admin commands on XML-RPC errors
+- Cleaned up unused code
+
 kobo 0.28.0
 -----------
 
