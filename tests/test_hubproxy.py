@@ -27,11 +27,7 @@ class FakeTransport(SafeCookieTransport):
     Subclasses the real SafeCookieTransport so we get a real CookieJar.
     """
     def __init__(self, *args, **kwargs):
-        # note: py2 transport classes do not subclass object
-        if sys.version_info[0] < 3:
-            SafeCookieTransport.__init__(self, *args, **kwargs)
-        else:
-            super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.fake_transport_calls = []
 

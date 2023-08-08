@@ -396,12 +396,7 @@ class TaskLogs(object):
             return io.open(log_path, 'rb', LOG_BUFFER_SIZE)
         elif os.path.isfile(log_path + ".gz"):
             out = gzip.open(log_path + ".gz", "rb")
-
-            # GZipFile was not usable with BufferedReader
-            # until 2.7
-            if sys.version_info[0:2] >= (2, 7):
-                out = io.BufferedReader(out, LOG_BUFFER_SIZE)
-
+            out = io.BufferedReader(out, LOG_BUFFER_SIZE)
             return out
         else:
             raise Exception('Cannot find log %s' % name)

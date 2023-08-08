@@ -292,32 +292,20 @@ class CookieTransport(xmlrpclib.Transport):
             host_ = "%s:%s" % (host, TimeoutHTTPProxyConnection.default_port)
 
         if self.proxy_config["proxy"] and host not in self.no_proxy and host_ not in self.no_proxy:
-            if sys.version_info[:2] < (2, 7):
-                host, extra_headers, x509 = self.get_host_info(host)
-                conn = TimeoutProxyHTTP(host, **self.proxy_config)
-                conn.set_timeout(self.timeout)
-                return conn
-            else:
-                CONNECTION_LOCK.acquire()
-                host, extra_headers, x509 = self.get_host_info(host)
-                conn = TimeoutProxyHTTPS(host, **self.proxy_config)
-                conn.set_timeout(self.timeout)
-                CONNECTION_LOCK.release()
-                return conn
-
-        if sys.version_info[:2] < (2, 7):
-            host, extra_headers, x509 = self.get_host_info(host)
-            conn = TimeoutHTTP(host)
-            conn.set_timeout(self.timeout)
-            return conn
-        else:
             CONNECTION_LOCK.acquire()
-            self._connection = (None, None) # this disables connection caching which causes a race condition when running in threads
-            conn = xmlrpclib.Transport.make_connection(self, host)
+            host, extra_headers, x509 = self.get_host_info(host)
+            conn = TimeoutProxyHTTPS(host, **self.proxy_config)
+            conn.set_timeout(self.timeout)
             CONNECTION_LOCK.release()
-            if self.timeout:
-                conn.timeout = self.timeout
             return conn
+
+        CONNECTION_LOCK.acquire()
+        self._connection = (None, None) # this disables connection caching which causes a race condition when running in threads
+        conn = xmlrpclib.Transport.make_connection(self, host)
+        CONNECTION_LOCK.release()
+        if self.timeout:
+            conn.timeout = self.timeout
+        return conn
 
     def send_cookies(self, connection, cookie_request):
         """Add cookies to the header."""
@@ -535,14 +523,7 @@ class CookieTransport(xmlrpclib.Transport):
         raise xmlrpclib.ProtocolError(host + handler, response.status, response.reason, response.msg)
 
     # override the appropriate request method
-    if sys.version_info[0] >= 3:
         single_request = _single_request3
-    elif hasattr(xmlrpclib.Transport, "single_request"):
-        # python 2.7+
-        single_request = _single_request
-    else:
-        # python 2.6-
-        request = _request
 
     def send_headers(self, connection, headers):
         headers.extend(self._cookie_headers)
@@ -578,32 +559,20 @@ class SafeCookieTransport(CookieTransport, xmlrpclib.SafeTransport):
             host_ = "%s:%s" % (host, TimeoutHTTPSProxyConnection.default_port)
 
         if self.proxy_config["proxy"] and host not in self.no_proxy and host_ not in self.no_proxy:
-            if sys.version_info[:2] < (2, 7):
-                host, extra_headers, x509 = self.get_host_info(host)
-                conn = TimeoutProxyHTTPS(host, **self.proxy_config)
-                conn.set_timeout(self.timeout)
-                return conn
-            else:
-                CONNECTION_LOCK.acquire()
-                host, extra_headers, x509 = self.get_host_info(host)
-                conn = TimeoutProxyHTTPS(host, **self.proxy_config)
-                conn.set_timeout(self.timeout)
-                CONNECTION_LOCK.release()
-                return conn
-
-        if sys.version_info[:2] < (2, 7):
-            host, extra_headers, x509 = self.get_host_info(host)
-            conn = TimeoutHTTPS(host, None, **(x509 or {}))
-            conn.set_timeout(self.timeout)
-            return conn
-        else:
             CONNECTION_LOCK.acquire()
-            self._connection = (None, None) # this disables connection caching which causes a race condition when running in threads
-            conn = xmlrpclib.SafeTransport.make_connection(self, host)
-            if self.timeout:
-                conn.timeout = self.timeout
+            host, extra_headers, x509 = self.get_host_info(host)
+            conn = TimeoutProxyHTTPS(host, **self.proxy_config)
+            conn.set_timeout(self.timeout)
             CONNECTION_LOCK.release()
             return conn
+
+        CONNECTION_LOCK.acquire()
+        self._connection = (None, None) # this disables connection caching which causes a race condition when running in threads
+        conn = xmlrpclib.SafeTransport.make_connection(self, host)
+        if self.timeout:
+            conn.timeout = self.timeout
+        CONNECTION_LOCK.release()
+        return conn
 
     def __init__(self, *args, **kwargs):
         self.context = kwargs.pop('context', None)
