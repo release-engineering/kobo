@@ -523,7 +523,7 @@ class CookieTransport(xmlrpclib.Transport):
         raise xmlrpclib.ProtocolError(host + handler, response.status, response.reason, response.msg)
 
     # override the appropriate request method
-        single_request = _single_request3
+    single_request = _single_request3
 
     def send_headers(self, connection, headers):
         headers.extend(self._cookie_headers)
