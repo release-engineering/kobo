@@ -31,6 +31,13 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.29.1
+-----------
+
+### BUG FIXES
+
+- Fixed XML-RPC authentication regression introduced in kobo 0.29.0
+
 kobo 0.29.0
 -----------
 
