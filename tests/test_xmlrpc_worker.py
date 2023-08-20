@@ -319,7 +319,6 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
             t = Task.objects.get(id=task.id)
             self.assertEqual(t.state, state)
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_interrupt_tasks_fails_to_interrupt_if_not_assigned_open_or_finished(self):
         tasks = {}
 
@@ -465,7 +464,6 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
             t = Task.objects.get(id=task.id)
             self.assertEqual(t.state, state)
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_timeout_tasks_fails_to_interrupt_if_not_open_or_finished(self):
         tasks = {}
 
@@ -507,7 +505,6 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
         t = Task.objects.get(id=t.id)
         self.assertEqual(t.state, TASK_STATES['ASSIGNED'])
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_assign_task_fails_to_assing_another_worker_task(self):
         w = Worker.objects.create(
             worker_key='other-worker',
@@ -545,7 +542,6 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
         t = Task.objects.get(id=t.id)
         self.assertEqual(t.state, TASK_STATES['OPEN'])
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_open_task_fails_to_open_another_worker_task(self):
         w = Worker.objects.create(
             worker_key='other-worker',

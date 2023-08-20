@@ -1136,7 +1136,6 @@ class TestTask(django.test.TransactionTestCase):
         task = Task.objects.get(id=task.id)
         self.assertEqual(task.state, TASK_STATES['FREE'])
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_free_task_with_invalid_initial_state(self):
         task = Task.objects.create(
             worker=self._worker,
@@ -1165,7 +1164,6 @@ class TestTask(django.test.TransactionTestCase):
         task = Task.objects.get(id=task.id)
         self.assertEqual(task.state, TASK_STATES['ASSIGNED'])
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_assign_task_with_invalid_initial_state(self):
         task = Task.objects.create(
             worker=self._worker,
@@ -1194,7 +1192,6 @@ class TestTask(django.test.TransactionTestCase):
         task = Task.objects.get(id=task.id)
         self.assertEqual(task.state, TASK_STATES['OPEN'])
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_open_task_with_invalid_initial_state(self):
         task = Task.objects.create(
             worker=self._worker,
@@ -1223,7 +1220,6 @@ class TestTask(django.test.TransactionTestCase):
         task = Task.objects.get(id=task.id)
         self.assertEqual(task.state, TASK_STATES['CLOSED'])
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_close_task_with_invalid_initial_state(self):
         task = Task.objects.create(
             worker=self._worker,
@@ -1267,7 +1263,6 @@ class TestTask(django.test.TransactionTestCase):
         task = Task.objects.get(id=task.id)
         self.assertEqual(task.state, TASK_STATES['INTERRUPTED'])
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_interrupt_task_with_invalid_initial_state(self):
         task = Task.objects.create(
             worker=self._worker,
@@ -1296,7 +1291,6 @@ class TestTask(django.test.TransactionTestCase):
         task = Task.objects.get(id=task.id)
         self.assertEqual(task.state, TASK_STATES['TIMEOUT'])
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_timeout_task_with_invalid_initial_state(self):
         task = Task.objects.create(
             worker=self._worker,
@@ -1325,7 +1319,6 @@ class TestTask(django.test.TransactionTestCase):
         task = Task.objects.get(id=task.id)
         self.assertEqual(task.state, TASK_STATES['FAILED'])
 
-    @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
     def test_fail_task_with_invalid_initial_state(self):
         task = Task.objects.create(
             worker=self._worker,
