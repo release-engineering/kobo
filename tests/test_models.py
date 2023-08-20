@@ -240,14 +240,42 @@ class TestWorker(django.test.TransactionTestCase):
         last_seen_delta = datetime.utcnow() - worker.last_seen
         self.assertTrue(abs(last_seen_delta) < timedelta(seconds=5))
 
-    @pytest.mark.xfail(reason='Check issue #68 for more info (https://git.io/fxSZ2).')
     def test_update_worker(self):
         worker = Worker.objects.create(worker_key='worker', name='Worker')
-        data = worker.update_worker(False, False, 0)
+        data = worker.export()
 
-        self.assertFalse(data['enabled'])
-        self.assertFalse(data['ready'])
+        self.assertTrue(data['enabled'])
+        self.assertTrue(data['ready'])
         self.assertEqual(data['task_count'], 0)
+
+        Task.objects.create(
+            worker=worker,
+            arch=self._arch,
+            channel=self._channel,
+            owner=self._user,
+            method='DummyTask',
+            state=TASK_STATES['OPEN'],
+        )
+
+        # We haven't updated the worker state in db yet.
+        data = worker.export()
+        self.assertTrue(data['enabled'])
+        self.assertTrue(data['ready'])
+        self.assertEqual(data['task_count'], 0)
+
+        # Call with same values as in db, so no db update should occur.
+        data = worker.update_worker(data['enabled'], data['ready'], data['task_count'])
+        self.assertTrue(data['enabled'])
+        self.assertTrue(data['ready'])
+        self.assertEqual(data['task_count'], 0)
+
+        # Intentionally provide incorrent values which are different than
+        # the expected returned values or current stale values in db.  Test
+        # that the returned data correspond to reality.
+        data = worker.update_worker(False, True, 10)
+        self.assertTrue(data['enabled'])
+        self.assertFalse(data['ready'])
+        self.assertEqual(data['task_count'], 1)
 
 
 class TestWorkerManager(django.test.TransactionTestCase):
