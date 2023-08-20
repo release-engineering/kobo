@@ -3,7 +3,6 @@
 import mimetypes
 import os
 import six
-from kobo.django.django_version import django_version_ge
 
 try:
     import json
@@ -14,14 +13,10 @@ import django.contrib.auth.views
 from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
 from django.core.exceptions import ImproperlyConfigured
-from kobo.django.django_version import django_version_ge
-if django_version_ge('1.10.0'):
-    from django.urls import reverse
-else:
-    from django.core.urlresolvers import reverse
 from django.http import HttpResponse, StreamingHttpResponse, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.template import RequestContext
+from django.urls import reverse
 from django.views.generic import RedirectView
 
 from kobo.hub.models import Arch, Channel, Task
@@ -242,29 +237,18 @@ def task_log_json(request, id, log_name):
 
     return HttpResponse(json.dumps(result), content_type="application/json")
 
-if django_version_ge('1.11.0'):
-    class LoginView(django.contrib.auth.views.LoginView):
-        template_name = 'auth/login.html'
 
-    class LogoutView(django.contrib.auth.views.LogoutView):
-        pass
+class LoginView(django.contrib.auth.views.LoginView):
+    template_name = 'auth/login.html'
 
-else:
-    def login(request, redirect_field_name=REDIRECT_FIELD_NAME):
-        return django.contrib.auth.views.login(request, template_name="auth/login.html", redirect_field_name=redirect_field_name)
-
-    def logout(request, redirect_field_name=REDIRECT_FIELD_NAME):
-        return django.contrib.auth.views.logout(request, redirect_field_name=redirect_field_name)
+class LogoutView(django.contrib.auth.views.LogoutView):
+    pass
 
 
 def krb5login(request, redirect_field_name=REDIRECT_FIELD_NAME):
     #middleware = 'django.contrib.auth.middleware.RemoteUserMiddleware'
     middleware = 'kobo.django.auth.middleware.LimitedRemoteUserMiddleware'
-    if django_version_ge('1.10.0'):
-        middleware_setting = settings.MIDDLEWARE
-    else:
-        middleware_setting = settings.MIDDLEWARE_CLASSES
-    if middleware not in middleware_setting:
+    if middleware not in settings.MIDDLEWARE:
         raise ImproperlyConfigured("krb5login view requires '%s' middleware installed" % middleware)
     redirect_to = request.POST.get(redirect_field_name, "")
     if not redirect_to:
@@ -275,10 +259,6 @@ def krb5login(request, redirect_field_name=REDIRECT_FIELD_NAME):
 
 def oidclogin(request):
     middleware = 'kobo.django.auth.middleware.LimitedRemoteUserMiddleware'
-    if django_version_ge('1.10.0'):
-        middleware_setting = settings.MIDDLEWARE
-    else:
-        middleware_setting = settings.MIDDLEWARE_CLASSES
-    if middleware not in middleware_setting:
+    if middleware not in settings.MIDDLEWARE:
         raise ImproperlyConfigured("oidclogin view requires '%s' middleware installed" % middleware)
     return RedirectView.as_view(url=reverse("home/index"), permanent=False)(request)

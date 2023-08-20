@@ -94,11 +94,7 @@ from six import python_2_unicode_compatible
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from kobo.django.django_version import django_version_ge
-if django_version_ge('1.10.0'):
-    from django.urls import reverse
-else:
-    from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.html import format_html
 
 try:
