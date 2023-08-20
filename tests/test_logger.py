@@ -3,6 +3,7 @@
 import time
 import logging
 
+import pytest
 import unittest
 
 from six import BytesIO, StringIO
@@ -55,6 +56,8 @@ class TestLoggingThread(unittest.TestCase):
         self.assertFalse(thread.is_alive())
         self.assertFalse(thread._running)
 
+    # Following test intentionally kills a thread with an exception.
+    @pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
     def test_logs_on_fatal_error(self):
         # Set up a logger whose output we'll be able to inspect.
         logs = StringIO()
