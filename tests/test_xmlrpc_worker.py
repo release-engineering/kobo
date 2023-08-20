@@ -320,12 +320,12 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
             self.assertEqual(t.state, state)
 
     @pytest.mark.xfail(six.PY3, reason='Check issue #73 for more info (https://git.io/fxdfm).')
-    def test_interrupt_tasks_fails_to_interrupt_if_not_open_or_finished(self):
+    def test_interrupt_tasks_fails_to_interrupt_if_not_assigned_open_or_finished(self):
         tasks = {}
 
         for state_id in TASK_STATES:
             state = TASK_STATES[state_id]
-            if state == TASK_STATES['OPEN'] or state in FINISHED_STATES:
+            if state in (TASK_STATES['ASSIGNED'], TASK_STATES['OPEN'], *FINISHED_STATES):
                 continue
 
             tasks[state] = Task.objects.create(
