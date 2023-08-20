@@ -532,10 +532,10 @@ class TaskLogs(object):
         if not name.endswith(".log"):
             return
 
-        import pipes
+        import shlex
         path = self._get_absolute_log_path(name)
         if not os.path.isfile(path + ".gz"):
-            run("gzip %s" % pipes.quote(path), can_fail=True, stdout=False)
+            run("gzip %s" % shlex.quote(path), can_fail=True, stdout=False)
 
     def gzip_logs(self):
         """gzip all task logs"""
