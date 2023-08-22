@@ -4,6 +4,7 @@
 import os
 
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -25,7 +26,8 @@ class FileUpload(models.Model):
     owner       = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name        = models.CharField(max_length=255)
     checksum    = models.CharField(max_length=255)
-    size        = models.PositiveIntegerField()
+    # models.PositiveBigIntegerField would be even better but it was introduced only in Django 3.1
+    size        = models.BigIntegerField(validators=[MinValueValidator(0)])
     target_dir = models.CharField(max_length=255)
     upload_key  = models.CharField(max_length=255)
     state       = models.PositiveIntegerField(default=0, choices=UPLOAD_STATES.get_mapping())
@@ -66,6 +68,9 @@ class FileUpload(models.Model):
                 self.state = UPLOAD_STATES['FAILED']
                 if "update_fields" in kwargs:
                     kwargs["update_fields"] = {"state"}.union(kwargs["update_fields"])
+
+        # execute validators
+        self.full_clean()
         super(FileUpload, self).save(*args, **kwargs)
 
     def delete(self):
