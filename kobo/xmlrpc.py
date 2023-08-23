@@ -214,7 +214,7 @@ class CookieTransport(xmlrpclib.Transport):
 
     def __init__(self, *args, **kwargs):
         cookiejar = kwargs.pop("cookiejar", None)
-        self.timeout = kwargs.pop("timeout", 0)
+        self.timeout = kwargs.pop("timeout", int(os.environ.get("KOBO_XMLRPC_TIMEOUT", "0")))
         self.proxy_config = self._get_proxy(**kwargs)
         self.no_proxy = os.environ.get("no_proxy", "").lower().split(',')
         self.context = kwargs.pop('context', None)
