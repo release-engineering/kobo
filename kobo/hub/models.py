@@ -205,9 +205,10 @@ class Worker(models.Model):
 
     def save(self, *args, **kwargs):
         # precompute task count, current load and ready
-        tasks = Task.objects.opened().filter(worker=self)
-        self.task_count = tasks.count()
-        self.current_load = sum(( task.weight for task in tasks if not task.waiting ))
+        if self.id is not None:
+            tasks = Task.objects.opened().filter(worker=self)
+            self.task_count = tasks.count()
+            self.current_load = sum(( task.weight for task in tasks if not task.waiting ))
         self.ready = self.enabled and (self.current_load < self.max_load and self.task_count < 3*self.max_load)
 
         if "update_fields" in kwargs:
@@ -301,14 +302,22 @@ class Worker(models.Model):
         return os.path.join(settings.WORKER_DIR, safe_name)
 
     def update_worker(self, enabled, ready, task_count):
-        """Update worker attributes. Return worker_info.
+        """Recomputes worker state and returns current worker_info.
 
-        Update only if data provided from a worker differs.
+        Compares provided actual state of the worker with the information
+        stored in the database.  If they differ, automatically recompute them using
+        self.save().
+
+        Always returns the latest worker state from the database.
+
+        This method is only meant to be used by the worker!  It is not a setter
+        for provided arguments!
         """
         if (self.enabled, self.ready, self.task_count) != (enabled, ready, task_count):
             self.save()
 
         return self.export()
+
     @classmethod
     def create_worker(cls, worker_name):
         new_worker = Worker()
@@ -524,10 +533,10 @@ class TaskLogs(object):
         if not name.endswith(".log"):
             return
 
-        import pipes
+        import shlex
         path = self._get_absolute_log_path(name)
         if not os.path.isfile(path + ".gz"):
-            run("gzip %s" % pipes.quote(path), can_fail=True, stdout=False)
+            run("gzip %s" % shlex.quote(path), can_fail=True, stdout=False)
 
     def gzip_logs(self):
         """gzip all task logs"""
