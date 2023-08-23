@@ -131,18 +131,39 @@ class TestTaskManager(django.test.TransactionTestCase):
         self._user = user
         self._worker = RpcServiceMock(w)
 
-    @pytest.mark.xfail(reason='Check issue #68 for more info (https://git.io/fxSZ2).')
     @patch('kobo.worker.taskmanager.HubProxy', HubProxyMock)
     def test_update_worker_info(self):
         tm = TaskManager(conf={'worker': self._worker})
         self.assertTrue(tm.worker_info['enabled'])
         self.assertTrue(tm.worker_info['ready'])
+        self.assertEqual(tm.worker_info['task_count'], 0)
 
         tm.worker_info['enabled'] = False
         tm.worker_info['ready'] = False
         tm.update_worker_info()
-        self.assertFalse(tm.worker_info['enabled'])
+
+        # no open tasks, info won't be updated
+        self.assertTrue(tm.worker_info['enabled'])
+        self.assertTrue(tm.worker_info['ready'])
+        self.assertEqual(tm.worker_info['task_count'], 0)
+
+        Task.objects.create(
+            worker=self._worker.worker,
+            arch=self._arch,
+            channel=self._channel,
+            owner=self._user,
+            method='DummyForkTask',
+            state=TASK_STATES['OPEN'],
+        )
+
+        tm.worker_info['enabled'] = False
+        tm.worker_info['ready'] = False
+        tm.update_worker_info()
+
+        # open task, info will be updated
+        self.assertTrue(tm.worker_info['enabled'])
         self.assertFalse(tm.worker_info['ready'])
+        self.assertEqual(tm.worker_info['task_count'], 1)
 
     @patch('kobo.worker.taskmanager.HubProxy', HubProxyMock)
     def test_update_worker_info_catch_protocol_error(self):

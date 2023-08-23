@@ -717,7 +717,6 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
         t = Task.objects.get(id=t.id)
         self.assertEqual(t.weight, 1)
 
-    @pytest.mark.xfail(reason='Check issue #68 for more info (https://git.io/fxSZ2).')
     def test_update_worker(self):
         req = _make_request(self._worker)
 
@@ -725,9 +724,25 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
         self.assertTrue(self._worker.ready)
         self.assertEqual(self._worker.task_count, 0)
 
-        wi = worker.update_worker(req, False, False, 1)
+        # no open tasks, info won't be updated
+        wi = worker.update_worker(req, True, False, 1)
 
-        self.assertFalse(wi['enabled'])
+        self.assertTrue(wi['enabled'])
+        self.assertTrue(wi['ready'])
+        self.assertEqual(wi['task_count'], 0)
+
+        Task.objects.create(
+            worker=self._worker,
+            arch=self._arch,
+            channel=self._channel,
+            owner=self._user,
+            state=TASK_STATES['OPEN'],
+        )
+
+        wi = worker.update_worker(req, True, False, 1)
+
+        # open task, info will be updated
+        self.assertTrue(wi['enabled'])
         self.assertFalse(wi['ready'])
         self.assertEqual(wi['task_count'], 1)
 
