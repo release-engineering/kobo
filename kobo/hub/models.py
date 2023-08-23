@@ -907,8 +907,9 @@ class Task(models.Model):
         result = True
         for task in self.subtasks():
             try:
-                result &= task.cancel_task()
-            except (MultipleObjectsReturned, ObjectDoesNotExist):
+                task.cancel_task()
+            except Exception as e:
+                logger.error('Cannot cancel subtask %d: %s', task.id, e)
                 result = False
         return result
 
