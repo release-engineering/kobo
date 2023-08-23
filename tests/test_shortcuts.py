@@ -178,7 +178,8 @@ class TestUtils(unittest.TestCase):
         run("echo foo | tee >(md5sum -b) >/dev/null", executable="/bin/bash")
 
     def test_run_in_text_mode(self):
-        """test run with kwargs 'text', 'encoding' or/and 'errors' set.
+        """test run with kwargs 'text', 'encoding', 'universal_newlines' or/and
+        'errors' set.
 
         Python 3.7 added 'text' as an alias for 'universal_newlines'.
         """
@@ -187,6 +188,9 @@ class TestUtils(unittest.TestCase):
             self.assertEqual(ret, 0)
             self.assertEqual(out, "hello\n")
 
+        ret, out = run("echo hello", universal_newlines=True)
+        self.assertEqual(ret, 0)
+        self.assertEqual(out, "hello\n")
 
         ret, out = run("echo hello", encoding="utf-8")
         self.assertEqual(ret, 0)
