@@ -93,15 +93,15 @@ class TestTaskBase(unittest.TestCase):
         args = []
 
         t = TaskBase(hub, conf, task_id, args)
-        self.assertEqual(len(t._subtask_list), 0)
+        self.assertEqual(len(t._running_subtask_list), 0)
 
         # access directly
-        t._subtask_list.append({'id': 1})
-        self.assertEqual(len(t._subtask_list), 1)
+        t._running_subtask_list.append({'id': 1})
+        self.assertEqual(len(t._running_subtask_list), 1)
 
         # copy to prevent modification
         t.subtask_list.append({'id': 2})
-        self.assertEqual(len(t._subtask_list), 1)
+        self.assertEqual(len(t._running_subtask_list), 1)
 
     def test_run(self):
         task_info = {'id': 100}
