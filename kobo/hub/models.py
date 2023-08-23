@@ -606,9 +606,8 @@ class Task(models.Model):
         return u"#%s [method: %s, state: %s, worker: %s]" % (self.id, self.method, self.get_state_display(), self.worker)
 
     def save(self, *args, **kwargs):
-        # save to db to precalculate subtask counts and obtain an ID (on insert) for stdout and traceback
-        super(self.__class__, self).save()
-        self.subtask_count = self.subtasks().count()
+        if self.id is not None:
+            self.subtask_count = self.subtasks().count()
         super(self.__class__, self).save()
         self.logs.save()
         if self.parent:
