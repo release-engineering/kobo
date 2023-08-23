@@ -177,15 +177,16 @@ class TestUtils(unittest.TestCase):
         # bashism - output redirection to subshells
         run("echo foo | tee >(md5sum -b) >/dev/null", executable="/bin/bash")
 
-    @pytest.mark.xfail(sys.version_info < (3, 7), reason="python3.7 api changes")
     def test_run_in_text_mode(self):
-        """test run with kwargs 'text', 'encoding' or/and 'errors' set. These kwargs are
-        added to Popen from python3.6(encoding, errors) and python3.7(text). Running test
-        with python version older than 3.7 is expected to fail
+        """test run with kwargs 'text', 'encoding' or/and 'errors' set.
+
+        Python 3.7 added 'text' as an alias for 'universal_newlines'.
         """
-        ret, out = run("echo hello", text=True)
-        self.assertEqual(ret, 0)
-        self.assertEqual(out, "hello\n")
+        if sys.version_info >= (3, 7):
+            ret, out = run("echo hello", text=True)
+            self.assertEqual(ret, 0)
+            self.assertEqual(out, "hello\n")
+
 
         ret, out = run("echo hello", encoding="utf-8")
         self.assertEqual(ret, 0)
