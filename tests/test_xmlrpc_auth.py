@@ -7,7 +7,6 @@ from mock import Mock, patch
 
 from kobo.hub.models import Worker
 from kobo.hub.xmlrpc import auth
-from kobo.django.django_version import django_version_ge
 
 from .utils import DjangoRunner
 
@@ -34,10 +33,7 @@ class TestLoginWorker(django.test.TransactionTestCase):
                 session_key = auth.login_worker_key(req, 'key')
 
                 login_mock.assert_called_once_with(req, user)
-        if django_version_ge('1.11.0'):
-            krb_mock.authenticate.assert_called_once_with(None, 'worker/name')
-        else:
-            krb_mock.authenticate.assert_called_once_with('worker/name')
+        krb_mock.authenticate.assert_called_once_with(None, 'worker/name')
         self.assertEqual(session_key, '1234567890')
 
     def test_login_worker_key_valid_worker_invalid_user(self):
@@ -49,10 +45,7 @@ class TestLoginWorker(django.test.TransactionTestCase):
             with self.assertRaises(PermissionDenied):
                 auth.login_worker_key(req, 'key')
 
-        if django_version_ge('1.11.0'):
-            krb_mock.authenticate.assert_called_once_with(None, 'worker/name')
-        else:
-            krb_mock.authenticate.assert_called_once_with('worker/name')
+        krb_mock.authenticate.assert_called_once_with(None, 'worker/name')
 
     def test_login_worker_key_invalid_worker(self):
         req = Mock()

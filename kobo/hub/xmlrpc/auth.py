@@ -15,7 +15,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from kobo.hub.models import Worker
 from kobo.django.auth.krb5 import Krb5RemoteUserBackend
 from kobo.django.xmlrpc.auth import *
-from kobo.django.django_version import django_version_ge
 
 
 __all__ = (
@@ -36,10 +35,7 @@ def login_worker_key(request, worker_key):
 
     username = "worker/%s" % worker.name
     backend = Krb5RemoteUserBackend()
-    if django_version_ge('1.11.0'):
-        user = backend.authenticate(None, username)
-    else:
-        user = backend.authenticate(username)
+    user = backend.authenticate(None, username)
     if user is None:
         raise PermissionDenied()
     user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)

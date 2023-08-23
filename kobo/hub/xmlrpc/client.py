@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 
 
-from kobo.django.django_version import django_version_ge
-if django_version_ge('1.10.0'):
-    from django.urls import reverse
-else:
-    from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
+from django.urls import reverse
 
 from kobo.hub import models
 from kobo.django.xmlrpc.decorators import admin_required, login_required

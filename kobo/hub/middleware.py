@@ -2,9 +2,7 @@
 
 from __future__ import absolute_import
 
-from kobo.django.django_version import django_version_ge
-if django_version_ge('1.10.0'):
-    from django.utils.deprecation import MiddlewareMixin
+from django.utils.deprecation import MiddlewareMixin
 
 from .models import Worker
 
@@ -28,7 +26,7 @@ class LazyWorker(object):
         return request._cached_worker
 
 
-class WorkerMiddleware(MiddlewareMixin if django_version_ge('1.10.0') else object):
+class WorkerMiddleware(MiddlewareMixin):
     """Sets a request.worker.
 
     - Worker instance if username exists in database

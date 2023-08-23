@@ -5,7 +5,6 @@ import os
 
 from kobo.exceptions import ImproperlyConfigured
 from django.conf import settings
-from kobo.django.django_version import django_version_ge
 
 
 for var in ["XMLRPC_METHODS", "TASK_DIR", "UPLOAD_DIR"]:
