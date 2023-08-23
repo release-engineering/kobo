@@ -134,6 +134,20 @@ class TestViewLog(django.test.TransactionTestCase):
         # for more accurate memory_profiler tests
         gc.collect()
 
+    def test_view_log_404(self):
+        """Fetching of non-existent logs should yield error 404"""
+        response = self.get_log('missing.htm')
+        self.assertEqual(response.content, b'Cannot find file missing.htm')
+        self.assertEqual(response.status_code, 404)
+
+        response = self.get_log('missing.html')
+        self.assertEqual(response.content, b'Cannot find file missing.html')
+        self.assertEqual(response.status_code, 404)
+
+        response = self.get_log('missing.tar.gz', data={'format': 'raw'})
+        self.assertEqual(response.content, b'Cannot find file missing.tar.gz')
+        self.assertEqual(response.status_code, 404)
+
     def test_view_zipped_small_raw(self):
         """Fetching a small compressed log with raw format should yield
         the gzip-compressed content."""

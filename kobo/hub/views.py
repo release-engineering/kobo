@@ -13,7 +13,7 @@ import django.contrib.auth.views
 from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
 from django.core.exceptions import ImproperlyConfigured
-from django.http import HttpResponse, StreamingHttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseNotFound, StreamingHttpResponse, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.template import RequestContext
 from django.urls import reverse
@@ -106,13 +106,8 @@ class TaskDetail(ExtraDetailView):
         return context
 
 
-def _stream_file(file_path, offset=0):
+def _stream_file(f, offset=0):
     """Generator that returns 1M file chunks."""
-    try:
-        f = open(file_path, "rb")
-    except IOError:
-        return
-
     f.seek(offset)
     while 1:
         data = f.read(1024 ** 2)
@@ -144,8 +139,13 @@ def _streamed_log_response(task, log_name, offset, as_attachment):
     except OSError:
         content_len = 0
 
+    try:
+        f = open(file_path, "rb")
+    except FileNotFoundError:
+        return HttpResponseNotFound('Cannot find file ' + log_name)
+
     # use _stream_file() instead of passing file object in order to improve performance
-    response = StreamingHttpResponse(_stream_file(file_path, offset), content_type=mimetype)
+    response = StreamingHttpResponse(_stream_file(f, offset), content_type=mimetype)
     response["Content-Length"] = content_len
 
     if as_attachment:
