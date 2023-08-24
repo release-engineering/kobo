@@ -27,7 +27,8 @@ def register_upload(request, name, checksum, size, target_dir):
     upload.owner = request.user
     upload.name = name
     upload.checksum = checksum.lower()
-    upload.size = size
+    # size may be sent as a string to workaround the xmlrpc.client.MAXINT limit
+    upload.size = int(size)
     upload.target_dir = target_dir
     upload.save()
     return (upload.id, upload.upload_key)

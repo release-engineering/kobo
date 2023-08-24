@@ -470,6 +470,10 @@ class HubProxy(object):
         checksum = sum.hexdigest().lower()
 
         fsize = os.path.getsize(file_name)
+        # use str only for large uploads to not break compatibility with older hubs
+        if fsize > xmlrpclib.MAXINT:
+            fsize = str(fsize)
+
         upload_id, upload_key = self.upload.register_upload(os.path.basename(file_name), checksum, fsize, target_dir)
 
         secure = (scheme == "https")
