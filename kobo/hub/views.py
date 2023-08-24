@@ -13,7 +13,7 @@ import django.contrib.auth.views
 from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
 from django.core.exceptions import ImproperlyConfigured
-from django.http import HttpResponse, StreamingHttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseNotFound, StreamingHttpResponse, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
 from django.template import RequestContext
 from django.urls import reverse
@@ -106,13 +106,8 @@ class TaskDetail(ExtraDetailView):
         return context
 
 
-def _stream_file(file_path, offset=0):
+def _stream_file(f, offset=0):
     """Generator that returns 1M file chunks."""
-    try:
-        f = open(file_path, "rb")
-    except IOError:
-        return
-
     f.seek(offset)
     while 1:
         data = f.read(1024 ** 2)
@@ -132,7 +127,11 @@ def _trim_log(text):
     return '<...trimmed, download required for full log>' + subtext
 
 
-def _streamed_log_response(file_path, offset, as_attachment):
+def _streamed_log_response(task, log_name, offset, as_attachment):
+    file_path = task.logs._get_absolute_log_path(log_name)
+    if not os.path.isfile(file_path) and not file_path.endswith(".gz"):
+        file_path = task.logs._get_absolute_log_path(log_name + ".gz")
+
     mimetype = mimetypes.guess_type(file_path)[0] or 'application/octet-stream'
 
     try:
@@ -140,8 +139,13 @@ def _streamed_log_response(file_path, offset, as_attachment):
     except OSError:
         content_len = 0
 
+    try:
+        f = open(file_path, "rb")
+    except FileNotFoundError:
+        return HttpResponseNotFound('Cannot find file ' + log_name)
+
     # use _stream_file() instead of passing file object in order to improve performance
-    response = StreamingHttpResponse(_stream_file(file_path, offset), content_type=mimetype)
+    response = StreamingHttpResponse(_stream_file(f, offset), content_type=mimetype)
     response["Content-Length"] = content_len
 
     if as_attachment:
@@ -191,16 +195,12 @@ def task_log(request, id, log_name):
 
     task = get_object_or_404(Task, id=id)
 
-    file_path = task.logs._get_absolute_log_path(log_name)
-    if not os.path.isfile(file_path) and not file_path.endswith(".gz"):
-        file_path = task.logs._get_absolute_log_path(log_name + ".gz")
-
     offset = int(request.GET.get("offset", 0))
 
     request_format = request.GET.get("format")
 
     if request_format == "raw" or log_name.endswith(".html") or log_name.endswith(".htm"):
-        return _streamed_log_response(file_path, offset, as_attachment=(request_format == 'raw'))
+        return _streamed_log_response(task, log_name, offset, as_attachment=(request_format == 'raw'))
 
     return _rendered_log_response(request, task, log_name)
 
