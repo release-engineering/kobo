@@ -32,7 +32,8 @@ class TaskBase(Plugin):
         self._task_info = self.hub.worker.get_task(self.task_id)
         self._task_manager = None  # created by taskmanager (only for foreground tasks)
         self._args = args
-        self._subtask_list = []
+        self._finished_subtasks = set()
+        self._running_subtask_list = []
         self.result = ""
 
     @property
@@ -71,7 +72,7 @@ class TaskBase(Plugin):
     @property
     def subtask_list(self):
         # deepcopy to prevent modification
-        return copy.deepcopy(self._subtask_list)
+        return copy.deepcopy(self._running_subtask_list)
 
     def run(self):
         """Run the task."""
@@ -95,7 +96,7 @@ class TaskBase(Plugin):
             raise RuntimeError("Foreground tasks can't spawn subtasks.")
 
         subtask_id = self.hub.worker.create_subtask(label, method, args, self.task_id, priority)
-        self._subtask_list.append(subtask_id)
+        self._running_subtask_list.append(subtask_id)
         return subtask_id
 
     def wait(self, subtasks=None):
@@ -126,13 +127,19 @@ class TaskBase(Plugin):
             signal.pause()
             # wake up on signal to check the status
 
+        # do not await subtasks that were already processed in previous wait calls
+        finished = [x for x in finished if x not in self._finished_subtasks]
+
         # remove finished subtasks from the list, check results
         fail = False
         for i in finished:
             state = self.hub.worker.get_task(i)
             if state['state'] != TASK_STATES['CLOSED']:
                 fail = True
-            self._subtask_list.remove(i)
+            self._running_subtask_list.remove(i)
+
+        # mark finished subtasks as processed
+        self._finished_subtasks.update(finished)
 
         if fail:
             print("Failing because of at least one subtask hasn't closed properly.")
