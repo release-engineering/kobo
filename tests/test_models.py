@@ -1332,7 +1332,6 @@ class TestTask(django.test.TransactionTestCase):
         with self.assertRaises(Exception):
             task.fail_task()
 
-    @pytest.mark.xfail(reason='Check issue #89 for more info (https://git.io/fp6gq).')
     def test_cancel_subtasks(self):
         parent = Task.objects.create(
             worker=self._worker,
