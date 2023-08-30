@@ -549,7 +549,7 @@ class Task(models.Model):
     """Model for hub_task table."""
     archive             = models.BooleanField(default=False, help_text=_("When a task is archived, it disappears from admin interface and cannot be accessed by taskd.<br />Make sure that archived tasks are finished and you won't need them anymore."))
     owner               = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    worker              = models.ForeignKey(Worker, null=True, blank=True, help_text=_("A worker which has this task assigned."), on_delete=models.CASCADE)
+    worker              = models.ForeignKey(Worker, null=True, blank=True, help_text=_("A worker which has this task assigned."), on_delete=models.SET_NULL)
     parent              = models.ForeignKey("self", null=True, blank=True, help_text=_("Parent task."), on_delete=models.CASCADE)
     state               = models.PositiveIntegerField(default=TASK_STATES["FREE"], choices=TASK_STATES.get_mapping(), help_text=_("Current task state."))
     label               = models.CharField(max_length=255, blank=True, help_text=_("Label, description or any reason for this task."))
