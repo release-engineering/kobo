@@ -31,6 +31,29 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.30.0
+-----------
+
+### BUG FIXES
+
+- hub: decorate Task.save with transaction.atomic
+- hub: do not call save twice in Task.save()
+- hub: fix Task.cancel_subtasks
+- client: allow file upload size to be sent a string
+- django: use BigIntegerField for file upload sizes
+- hub: return error 404 for non-existent logs
+- hub: move filename resolution to _streamed_log_response
+- worker: do not repeatedly remove already awaited tasks from subtask list
+- django: reimplement django_version_ge in pure Python
+- hub: do not use workers without ids in a filter
+- hub: replace pipes with shlex
+
+### FEATURES & IMPROVEMENTS
+
+- Make xmlrpc timeout configurable
+- django: remove support for Django 1.10 and older
+- hub: update `Worker.update_worker` documentation
+
 kobo 0.29.1
 -----------
 
