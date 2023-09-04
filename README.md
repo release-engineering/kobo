@@ -31,6 +31,13 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.30.1
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- hub: deleting a worker no longer deletes associated tasks
+
 kobo 0.30.0
 -----------
 
