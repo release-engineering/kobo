@@ -239,6 +239,7 @@ def task_log_json(request, id, log_name):
 
 
 class LoginView(django.contrib.auth.views.LoginView):
+    extra_context = {'title': _('Login')}
     template_name = 'auth/login.html'
 
 class LogoutView(django.contrib.auth.views.LogoutView):
