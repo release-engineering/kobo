@@ -22,6 +22,6 @@ urlpatterns = [
         model = Channel,
         template_name = "channel/detail.html",
         context_object_name = "channel",
-        title = _("Architecture detail"),
+        title = _("Channel detail"),
     ), name="channel/detail"),
 ]
