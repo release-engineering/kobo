@@ -8,13 +8,13 @@ if django_version_ge("2.0"):
     
 else:
     from django.conf.urls import url
-from kobo.django.views.generic import ExtraListView
+from kobo.django.views.generic import UserListView
 from kobo.hub.views import UserDetailView
 from kobo.django.compat import gettext_lazy as _
 
 
 urlpatterns = [
-    url(r"^$", ExtraListView.as_view(
+    url(r"^$", UserListView.as_view(
         queryset=get_user_model().objects.order_by("username"),
         template_name="user/list.html",
         context_object_name="usr_list",
