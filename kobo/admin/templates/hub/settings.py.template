@@ -160,6 +160,13 @@ XMLRPC_METHODS = {
     ),
 }
 
+# Denote whether the access to user list/detail view is restricted
+# Possible values:
+# "" (empty string) = Anonymous access (default)
+# "authenticated" = Authenticated users
+# "staff" = Staff (admin) users only
+USERS_ACL_PERMISSION = ""
+
 # override default values with custom ones from local settings
 try:
     from settings_local import *
