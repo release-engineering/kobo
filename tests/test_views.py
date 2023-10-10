@@ -27,11 +27,19 @@ teardown_module = runner.stop
 class TestAuthView(django.test.TransactionTestCase):
 
     def setUp(self):
+        self.credentials = {
+            'username': 'user1',
+            'password': 'test'}
+        self.user = User.objects.create_user(**self.credentials)
         self.client = django.test.Client()
 
     def test_login(self):
         response = self.client.get('/auth/login/')
         self.assertEqual(response.status_code, 200)
+        self.assertFalse(self.client.session.get("_auth_user_id"))
+        response = self.client.post('/auth/login/', self.credentials)
+        self.assertIn(response.status_code, [200, 302])
+        self.assertTrue(self.client.session.get("_auth_user_id"))
 
     def test_krb5login(self):
         response = self.client.get('/auth/krb5login/')
@@ -51,6 +59,9 @@ class TestAuthView(django.test.TransactionTestCase):
     def test_logout(self):
         response = self.client.get('/auth/logout/')
         self.assertEqual(response.status_code, 200)
+        self.client.post('/auth/login/', self.credentials)
+        self.client.logout()
+        self.assertFalse(self.client.session.get("_auth_user_id"))
 
 
 class TestTaskView(django.test.TransactionTestCase):
