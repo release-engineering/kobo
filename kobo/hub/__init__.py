@@ -30,6 +30,16 @@ for var in ["TASK_DIR", "UPLOAD_DIR", "WORKER_DIR"]:
         raise ImproperlyConfigured("Invalid permissions on '%s'." % dir_path)
 
 
+if hasattr(settings, "USERS_ACL_PERMISSION"):
+    acl_permission = getattr(settings, "USERS_ACL_PERMISSION")
+    valid_options = ["", "authenticated", "staff"]
+    if acl_permission not in valid_options:
+        raise ImproperlyConfigured(
+            f"Invalid USERS_ACL_PERMISSION in settings: '{acl_permission}', must be one of "
+            f"'authenticated', 'staff' or ''(empty string)"
+        )
+
+
 if getattr(settings, "MIDDLEWARE", None) is not None:
     # Settings defines Django>=1.10 style middleware, check that
     middleware_var = "MIDDLEWARE"

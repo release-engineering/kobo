@@ -21,7 +21,7 @@ from django.views.generic import RedirectView
 
 from kobo.hub.models import Arch, Channel, Task
 from kobo.hub.forms import TaskSearchForm
-from kobo.django.views.generic import ExtraDetailView, SearchView
+from kobo.django.views.generic import ExtraDetailView, SearchView, UsersAclMixin
 from kobo.django.compat import gettext_lazy as _
 
 
@@ -35,7 +35,7 @@ JSON_LOG_MAX_SIZE = getattr(settings, "JSON_LOG_MAX_SIZE", (1024 ** 2) * 8)
 LOG_WATCHER_INTERVAL = getattr(settings, "LOG_WATCHER_INTERVAL", 5000)
 
 
-class UserDetailView(ExtraDetailView):
+class UserDetailView(UsersAclMixin, ExtraDetailView):
     model = get_user_model()
     title = _("User detail")
     template_name = "user/detail.html"
