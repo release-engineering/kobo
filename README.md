@@ -31,6 +31,17 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.31.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- hub: introduced `settings.USERS_ACL_PERMISSION` to adjust access to user list
+
+### BUG FIXES
+
+- hub: minor fixes to page titles
+
 kobo 0.30.1
 -----------
 
