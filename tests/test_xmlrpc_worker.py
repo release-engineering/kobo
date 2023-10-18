@@ -897,6 +897,8 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
         self.assertEqual(t_child.parent.id, t_parent.id)
         self.assertEqual(t_child.label, 'Label')
         self.assertEqual(t_child.method, 'Method')
+        self.assertEqual(t_child.worker, None)
+        self.assertEqual(t_child.state, TASK_STATES['FREE'])
 
     def test_create_subtask_if_another_worker_task(self):
         w = Worker.objects.create(
