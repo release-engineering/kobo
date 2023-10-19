@@ -897,6 +897,29 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
         self.assertEqual(t_child.parent.id, t_parent.id)
         self.assertEqual(t_child.label, 'Label')
         self.assertEqual(t_child.method, 'Method')
+        self.assertEqual(t_child.worker, None)
+        self.assertEqual(t_child.state, TASK_STATES['FREE'])
+
+    def test_create_subtask_with_worker(self):
+        t_parent = Task.objects.create(
+            worker=self._worker,
+            arch=self._arch,
+            channel=self._channel,
+            owner=self._user,
+            state=TASK_STATES['FREE'],
+        )
+
+        req = _make_request(self._worker)
+        task_id = worker.create_subtask(req, 'Label', 'Method', None, t_parent.id,
+                                        inherit_worker=True)
+        self.assertTrue(task_id > 0)
+
+        t_child = Task.objects.get(id=task_id)
+        self.assertEqual(t_child.parent.id, t_parent.id)
+        self.assertEqual(t_child.label, 'Label')
+        self.assertEqual(t_child.method, 'Method')
+        self.assertEqual(t_child.worker, self._worker)
+        self.assertEqual(t_child.state, TASK_STATES['ASSIGNED'])
 
     def test_create_subtask_if_another_worker_task(self):
         w = Worker.objects.create(
