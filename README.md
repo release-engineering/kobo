@@ -31,6 +31,14 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.32.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- hub: introduced `inherit_worker` argument to `create_subtask` API, allowing workers
+  to ensure created subtasks are assigned to themselves
+
 kobo 0.31.0
 -----------
 
