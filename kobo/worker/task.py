@@ -90,12 +90,13 @@ class TaskBase(Plugin):
     def notification(cls, hub, conf, task_info):
         pass
 
-    def spawn_subtask(self, method, args, label="", priority = None):
+    def spawn_subtask(self, method, args, label="", priority = None,
+                      inherit_worker=False):
         """Spawn a new subtask."""
         if self.foreground:
             raise RuntimeError("Foreground tasks can't spawn subtasks.")
 
-        subtask_id = self.hub.worker.create_subtask(label, method, args, self.task_id, priority)
+        subtask_id = self.hub.worker.create_subtask(label, method, args, self.task_id, priority, inherit_worker)
         self._running_subtask_list.append(subtask_id)
         return subtask_id
 

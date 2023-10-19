@@ -144,7 +144,8 @@ class TestTaskBase(unittest.TestCase):
         ret_id = t.spawn_subtask('method', [], 'label')
         self.assertEqual(ret_id, subtask_id)
 
-        hub.worker.create_subtask.assert_called_once_with('label', 'method', [], task_id, None)
+        hub.worker.create_subtask.assert_called_once_with(
+                'label', 'method', [], task_id, None, False)
 
     def test_spawn_subtask_foreground_task(self):
         task_info = {'id': 100}
