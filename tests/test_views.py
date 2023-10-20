@@ -134,6 +134,15 @@ class TestTaskView(django.test.TransactionTestCase):
         self.assertTrue(self.task3.method not in str(response.content))
         self.assertTrue(self.task4.method not in str(response.content))
 
+    def test_list_failed(self):
+        response = self.client.get('/task/failed/')
+        self.assertEqual(response.status_code, 200)
+        # make sure only failed tasks are listed
+        self.assertTrue(self.task1.get_state_display() not in str(response.content))
+        self.assertTrue(self.task2.get_state_display() not in str(response.content))
+        self.assertTrue(self.task3.get_state_display() not in str(response.content))
+        self.assertTrue(self.task4.get_state_display() in str(response.content))
+
     def test_list_finished(self):
         response = self.client.get('/task/finished/')
         self.assertEqual(response.status_code, 200)
