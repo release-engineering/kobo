@@ -31,6 +31,14 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.33.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- hub: added a page for listing failed tasks, alongside the existing
+  Running/Finished task lists.
+
 kobo 0.32.0
 -----------
 
