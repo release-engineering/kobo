@@ -86,6 +86,6 @@ def file_upload(request):
 
     # upload.save can modify state if there is a race
     if upload.state == UPLOAD_STATES['FAILED']:
-        return HttpResponseServerError(b"Checksum mismatch.")
+        return HttpResponseServerError(b"File already exists.")
 
     return HttpResponse(b"Upload finished.")
