@@ -39,7 +39,7 @@ def file_upload(request):
     try:
         upload = FileUpload.objects.get(id=upload_id, upload_key=upload_key)
     except:
-        return HttpResponseForbidden("Not allowed to upload the file.")
+        return HttpResponseForbidden(b"Not allowed to upload the file.")
 
     upload_path = os.path.join(upload.target_dir, upload.name)
 
@@ -47,7 +47,7 @@ def file_upload(request):
         upload.state = UPLOAD_STATES["FAILED"]
         upload.save()
         # remove file
-        return HttpResponseServerError("File already exists.")
+        return HttpResponseServerError(b"File already exists.")
 
     # TODO: check size
     # don't re-upload FINISHED or STARTED
@@ -72,7 +72,7 @@ def file_upload(request):
         upload.state = UPLOAD_STATES["FAILED"]
         upload.save()
         # remove file
-        return HttpResponseServerError("Checksum mismatch.")
+        return HttpResponseServerError(b"Checksum mismatch.")
 
     if not os.path.isdir(upload.target_dir):
         os.makedirs(upload.target_dir)
@@ -86,6 +86,6 @@ def file_upload(request):
 
     # upload.save can modify state if there is a race
     if upload.state == UPLOAD_STATES['FAILED']:
-        return HttpResponseServerError("Checksum mismatch.")
+        return HttpResponseServerError(b"Checksum mismatch.")
 
-    return HttpResponse("Upload finished.")
+    return HttpResponse(b"Upload finished.")
