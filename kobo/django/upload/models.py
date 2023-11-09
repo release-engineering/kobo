@@ -63,7 +63,8 @@ class FileUpload(models.Model):
             if "update_fields" in kwargs:
                 kwargs["update_fields"] = {"upload_key"}.union(kwargs["update_fields"])
         if self.state == UPLOAD_STATES['FINISHED']:
-            if FileUpload.objects.filter(state = UPLOAD_STATES['FINISHED'], name = self.name).exclude(id = self.id).count() != 0:
+            if FileUpload.objects.filter(state = UPLOAD_STATES['FINISHED'], name = self.name,
+                                         checksum=self.checksum, target_dir=self.target_dir).exclude(id = self.id).count() != 0:
                 # someone created same upload faster
                 self.state = UPLOAD_STATES['FAILED']
                 if "update_fields" in kwargs:
