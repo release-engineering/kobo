@@ -31,6 +31,19 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.34.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- hub: the `/` character may now be used within usernames
+
+### BUG FIXES
+
+- hub: uploads of the same name but different content are no
+  longer considered duplicates
+
+
 kobo 0.33.0
 -----------
 
