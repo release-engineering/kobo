@@ -18,12 +18,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     Username, password and email are required. Other fields are optional.
     """
     username = models.CharField(_('username'), max_length=MAX_LENGTH, unique=True,
-        help_text=_('Required. %s characters or fewer. Letters, digits and @/./+/-/_ only.' % MAX_LENGTH),
+        help_text=_('Required. %s characters or fewer. Letters, digits and @.+-_/ only.' % MAX_LENGTH),
         validators=[
-            validators.RegexValidator(r'^[\w.@+-]+$',
+            validators.RegexValidator(r'^[\w.@+\-/]+$',
                                       _('Enter a valid username. '
                                         'This value may contain only letters, numbers '
-                                        'and @/./+/-/_ characters.'), 'invalid'),
+                                        'and @.+-_/ characters.'), 'invalid'),
         ],
         error_messages={
             'unique': _("A user with that username already exists."),
