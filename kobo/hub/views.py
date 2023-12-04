@@ -1,13 +1,6 @@
-# -*- coding: utf-8 -*-
-
+import json
 import mimetypes
 import os
-import six
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 import django.contrib.auth.views
 from django.conf import settings
@@ -15,7 +8,6 @@ from django.contrib.auth import REDIRECT_FIELD_NAME, get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse, HttpResponseNotFound, StreamingHttpResponse, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404
-from django.template import RequestContext
 from django.urls import reverse
 from django.views.generic import RedirectView
 
@@ -225,17 +217,16 @@ def task_log_json(request, id, log_name):
         # check back soon
         next_poll = LOG_WATCHER_INTERVAL
 
-    if six.PY3:
-        content = str(content, encoding="utf-8", errors="replace")
 
     result = {
         "new_offset": offset + len(content),
         "task_finished": task.is_finished() and 1 or 0,
         "next_poll": next_poll,
-        "content": content,
+        "content": str(content, encoding="utf-8", errors="replace"),
     }
 
-    return HttpResponse(json.dumps(result), content_type="application/json")
+    return HttpResponse(json.dumps(result).encode(),
+                        content_type="application/json")
 
 
 class LoginView(django.contrib.auth.views.LoginView):
@@ -247,7 +238,6 @@ class LogoutView(django.contrib.auth.views.LogoutView):
 
 
 def krb5login(request, redirect_field_name=REDIRECT_FIELD_NAME):
-    #middleware = 'django.contrib.auth.middleware.RemoteUserMiddleware'
     middleware = 'kobo.django.auth.middleware.LimitedRemoteUserMiddleware'
     if middleware not in settings.MIDDLEWARE:
         raise ImproperlyConfigured("krb5login view requires '%s' middleware installed" % middleware)
