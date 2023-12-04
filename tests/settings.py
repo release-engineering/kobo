@@ -20,6 +20,10 @@ TASK_DIR = TASK_DIR_OBJ.name
 UPLOAD_DIR = UPLOAD_DIR_OBJ.name
 WORKER_DIR = WORKER_DIR_OBJ.name
 
+# Default redirects for unsafe login redirections
+LOGIN_REDIRECT_URL = 'home/index'
+LOGOUT_REDIRECT_URL = 'home/index'
+
 # The middleware and apps below are the bare minimum required
 # to let kobo.hub load successfully
 

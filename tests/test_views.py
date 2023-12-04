@@ -58,7 +58,7 @@ class TestAuthView(django.test.TransactionTestCase):
 
     def test_logout(self):
         response = self.client.get('/auth/logout/')
-        self.assertEqual(response.status_code, 200)
+        self.assertIn(response.status_code, [200, 302])
         self.client.post('/auth/login/', self.credentials)
         self.client.logout()
         self.assertFalse(self.client.session.get("_auth_user_id"))
