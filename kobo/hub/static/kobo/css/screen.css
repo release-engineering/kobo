@@ -31,6 +31,22 @@ body {
     float: right;
 }
 
+#logout-form {
+    display: inline;
+}
+
+#logout-form button {
+    font-size: inherit;
+    font-weight: normal;
+    color: #ffffff;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    font-family: inherit;
+}
+
 #menu {
     border: 1px solid #8c8f91;
     border-top: none;
