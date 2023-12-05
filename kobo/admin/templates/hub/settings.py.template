@@ -84,6 +84,10 @@ SECRET_KEY = ''
 # Ensure db transactions
 ATOMIC_REQUESTS = True
 
+# Default redirects for unsafe login redirections
+LOGIN_REDIRECT_URL = 'home/index'
+LOGOUT_REDIRECT_URL = 'home/index'
+
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     ('django.template.loaders.cached.Loader', (
