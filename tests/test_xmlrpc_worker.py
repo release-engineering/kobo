@@ -747,6 +747,8 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
         self.assertEqual(wi['task_count'], 1)
 
     def test_get_tasks_to_assign(self):
+        new_arch = Arch.objects.create(name='testarch2', pretty_name='testarch2')
+
         for _ in range(2):
             Task.objects.create(
                 worker=self._worker,
@@ -788,6 +790,13 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
                 channel=self._channel,
                 owner=self._user,
                 state=TASK_STATES['CLOSED'],
+            )
+
+            # task with an incompatible architecture
+            Task.objects.create(
+                arch=new_arch,
+                channel=self._channel,
+                owner=self._user,
             )
 
         req = _make_request(self._worker)
