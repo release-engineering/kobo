@@ -31,6 +31,22 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.35.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- Support Django 5.0
+
+### BUG FIXES
+
+- hub: restricted login redirects to same site only
+- hub: fixed assignment of tasks to workers with incompatible arch
+- hub: fixed display of arches/channels on worker detail page
+- hub: avoid SELinux relabelling issue during file upload
+- Minor cleanups of obsolete or deprecated code
+
+
 kobo 0.34.0
 -----------
 
