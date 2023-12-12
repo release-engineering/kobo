@@ -40,6 +40,9 @@ jobs:
           py310-django4,
           py311-django4,
           py312-django4,
+          py310-django5,
+          py311-django5,
+          py312-django5,
           py39-bandit,
         ]
 

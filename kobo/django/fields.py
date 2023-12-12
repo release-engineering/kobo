@@ -6,13 +6,16 @@ from django.db import models
 from django.core import exceptions
 from django.utils.text import capfirst
 from django.forms.widgets import Select
-from django.forms.fields import CallableChoiceIterator
 
 import kobo.django.forms
 from kobo.types import StateEnum
 from kobo.django.compat import gettext_lazy as _
 from kobo.django.django_version import django_version_ge
 
+if django_version_ge('5.0.0'):
+    from django.utils.choices import CallableChoiceIterator
+else:
+    from django.forms.fields import CallableChoiceIterator
 
 '''
 StateEnumField
