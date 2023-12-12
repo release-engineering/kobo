@@ -16,7 +16,7 @@
   </tr>
   <tr>
     <th>{% trans "Arches" %}</th>
-    <td>{{ worker.get_arches_display }}</td>
+    <td>{{ worker.arches.all | join:" " }}</td>
   </tr>
   <tr>
     <th>{% trans "Load" %}</th>
@@ -37,7 +37,7 @@
   </tr>
   <tr>
     <th>{% trans "Channels" %}</th>
-    <td>{{ worker.get_channels_display }}</td>
+    <td>{{ worker.channels.all | join:" " }}</td>
   </tr>
 </table>
 
