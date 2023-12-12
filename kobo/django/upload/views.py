@@ -77,7 +77,7 @@ def file_upload(request):
     if not os.path.isdir(upload.target_dir):
         os.makedirs(upload.target_dir)
 
-    shutil.move(tmp_file_name, upload.target_dir)
+    shutil.move(tmp_file_name, upload.target_dir, copy_function=shutil.copy)
     shutil.rmtree(tmp_dir)
 
     upload.state = UPLOAD_STATES["FINISHED"]
