@@ -31,6 +31,14 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.35.1
+-----------
+
+### BUG FIXES
+
+- client: fixed support for proxies (`https_proxy`) in XML-RPC client
+
+
 kobo 0.35.0
 -----------
 
