@@ -6,7 +6,7 @@ import base64
 import six.moves.http_cookiejar as cookielib
 import fcntl
 import hashlib
-import six.moves.http_client as httplib
+import http.client as httplib
 import os
 import socket
 import ssl
@@ -38,153 +38,31 @@ __all__ = (
 CONNECTION_LOCK = threading.Lock()
 
 
-class TimeoutHTTPConnection(httplib.HTTPConnection):
-    def connect(self):
-        httplib.HTTPConnection.connect(self)
-        timeout = getattr(self, "_timeout", 0)
-        if timeout:
-            self.sock.settimeout(timeout)
-
-class TimeoutHTTPProxyConnection(TimeoutHTTPConnection):
-    default_port = httplib.HTTPConnection.default_port
-
+class HTTPProxyConnection(httplib.HTTPConnection):
     def __init__(self, host, proxy, port=None, proxy_user=None, proxy_password=None, **kwargs):
-        TimeoutHTTPConnection.__init__(self, proxy, **kwargs)
-        self.proxy, self.proxy_port = self.host, self.port
-        self.set_host_and_port(host, port)
-        self.real_host, self.real_port = self.host, self.port
-        self.proxy_user = proxy_user
-        self.proxy_password = proxy_password
+        super().__init__(proxy, **kwargs)
+        proxy_header = {}
 
-    def connect(self):
-        # Connect to the proxy
-        self.set_host_and_port(self.proxy, self.proxy_port)
-        httplib.HTTPConnection.connect(self)
-        self.set_host_and_port(self.real_host, self.real_port)
-        timeout = getattr(self, "_timeout", 0)
-        if timeout:
-            self.sock.settimeout(timeout)
+        if proxy_user:
+            userpass = f"{proxy_user}:{proxy_password}".encode()
+            enc_userpass = base64.encodebytes(userpass).strip()
+            proxy_header = {"Proxy-Authorization": "Basic %s" % enc_userpass}
 
-    def putrequest(self, method, url, skip_host=0, skip_accept_encoding=0):
-        host = self.real_host
-        if self.default_port != self.real_port:
-            host = host + ':' + str(self.real_port)
-        url = "http://%s%s" % (host, url)
-        httplib.HTTPConnection.putrequest(self, method, url)
-        self._add_auth_proxy_header()
-
-    def _add_auth_proxy_header(self):
-        if not self.proxy_user:
-            return
-        userpass = "%s:%s" % (self.proxy_user, self.proxy_password)
-        encode_func = base64.encodebytes if hasattr(base64, "encodebytes") else base64.encodestring
-        enc_userpass = encode_func(userpass).strip()
-        self.putheader("Proxy-Authorization", "Basic %s" % enc_userpass)
-
-    def set_host_and_port(self, host, port):
-        """Due to httplib.py changes using set host & port method depends on package version"""
-        if hasattr(self, "_set_hostport"):
-            self._set_hostport(host, port)
-        else:
-            (self.host, self.port) = self._get_hostport(host, port)
-
-class TimeoutHTTP(httplib.HTTPConnection):
-    _connection_class = TimeoutHTTPConnection
-
-    def set_timeout(self, timeout):
-        self._conn._timeout = timeout
+        self.set_tunnel(host, port, headers=proxy_header)
 
 
-class TimeoutProxyHTTP(TimeoutHTTP):
-    _connection_class = TimeoutHTTPProxyConnection
-
-    def __init__(self, host='', proxy='',  port=None, strict=None,
-                 proxy_user=None, proxy_password=None):
-        if port == 0:
-            port = None
-        self._setup(self._connection_class(host, proxy, port=port,
-                    strict=strict,
-                    proxy_user=proxy_user,
-                    proxy_password=proxy_password))
-
-    def _setup(self, conn):
-        httplib.HTTP._setup(self, conn)
-        # XXX: Hack for python >= 2.7 where a _single_request method is used
-        # and the method needs a connection object with .getresponse() method
-        self.getresponse = conn.getresponse
-
-
-class TimeoutHTTPSConnection(httplib.HTTPSConnection):
-    def connect(self):
-        httplib.HTTPSConnection.connect(self)
-        timeout = getattr(self, "_timeout", 0)
-        if timeout:
-            self.sock.settimeout(timeout)
-
-
-class TimeoutHTTPSProxyConnection(TimeoutHTTPProxyConnection):
-    default_port = httplib.HTTPSConnection.default_port
-
+class HTTPSProxyConnection(httplib.HTTPSConnection):
     def __init__(self, host, proxy, port=None, proxy_user=None,
-                 proxy_password=None, cert_file=None, key_file=None, **kwargs):
-        TimeoutHTTPProxyConnection.__init__(self, host, proxy, port,
-            proxy_user, proxy_password, **kwargs)
-        self.cert_file = cert_file
-        self.key_file = key_file
-        self.connect()
+                 proxy_password=None, **kwargs):
+        super().__init__(proxy, **kwargs)
+        proxy_header = {}
 
-    def connect(self):
-        TimeoutHTTPProxyConnection.connect(self)
-        host = "%s:%s" % (self.real_host, self.real_port)
-        TimeoutHTTPConnection.putrequest(self, "CONNECT", host)
-        self._add_auth_proxy_header()
-        TimeoutHTTPConnection.endheaders(self)
+        if proxy_user:
+            userpass = f"{proxy_user}:{proxy_password}".encode()
+            enc_userpass = base64.encodebytes(userpass).strip()
+            proxy_header = {"Proxy-Authorization": "Basic %s" % enc_userpass}
 
-        class MyHTTPSResponse(httplib.HTTPResponse):
-            def begin(self):
-                httplib.HTTPResponse.begin(self)
-                self.will_close = 0
-
-        response_class = self.response_class
-        self.response_class = MyHTTPSResponse
-        response = httplib.HTTPConnection.getresponse(self)
-        self.response_class = response_class
-        response.close()
-        if response.status != 200:
-            self.close()
-            raise socket.error(1001, response.status, response.msg)
-
-        self.sock = ssl.wrap_socket(self.sock, keyfile=self.key_file, certfile=self.cert_file)
-
-    def putrequest(self, method, url, skip_host=0, skip_accept_encoding=0):
-        return TimeoutHTTPConnection.putrequest(self, method, url)
-
-
-class TimeoutHTTPS(httplib.HTTPSConnection):
-    _connection_class = TimeoutHTTPSConnection
-
-    def set_timeout(self, timeout):
-        self._conn._timeout = timeout
-
-
-class TimeoutProxyHTTPS(TimeoutHTTPS):
-    _connection_class = TimeoutHTTPSProxyConnection
-
-    def __init__(self, host='', proxy='',  port=None, strict=None,
-                 proxy_user=None, proxy_password=None, cert_file=None,
-                 key_file=None):
-        if port == 0:
-            port = None
-        self._setup(self._connection_class(host, proxy, port=port,
-                    strict=strict, proxy_user=proxy_user,
-                    proxy_password=proxy_password, cert_file=cert_file,
-                    key_file=key_file))
-
-    def _setup(self, conn):
-        httplib.HTTP._setup(self, conn)
-        # XXX: Hack for python >= 2.7 where a _single_request method is used
-        # and the method needs a connection object with .getresponse() method
-        self.getresponse = conn.getresponse
+        self.set_tunnel(host, port, headers=proxy_header)
 
 
 class CookieResponse(object):
@@ -214,7 +92,7 @@ class CookieTransport(xmlrpclib.Transport):
 
     def __init__(self, *args, **kwargs):
         cookiejar = kwargs.pop("cookiejar", None)
-        self.timeout = kwargs.pop("timeout", int(os.environ.get("KOBO_XMLRPC_TIMEOUT", "0")))
+        self.timeout = kwargs.pop("timeout", None)
         self.proxy_config = self._get_proxy(**kwargs)
         self.no_proxy = os.environ.get("no_proxy", "").lower().split(',')
         self.context = kwargs.pop('context', None)
@@ -226,6 +104,9 @@ class CookieTransport(xmlrpclib.Transport):
             xmlrpclib.Transport.__init__(self, *args, **kwargs)
 
         self.cookiejar = cookiejar or cookielib.CookieJar()
+
+        if self.timeout is None and "KOBO_XMLRPC_TIMEOUT" in os.environ:
+            self.timeout = int(os.environ["KOBO_XMLRPC_TIMEOUT"])
 
         if hasattr(self.cookiejar, "load"):
             if not os.path.exists(self.cookiejar.filename):
@@ -289,13 +170,12 @@ class CookieTransport(xmlrpclib.Transport):
             # Remove port from the host
             host_ = host.split(':')[0]
         else:
-            host_ = "%s:%s" % (host, TimeoutHTTPProxyConnection.default_port)
+            host_ = "%s:%s" % (host, HTTPProxyConnection.default_port)
 
         if self.proxy_config["proxy"] and host not in self.no_proxy and host_ not in self.no_proxy:
             CONNECTION_LOCK.acquire()
             host, extra_headers, x509 = self.get_host_info(host)
-            conn = TimeoutProxyHTTPS(host, **self.proxy_config)
-            conn.set_timeout(self.timeout)
+            conn = HTTPProxyConnection(host, timeout=self.timeout, **self.proxy_config)
             CONNECTION_LOCK.release()
             return conn
 
@@ -556,13 +436,12 @@ class SafeCookieTransport(CookieTransport, xmlrpclib.SafeTransport):
             # Remove port from the host
             host_ = host.split(':')[0]
         else:
-            host_ = "%s:%s" % (host, TimeoutHTTPSProxyConnection.default_port)
+            host_ = "%s:%s" % (host, HTTPSProxyConnection.default_port)
 
         if self.proxy_config["proxy"] and host not in self.no_proxy and host_ not in self.no_proxy:
             CONNECTION_LOCK.acquire()
             host, extra_headers, x509 = self.get_host_info(host)
-            conn = TimeoutProxyHTTPS(host, **self.proxy_config)
-            conn.set_timeout(self.timeout)
+            conn = HTTPSProxyConnection(host, timeout=self.timeout, **self.proxy_config)
             CONNECTION_LOCK.release()
             return conn
 
