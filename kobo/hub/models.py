@@ -24,6 +24,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models, connection, transaction
 from django.db.models.signals import post_delete
+from django.http import Http404
 import six
 from textwrap import dedent
 
@@ -408,7 +409,7 @@ class TaskLogs(object):
             out = io.BufferedReader(out, LOG_BUFFER_SIZE)
             return out
         else:
-            raise Exception('Cannot find log %s' % name)
+            raise Http404('Cannot find log %s' % name)
 
     def get_chunk(self, name, offset=0, length=-1):
         """Returns a sequence of bytes from the named log.
