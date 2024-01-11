@@ -306,11 +306,11 @@ class TaskManager(TaskManagerBase):
 
             return
 
-        assigned_task_list = self.hub.worker.get_tasks_to_assign()
-        self.log_debug("Current assigned tasks: %r" % [ti["id"] for ti in assigned_task_list])
+        tasks_to_open = self.hub.worker.get_tasks_to_assign()
+        self.log_debug("Current tasks to open: %r" % [ti["id"] for ti in tasks_to_open])
 
-        # process assigned tasks first
-        for task_info in assigned_task_list:
+        # process tasks that could be transitioned to the OPEN state
+        for task_info in tasks_to_open:
             self.take_task(task_info)
 
     def take_task(self, task_info):
