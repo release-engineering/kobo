@@ -14,7 +14,7 @@
     <td>{{ worker.arches.all|join:" " }}</td>
     <td>{% if worker.enabled %}<span class="FREE">{% trans 'YES' %}</span>{% else %}<span class="FAILED">{% trans 'NO' %}</span>{% endif %}</td>
     <td>{% if worker.ready %}<span class="FREE">{% trans 'YES' %}</span>{% else %}<span class="FAILED">{% trans 'NO' %}</span>{% endif %}</td>
-    <td><span class="{% if worker.task_count != worker.max_tasks %}FREE{% else %}FAILED{% endif %}">{{ worker.task_count }}</span> / {{ worker.max_tasks }}</td>
+    <td><span class="{% if worker.task_count != worker.max_tasks %}FREE{% else %}FAILED{% endif %}">{{ worker.task_count }}</span> / {{ worker.max_tasks | default:"unlimited" }}</td>
   </tr>
 {% endfor %}
 </table>

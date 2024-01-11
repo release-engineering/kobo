@@ -24,7 +24,7 @@
   </tr>
   <tr>
     <th>{% trans "Tasks" %}</th>
-    <td><span class="{% if worker.task_count != worker.max_tasks %}FREE{% else %}FAILED{% endif %}">{{ worker.task_count }}</span> / {{ worker.max_tasks }}</td>
+    <td><span class="{% if worker.task_count != worker.max_tasks %}FREE{% else %}FAILED{% endif %}">{{ worker.task_count }}</span> / {{ worker.max_tasks | default:"unlimited" }}</td>
   </tr>
   <tr>
     <th>{% trans "Enabled" %}</th>
