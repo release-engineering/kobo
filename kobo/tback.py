@@ -169,18 +169,8 @@ class Traceback(object):
                                 obj_value_str = self._to_str(obj_value, "%.200r")
                                 result.append("%20s = %s" % ("self." + self._to_str(obj_key), obj_value_str))
                     result.append("</LOCALS>")
-        s = u''
 
-        for i in result:
-            line = i.replace(r'\\n', '\n').replace(r'\n', '\n')
-
-            if type(i) == six.text_type:
-                s += i
-            else:
-                s += six.text_type(str(i), errors='replace')
-            s += '\n'
-
-        return s.encode('ascii', 'replace')
+        return '\n'.join(result)
 
     def print_traceback(self):
         """Print a traceback string to stderr."""

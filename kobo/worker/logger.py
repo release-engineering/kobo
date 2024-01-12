@@ -77,7 +77,7 @@ class LoggingThread(threading.Thread):
                 if self._logger:
                     msg = "\n".join([
                         "Fatal error in LoggingThread",
-                        kobo.tback.Traceback().get_traceback().decode(),
+                        kobo.tback.Traceback().get_traceback(),
                     ])
                     self._logger.log_critical(msg)
                 raise
