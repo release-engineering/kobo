@@ -260,7 +260,6 @@ def set_except_hook(logger=None):
         tback.show_locals = True
         logger and logger.error(tback.get_traceback())
         tback.print_traceback()
-        print()
 
     _hook.__doc__ = sys.excepthook.__doc__
     _hook.__name__ = sys.excepthook.__name__
