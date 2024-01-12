@@ -129,7 +129,7 @@ class TestMainLoop(unittest.TestCase):
                 with patch.object(main.sys, 'exit') as exit_mock:
                     main.main_loop({
                         'max_runs': max_runs,
-                    }, foreground=False)
+                    }, foreground=True)
 
                     signal_mock.assert_has_calls([
                         call(signal.SIGTERM, main.daemon_shutdown),
