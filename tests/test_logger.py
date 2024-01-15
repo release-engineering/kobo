@@ -82,8 +82,8 @@ class TestLoggingThread(unittest.TestCase):
 
         # Before dying, it should have written something useful to the logs.
         captured = logs.getvalue()
-        assert 'Fatal error in LoggingThread' in captured
-        assert 'RuntimeError: Simulated error' in captured
+        self.assertIn('Fatal error in LoggingThread', captured)
+        self.assertIn('RuntimeError: Simulated error', captured)
 
     def test_mixed_writes(self):
         uploaded = []
@@ -112,7 +112,7 @@ class TestLoggingThread(unittest.TestCase):
         self.assertFalse(thread.is_alive())
 
         # It should have uploaded exactly the expected bytes.
-        assert b''.join(uploaded) == (
+        self.assertEqual(b''.join(uploaded),
             b'Some text!Some bytes!'
             b'Some \xe6\x96\x87!Some \xe2 wacky bytes!'
         )
