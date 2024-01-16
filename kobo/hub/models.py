@@ -24,6 +24,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models, connection, transaction
 from django.db.models.signals import post_delete
+from django.http import Http404
 import six
 from textwrap import dedent
 
@@ -401,14 +402,14 @@ class TaskLogs(object):
 
     def _open_log(self, name):
         log_path = self._get_absolute_log_path(name)
-        if os.path.isfile(log_path):
-            return io.open(log_path, 'rb', LOG_BUFFER_SIZE)
-        elif os.path.isfile(log_path + ".gz"):
-            out = gzip.open(log_path + ".gz", "rb")
-            out = io.BufferedReader(out, LOG_BUFFER_SIZE)
-            return out
-        else:
-            raise Exception('Cannot find log %s' % name)
+        try:
+            return open(log_path, 'rb', LOG_BUFFER_SIZE)
+        except FileNotFoundError:
+            try:
+                out = gzip.open(log_path + ".gz", "rb")
+                return io.BufferedReader(out, LOG_BUFFER_SIZE)
+            except FileNotFoundError:
+                raise Http404('Cannot find log %s' % name)
 
     def get_chunk(self, name, offset=0, length=-1):
         """Returns a sequence of bytes from the named log.
