@@ -335,7 +335,7 @@ class TestXmlRpcClientAuthentication(django.test.TransactionTestCase):
                 "worker",
             )
         exp_msg = "User testuser with IP 127.0.0.1 attempted admin access to method shutdown_worker."
-        assert exp_msg in self._caplog.text
+        self.assertIn(exp_msg, self._caplog.text)
 
     def test_enable_worker_raise_if_no_auth(self):
         meta = {"REMOTE_ADDR": "127.0.0.1"}
@@ -376,7 +376,7 @@ class TestXmlRpcClientAuthentication(django.test.TransactionTestCase):
         exp_msg = (
             "Unauthenticated user with IP 127.0.0.1 attempted to use authenticated method cancel_task"
         )
-        assert exp_msg in self._caplog.text
+        self.assertIn(exp_msg, self._caplog.text)
 
     def test_resubmit_task_raise_if_no_auth(self):
         meta = {"REMOTE_ADDR": "127.0.0.1"}
@@ -451,4 +451,4 @@ class TestXmlRpcClientAuthentication(django.test.TransactionTestCase):
                 {},
             )
         exp_msg = "User testuser with IP 127.0.0.1 attempted admin access to method create_task."
-        assert exp_msg in self._caplog.text
+        self.assertIn(exp_msg, self._caplog.text)

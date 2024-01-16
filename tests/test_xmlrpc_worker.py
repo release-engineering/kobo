@@ -74,7 +74,7 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
         req = _make_request(self._worker)
         w_id = worker.get_worker_id(req)
 
-        assert isinstance(w_id, int)
+        self.assertIsInstance(w_id, int)
 
     def test_get_worker_tasks(self):
         for state in TASK_STATES:
