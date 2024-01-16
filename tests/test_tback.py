@@ -3,7 +3,6 @@
 
 
 import re
-import six
 import unittest
 
 from kobo.tback import get_traceback, Traceback
@@ -20,40 +19,39 @@ class TestTraceback(unittest.TestCase):
         try:
             raise Exception('Simple text')
         except:
-            str_regexp = re.compile(r'Traceback \(most recent call last\):\n *File ".*test_tback.py", line .+, in test_text\n *raise Exception\(\'Simple text\'\)\n *Exception: Simple text', re.M)
-            bytes_regexp = re.compile(rb'Traceback \(most recent call last\):\n *File ".*test_tback.py", line .+, in test_text\n *raise Exception\(\'Simple text\'\)\n *Exception: Simple text', re.M)
+            regexp = re.compile(r'Traceback \(most recent call last\):\n *File ".*test_tback.py", line .+, in test_text\n *raise Exception\(\'Simple text\'\)\n *Exception: Simple text', re.M)
 
-            self.assertRegex(get_traceback(), str_regexp)
+            self.assertRegex(get_traceback(), regexp)
             tb = Traceback(show_traceback = True, show_code = False, show_locals = False, show_environ = False, show_modules = False)
-            self.assertRegex(tb.get_traceback(), bytes_regexp)
+            self.assertRegex(tb.get_traceback(), regexp)
 
     def test_Traceback(self):
         try:
             raise Exception('Simple text')
         except:
             tb = Traceback(show_traceback = False, show_code = False, show_locals = False, show_environ = False, show_modules = False)
-        self.assertEqual(b'', tb.get_traceback())
+        self.assertEqual('', tb.get_traceback())
         tb.show_code = True
-        self.assertRegex(tb.get_traceback(), re.compile(rb'<CODE>.*--> *\d+ *raise Exception.*<\/CODE>$', re.M | re.S))
+        self.assertRegex(tb.get_traceback(), re.compile(r'<CODE>.*--> *\d+ *raise Exception.*<\/CODE>$', re.M | re.S))
         tb.show_code = False
         tb.show_locals = True
-        self.assertRegex(tb.get_traceback(), re.compile(rb'<LOCALS>.*tb = .*<\/LOCALS>$', re.M | re.S))
+        self.assertRegex(tb.get_traceback(), re.compile(r'<LOCALS>.*tb = .*<\/LOCALS>$', re.M | re.S))
         tb.show_locals = False
         tb.show_environ = True
-        self.assertRegex(tb.get_traceback(), re.compile(rb'<ENVIRON>.*<\/ENVIRON>\n<GLOBALS>.*</GLOBALS>$', re.M | re.S))
+        self.assertRegex(tb.get_traceback(), re.compile(r'<ENVIRON>.*<\/ENVIRON>\n<GLOBALS>.*</GLOBALS>$', re.M | re.S))
         tb.show_environ = False
         tb.show_modules = True
-        self.assertRegex(tb.get_traceback(), re.compile(rb'<MODULES>.*<\/MODULES>$', re.M | re.S))
+        self.assertRegex(tb.get_traceback(), re.compile(r'<MODULES>.*<\/MODULES>$', re.M | re.S))
 
     def test_encoding(self):
         try:
             a = ''.join([chr(i) for i in range(256)])
-            b = u''.join([unichr(i) for i in range(65536)])
+            b = b''.join([chr(i).encode() for i in range(65536)])
             raise Exception()
         except:
             tb = Traceback(show_code = False, show_traceback = False)
         output = tb.get_traceback()
-        self.assertIsInstance(output, six.binary_type)
+        self.assertIsInstance(output, str)
 
     def test_uninitialized_variables(self):
         class Foo(object):

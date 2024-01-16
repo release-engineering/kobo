@@ -510,21 +510,13 @@ class HubProxy(object):
             self._hub.worker.upload_task_log(task_id, remote_file_name, mode, chunk_start, chunk_len, chunk_checksum, encoded_chunk)
 
 
-from six.moves.xmlrpc_client import Fault
-import sys
-
+from xmlrpc.client import Fault
 
 # default implementation of Fault.__repr__ is:
 #    "<Fault %s: %s>" % (self.faultCode, repr(self.faultString))
-# repr of string does not escape newlines ('\n') and produces very ugly output
-# so using direct string is much nicer for users
+# repr of string escapes everything (e.g. newlines) and produces a very ugly
+# output so using it directly is much nicer for users
 def fault_repr(self):
-    fault = self.faultString
-    if sys.version_info[0] > 2 and fault.startswith("b\'Traceback"):
-        # properly deserialize tracebacks
-        import ast
-        fault = ast.literal_eval(fault).decode("unicode-escape")
-
-    return "<Fault %s: %s>" % (self.faultCode, str(fault))
+    return "<Fault %s: %s>" % (self.faultCode, self.faultString)
 
 Fault.__repr__ = fault_repr
