@@ -56,34 +56,54 @@ class TestLoggingThread(unittest.TestCase):
         self.assertFalse(thread.is_alive())
         self.assertFalse(thread._running)
 
-    # Following test intentionally kills a thread with an exception.
-    @pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
-    def test_logs_on_fatal_error(self):
-        # Set up a logger whose output we'll be able to inspect.
-        logs = StringIO()
-        logger = logging.getLogger('TestLoggingThread')
-        logger.addHandler(logging.StreamHandler(logs))
-        kobo_logger = LoggingBase(logger)
+    def test_logs_during_temporary_outage(self):
+        # Messages written to the logging thread during a temporary
+        # outage should be uploaded (and not discarded) after the hub
+        # recovers from the outage.
+        uploaded = []
 
-        # Set up hub to raise some exception other than an XML-RPC fault.
+        # Used as a side-effect to keep whatever's uploaded
+        def mock_upload(io, *args, **kwargs):
+            uploaded.append(io.read())
+
+        # Used as a side-effect to simulate the a temporary
+        # outage between the worker and the hub
+        def mock_upload_raise_error(io, *args, **kwargs):
+            raise RuntimeError("Simulated error")
+
         mock_hub = Mock()
-        mock_hub.upload_task_log.side_effect = RuntimeError("Simulated error")
+        thread = LoggingThread(mock_hub, 9999)
 
-        thread = LoggingThread(mock_hub, 9999, logger=kobo_logger)
         thread.daemon = True
         thread.start()
 
-        thread.write('This is a log message!')
+        # Simulate writing log messages to the thread while the hub
+        # incurs a temporary outage
+        mock_hub.upload_task_log.side_effect = mock_upload_raise_error
+        thread.write('This is a mid-outage log message!')
+        thread.write('Another mid-outage log message...')
 
-        # Since we set up a fatal error, we expect the thread to die soon
-        # despite not calling stop().
+        # Simulate the hub recovering from the outage
+        mock_hub.upload_task_log.side_effect = mock_upload
+        thread.write('This is a post-outage log message!')
+        thread.write('Another post-outage log message...')
+
+        # Even though the hub raised a fatal error, we expect the
+        # logging thread to recover from the error
         thread.join(10.0)
+        self.assertTrue(thread.is_alive())
+
+        # It should be able to stop normally after encountering an error
+        thread.stop()
         self.assertFalse(thread.is_alive())
 
-        # Before dying, it should have written something useful to the logs.
-        captured = logs.getvalue()
-        self.assertIn('Fatal error in LoggingThread', captured)
-        self.assertIn('RuntimeError: Simulated error', captured)
+        # Ensure that both mid-outage and post-outage logs were uploaded
+        self.assertEqual(b''.join(uploaded),
+            b"This is a mid-outage log message!"
+            b"Another mid-outage log message..."
+            b"This is a post-outage log message!"
+            b"Another post-outage log message..."
+        )
 
     def test_mixed_writes(self):
         uploaded = []
