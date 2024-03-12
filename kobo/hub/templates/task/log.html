@@ -14,8 +14,5 @@ document.log_watcher.watch();
 <h2>{% trans 'Task' %} #{{ task.id }} - {{ log_name }}</h2>
 <a href="{% url 'task/detail' task.id %}">{% trans "back to task" %} #{{ task.id }}</a><br />
 <a href="?format=raw">{% trans 'download' %}</a>
-<pre class="log" id="log">
-{{ content }}
-</pre>
-
+<pre class="log" id="log">{{ content }}</pre>
 {% endblock %}

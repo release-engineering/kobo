@@ -196,7 +196,7 @@ class TestViewLog(django.test.TransactionTestCase):
         # The response is expected to be wrapped in some view.
         # We are only doing a very basic verification of the view here
         self.assertTrue(content.startswith('<!DOCTYPE html'))
-        self.assertTrue((small_log_content() + "\n</pre>") in content, content)
+        self.assertTrue((small_log_content() + "</pre>") in content, content)
 
         # No trimming necessary
         self.assertFalse('...trimmed, download required for full log' in content)
@@ -210,7 +210,7 @@ class TestViewLog(django.test.TransactionTestCase):
         )
 
         self.assertTrue(content.startswith('<!DOCTYPE html'))
-        self.assertTrue((tiny_log_content() + "\n</pre>") in content, content)
+        self.assertTrue((tiny_log_content() + "</pre>") in content, content)
         self.assertFalse('...trimmed, download required for full log' in content)
 
     @profile
