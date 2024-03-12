@@ -68,6 +68,14 @@ class LoggingThread(threading.Thread):
                 self._send_time = now
                 self._send_data = b""
             except Exception:
+                # Log all caught exceptions.
+                if self._logger:
+                    msg = "\n".join([
+                        "Exception in LoggingThread:",
+                        kobo.tback.Traceback().get_traceback(),
+                    ])
+                    self._logger.log_error(msg)
+
                 continue
 
     def write(self, data):
