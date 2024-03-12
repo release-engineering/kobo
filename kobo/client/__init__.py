@@ -187,6 +187,34 @@ class HubProxy(object):
         except:
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
 
+    def check_hub_connectivity(self, hub, timeout=5):
+        """
+        Check the connectivity of an XML-RPC endpoint.
+
+        Returns:
+            A tuple containing a boolean indicating the connectivity status
+            and error message if the connectivity check fails.
+
+        """
+        import requests
+        try:
+            response = requests.get(hub, timeout=timeout)
+
+            # A valid xmlrpc endpoint may yield 404 when accessing via http, we need to check
+            # whether the response is of the desired content type
+            if response.content:
+                content_type = response.headers.get("Content-Type")
+                if content_type and ("html" in content_type or "xml" in content_type):
+                    # If the content type contains html/xml, the endpoint might be valid
+                    return (True, None)
+                else:
+                    return (False, "The response does not indicate the expected HTML/XML content type.")
+            else:
+                # If the response is empty, the endpoint is likely invalid
+                return (False, "The response has no content.")
+        except Exception as e:
+            return (False, f"Error: {e}")
+
     @property
     def is_logged_in(self):
         return self._logged_in
@@ -216,7 +244,12 @@ class HubProxy(object):
 
         # create new self._hub instance (only once, when calling constructor)
         if self._hub is None:
-            self._hub = xmlrpclib.ServerProxy("%s/%s/" % (self._hub_url, self._client_type), allow_none=True, transport=self._transport, verbose=verbose)
+            success, message = self.check_hub_connectivity(self._hub_url)
+            if success:
+                self._hub = xmlrpclib.ServerProxy("%s/%s/" % (self._hub_url, self._client_type), allow_none=True, transport=self._transport, verbose=verbose)
+            else:
+                self._logger and self._logger.error(f"Failed to connect to {self._hub_url}: {message}")
+                raise ValueError(f"Failed to connect to {self._hub_url}: {message}")
 
         if force or self._hub.auth.renew_session():
             self._logger and self._logger.info("Creating new session...")
