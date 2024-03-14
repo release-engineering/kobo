@@ -58,12 +58,16 @@ def get_worker_id(request):
 @validate_worker
 def get_worker_tasks(request):
     """
-    Get list of tasks running on a worker.
+    Get list of OPEN tasks executed on a worker.
 
     @rtype: list
     """
     task_list = []
-    for task in request.worker.running_tasks().order_by("-exclusive", "-awaited", "id"):
+
+    # Worker.running_tasks returns both OPEN and ASSIGNED tasks but all calls
+    # by the worker assume that only OPEN tasks will be returned.
+    # See: https://github.com/release-engineering/kobo/pull/251#issue-2183712995
+    for task in request.worker.running_tasks().filter(state=TASK_STATES['OPEN']).order_by("-exclusive", "-awaited", "id"):
         task_info = task.export()
 
         # set wakeup alert
