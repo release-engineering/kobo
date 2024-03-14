@@ -300,9 +300,10 @@ class TaskManager(TaskManagerBase):
             awaited_task_list = self.hub.worker.get_awaited_tasks(task_list)
             self.log_debug("Current awaited tasks: %r" % [ti["id"] for ti in awaited_task_list])
 
-            # process assigned tasks first
+            # process awaited tasks that could be transitioned to the OPEN state
             for task_info in awaited_task_list:
-                self.take_task(task_info)
+                if task_info['state'] in (TASK_STATES["FREE"], TASK_STATES["ASSIGNED"]):
+                    self.take_task(task_info)
 
             return
 
