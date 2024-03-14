@@ -56,6 +56,33 @@ class TestLoggingThread(unittest.TestCase):
         self.assertFalse(thread.is_alive())
         self.assertFalse(thread._running)
 
+    # Following test intentionally kills a thread with an exception.
+    @pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
+    def test_logs_on_fatal_error(self):
+        # Set up a logger whose output we'll be able to inspect.
+        logs = StringIO()
+        logger = logging.getLogger('TestLoggingThread')
+        logger.addHandler(logging.StreamHandler(logs))
+        kobo_logger = LoggingBase(logger)
+
+        mock_hub = Mock()
+        mock_hub.upload_task_log.side_effect = RuntimeError("Simulated error")
+
+        thread = LoggingThread(mock_hub, 9999, logger=kobo_logger)
+        thread.daemon = True
+        thread.start()
+
+        thread.write('This is a log message!')
+        # Since we set up a fatal error, we expect the thread to die soon
+        # despite not calling stop().
+        thread.join(10.0)
+        self.assertFalse(thread.is_alive())
+
+        # Before dying, it should have written something useful to the logs.
+        captured = logs.getvalue()
+        self.assertIn('Fatal error in LoggingThread', captured)
+        self.assertIn('RuntimeError: Simulated error', captured)
+
     def test_logs_during_temporary_outage(self):
         # Messages written to the logging thread during a temporary
         # outage should be uploaded (and not discarded) after the hub
