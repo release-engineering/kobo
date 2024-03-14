@@ -25,7 +25,8 @@ class LoggingThread(threading.Thread):
         threading.Thread.__init__(self, *args, **kwargs)
         self._hub = hub
         self._task_id = task_id
-        self._queue = queue.Queue()
+        self._buffer_size = kwargs.pop('buffer_size', 256)
+        self._queue = queue.Queue(maxsize=self._buffer_size)
         self._event = threading.Event()
         self._running = True
         self._send_time = 0
@@ -49,7 +50,7 @@ class LoggingThread(threading.Thread):
                 self._event.wait(5)
 
             self._event.clear()
-            while True:
+            for _ in range(self._buffer_size):
                 try:
                     self._send_data += self.read_queue()
                 except queue.Empty:
