@@ -57,7 +57,8 @@ class Watch_Log(ClientCommand):
         # HACK: We're presuming, that urls were not touched and that base_url
         # is also url of web ui. As we suppose that also task.urls were not
         # altered it should work.
-        url = self.conf['HUB_URL'].replace('/xmlrpc', '') + '/task/%d/log-json/%s?offset=%d'
+        hub = kwargs.pop('hub', None) or self.conf['HUB_URL']
+        url = hub.replace('/xmlrpc', '') + '/task/%d/log-json/%s?offset=%d'
         offset = 0
         assert url.startswith(("http:", "https:"))
         while True:
