@@ -7,7 +7,7 @@ import pytest
 import six
 import unittest
 
-from mock import Mock, patch, call
+from mock import ANY, Mock, patch, call
 
 from kobo.exceptions import ShutdownException
 from kobo.worker import main
@@ -25,6 +25,7 @@ class DummyTaskManager(object):
             if self.fail:
                 raise Exception('This task always fails.')
 
+        self.reexec = False
         self.run_count = 0
         self.max_runs = conf.get('max_runs', 1)
         self.fail = conf.get('fail', False)
@@ -54,10 +55,6 @@ class TestMainLoop(unittest.TestCase):
             return self.task_manager
         return wrap
 
-    def test_daemon_shutdown(self):
-        with self.assertRaises(ShutdownException):
-            main.daemon_shutdown()
-
     def test_main_loop_task_manager_exception(self):
         with patch('kobo.worker.main.TaskManager', Mock(side_effect=ValueError)) as mock_tm:
             with patch.object(main.signal, 'signal') as signal_mock:
@@ -81,7 +78,9 @@ class TestMainLoop(unittest.TestCase):
                     }, foreground=False)
 
                     signal_mock.assert_has_calls([
-                        call(signal.SIGTERM, main.daemon_shutdown),
+                        call(signal.SIGTERM, ANY),
+                        call(signal.SIGHUP, ANY),
+                        call(signal.SIGINT, signal.default_int_handler),
                         call(signal.SIGINT, signal.SIG_IGN),
                         call(signal.SIGTERM, signal.SIG_IGN),
                     ], any_order=False)
@@ -107,7 +106,9 @@ class TestMainLoop(unittest.TestCase):
                     }, foreground=False)
 
                     signal_mock.assert_has_calls([
-                        call(signal.SIGTERM, main.daemon_shutdown),
+                        call(signal.SIGTERM, ANY),
+                        call(signal.SIGHUP, ANY),
+                        call(signal.SIGINT, signal.default_int_handler),
                         call(signal.SIGINT, signal.SIG_IGN),
                         call(signal.SIGTERM, signal.SIG_IGN),
                     ], any_order=False)
@@ -132,7 +133,9 @@ class TestMainLoop(unittest.TestCase):
                     }, foreground=True)
 
                     signal_mock.assert_has_calls([
-                        call(signal.SIGTERM, main.daemon_shutdown),
+                        call(signal.SIGTERM, ANY),
+                        call(signal.SIGHUP, ANY),
+                        call(signal.SIGINT, signal.default_int_handler),
                         call(signal.SIGINT, signal.SIG_IGN),
                         call(signal.SIGTERM, signal.SIG_IGN),
                     ], any_order=False)
@@ -167,7 +170,9 @@ class TestMainLoop(unittest.TestCase):
                         log_mock.add_stderr_logger.assert_not_called()
 
                         signal_mock.assert_has_calls([
-                            call(signal.SIGTERM, main.daemon_shutdown),
+                            call(signal.SIGTERM, ANY),
+                            call(signal.SIGHUP, ANY),
+                            call(signal.SIGINT, signal.default_int_handler),
                             call(signal.SIGINT, signal.SIG_IGN),
                             call(signal.SIGTERM, signal.SIG_IGN),
                         ], any_order=False)
@@ -202,7 +207,9 @@ class TestMainLoop(unittest.TestCase):
                         log_mock.add_stderr_logger.assert_called_once_with(self.task_manager._logger)
 
                         signal_mock.assert_has_calls([
-                            call(signal.SIGTERM, main.daemon_shutdown),
+                            call(signal.SIGTERM, ANY),
+                            call(signal.SIGHUP, ANY),
+                            call(signal.SIGINT, signal.default_int_handler),
                             call(signal.SIGINT, signal.SIG_IGN),
                             call(signal.SIGTERM, signal.SIG_IGN),
                         ], any_order=False)

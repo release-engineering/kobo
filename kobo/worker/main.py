@@ -18,15 +18,8 @@ from kobo.tback import Traceback, set_except_hook
 set_except_hook()
 
 
-def daemon_shutdown(*args, **kwargs):
-    raise ShutdownException()
-
-
 def main_loop(conf, foreground=False, task_manager_class=None):
     """infinite daemon loop"""
-
-    # define custom signal handlers
-    signal.signal(signal.SIGTERM, daemon_shutdown)
 
     # initialize TaskManager
     try:
@@ -49,6 +42,22 @@ def main_loop(conf, foreground=False, task_manager_class=None):
     if foreground and tm._logger is not None:
         kobo.log.add_stderr_logger(tm._logger)
 
+    # define other signal handlers
+    def sigterm_handler(*_):
+        tm.reexec = False
+        raise ShutdownException()
+    signal.signal(signal.SIGTERM, sigterm_handler)
+
+    # reload the worker on SIGHUP
+    def sighup_handler(*_):
+        # do not accept new tasks
+        tm.lock()
+        tm.reexec = True
+    signal.signal(signal.SIGHUP, sighup_handler)
+
+    # reset SIGINT to default handler
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+
     while 1:
         try:
             tm.log_debug(80 * '-')
@@ -65,7 +74,11 @@ def main_loop(conf, foreground=False, task_manager_class=None):
             # sleep for some time
             tm.sleep()
 
-        except (ShutdownException, KeyboardInterrupt):
+        except (ShutdownException, KeyboardInterrupt) as e:
+            # do not reexec on SIGINT
+            if isinstance(e, KeyboardInterrupt):
+                tm.reexec = False
+
             # ignore keyboard interrupts and sigterm
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
@@ -80,6 +93,10 @@ def main_loop(conf, foreground=False, task_manager_class=None):
             traceback = Traceback()
             tm.log_error(traceback.get_traceback())
             tm.sleep()
+
+    if tm.reexec:
+        tm.log_info('Restarting: %s', sys.argv)
+        os.execvp(sys.argv[0], sys.argv)
 
 
 def main(conf, argv=None, task_manager_class=None):

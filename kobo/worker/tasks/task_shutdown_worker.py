@@ -23,3 +23,4 @@ class ShutdownWorker(TaskBase):
 
         # lock the task manager and let it terminate all tasks
         self.task_manager.locked = True
+        self.task_manager.reexec = False
