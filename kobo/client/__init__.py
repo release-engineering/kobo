@@ -72,6 +72,7 @@ class Add_User(kobo.client.ClientCommand):
 import os
 import base64
 import hashlib
+import requests
 import ssl
 import warnings
 import six.moves.urllib.parse as urlparse
@@ -196,7 +197,6 @@ class HubProxy(object):
             and error message if the connectivity check fails.
 
         """
-        import requests
         try:
             response = requests.get(hub, timeout=timeout)
 
@@ -350,8 +350,6 @@ class HubProxy(object):
         auth_server_token_url = self._conf.get("OIDC_AUTH_SERVER_TOKEN_URL")
         request_args = {}
 
-        import requests
-
         token_data = {
             "grant_type": "client_credentials",
             "client_id": client_id,
@@ -411,7 +409,6 @@ class HubProxy(object):
         realm = self._conf.get("KRB_REALM")
         ccache = self._conf.get("KRB_CCACHE")
 
-        import requests
         import gssapi
         import requests_gssapi
 
