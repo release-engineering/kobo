@@ -31,6 +31,21 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.36.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- worker: on `SIGHUP`, will now gracefully await task completion and re-exec
+
+### BUG FIXES
+
+- client: the `--hub` option to `watch-log` command is no longer ignored
+- worker: logging thread is more robust, recovers from many errors
+- hub: minor fixes to worker detail UI
+- hub: respond with 404 error on missing logs, rather than 500
+- other minor fixes
+
 kobo 0.35.1
 -----------
 
