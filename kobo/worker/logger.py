@@ -2,6 +2,7 @@
 
 import threading
 import time
+import os
 
 import six
 
@@ -31,6 +32,7 @@ class LoggingThread(threading.Thread):
         self._running = True
         self._send_time = 0
         self._send_data = b""
+        self._timeout = int(os.environ.get("KOBO_LOGGING_THREAD_TIMEOUT", 600))
 
     def read_queue(self):
         out = self._queue.get_nowait()
@@ -68,15 +70,26 @@ class LoggingThread(threading.Thread):
                 self._send_time = now
                 self._send_data = b""
             except Exception:
-                # Log all caught exceptions.
+                # Any exception other than an XML-RPC fault may be fatal. It is
+                # possible that we've encountered a retryable error, such as a
+                # temporary network disruption between worker and hub. Attempt
+                # to retry for a bit.
+                if now - self._send_time <= self._timeout:
+                    continue
+
+                # If the timemout has been exceeded, we can assume we've
+                # encountered a non-temporary, fatal exception.
+                #
+                # Since upload_task_log is apparently not working, we can't get
+                # this into the task logs, but it should at least be possible
+                # for this to get into the worker's local log file.
                 if self._logger:
                     msg = "\n".join([
-                        "Exception in LoggingThread:",
+                        "Fatal error in LoggingThread",
                         kobo.tback.Traceback().get_traceback(),
                     ])
-                    self._logger.log_error(msg)
-
-                continue
+                    self._logger.log_critical(msg)
+                raise
 
     def write(self, data):
         """Add data to the queue and set the event for sending queue content."""
