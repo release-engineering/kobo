@@ -133,6 +133,7 @@ class TaskManager(TaskManagerBase):
         self.task_dict = {}  # { task_id: { task information obtained from self.hub.get_worker_tasks() } }
 
         self.locked = False # if task manager is locked, it waits until tasks finish and exits
+        self.reexec = False  # if the worker should be restarted after it finishes
 
         self.task_container = TaskContainer()
 
