@@ -313,6 +313,10 @@ class TaskManager(TaskManagerBase):
 
         # process tasks that could be transitioned to the OPEN state
         for task_info in tasks_to_open:
+            # do not take additional tasks
+            if self.locked:
+                return
+
             self.take_task(task_info)
 
     def take_task(self, task_info):
