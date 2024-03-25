@@ -88,8 +88,17 @@ class LoggingThread(threading.Thread):
 
     def write(self, data):
         """Add data to the queue and set the event for sending queue content."""
-        self._queue.put(data)
-        self._event.set()
+        if threading.get_ident() != self.ident:
+            self._queue.put(data)
+            self._event.set()
+
+        # If self._hub.upload_task_log() called self._queue.put(), it would
+        # cause deadlock because self._queue uses locks that are not reentrant
+        # and queue may already be full.
+        #
+        # Log only data with printable characters.
+        elif self._logger and data.strip():
+            self._logger.log_error("Error in LoggingThread: %r", data)
 
     def stop(self):
         """Send remaining data to hub and finish."""
