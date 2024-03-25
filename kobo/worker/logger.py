@@ -1,13 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import threading
 import time
 import os
-
-import six
-
-from six.moves import queue
-from six import BytesIO
+import queue
+from io import BytesIO
 
 import kobo.tback
 
@@ -40,7 +35,7 @@ class LoggingThread(threading.Thread):
         # We do not know whether we're being sent bytes or text.
         # The hub API always wants bytes.
         # Ensure we safely convert everything to bytes as we go.
-        if isinstance(out, six.text_type):
+        if isinstance(out, str):
             out = out.encode('utf-8', errors='replace')
 
         return out
@@ -103,7 +98,7 @@ class LoggingThread(threading.Thread):
         self.join()
 
 
-class LoggingIO(object):
+class LoggingIO():
     """StringIO wrapper that also writes all data to a logging thread."""
 
     def __init__(self, io, logging_thread):
