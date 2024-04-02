@@ -73,6 +73,7 @@ import os
 import base64
 import hashlib
 import ssl
+import sys
 import warnings
 import six.moves.urllib.parse as urlparse
 from six.moves import xmlrpc_client as xmlrpclib
@@ -111,7 +112,11 @@ class BaseClientCommandContainer(kobo.cli.CommandContainer):
         if hub:
             self.conf["HUB_URL"] = hub
 
-        self.hub = HubProxy(conf=self.conf)
+        try:
+            self.hub = HubProxy(conf=self.conf)
+        except Exception as ex:
+            print(f"Failed to initialize hub proxy: {ex}", file=sys.stderr)
+            sys.exit(1)
 
 
 class ClientCommandContainer(BaseClientCommandContainer):
