@@ -1,13 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import threading
 import time
 import os
-
-import six
-
-from six.moves import queue
-from six import BytesIO
+import queue
+from io import BytesIO
 
 import kobo.tback
 
@@ -29,6 +24,7 @@ class LoggingThread(threading.Thread):
         self._buffer_size = kwargs.pop('buffer_size', 256)
         self._queue = queue.Queue(maxsize=self._buffer_size)
         self._event = threading.Event()
+        self._in_logger_call = False
         self._running = True
         self._send_time = 0
         self._send_data = b""
@@ -40,7 +36,7 @@ class LoggingThread(threading.Thread):
         # We do not know whether we're being sent bytes or text.
         # The hub API always wants bytes.
         # Ensure we safely convert everything to bytes as we go.
-        if isinstance(out, six.text_type):
+        if isinstance(out, str):
             out = out.encode('utf-8', errors='replace')
 
         return out
@@ -93,8 +89,24 @@ class LoggingThread(threading.Thread):
 
     def write(self, data):
         """Add data to the queue and set the event for sending queue content."""
-        self._queue.put(data)
-        self._event.set()
+        if threading.get_ident() != self.ident:
+            self._queue.put(data)
+            self._event.set()
+
+        # If self._hub.upload_task_log() called self._queue.put(), it would
+        # cause deadlock because self._queue uses locks that are not reentrant
+        # and queue may already be full.
+        #
+        # Log only data with printable characters.
+        elif self._logger and data.strip():
+            # Prevent infinite recursion if this thread is also used for the
+            # logger output.
+            if self._in_logger_call:
+                return
+
+            self._in_logger_call = True
+            self._logger.log_error("Error in LoggingThread: %r", data)
+            self._in_logger_call = False
 
     def stop(self):
         """Send remaining data to hub and finish."""
@@ -103,7 +115,7 @@ class LoggingThread(threading.Thread):
         self.join()
 
 
-class LoggingIO(object):
+class LoggingIO():
     """StringIO wrapper that also writes all data to a logging thread."""
 
     def __init__(self, io, logging_thread):
