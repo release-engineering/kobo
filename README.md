@@ -31,6 +31,15 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.36.1
+-----------
+
+### BUG FIXES
+
+- hub: fixed display of permissions in user details template
+- worker: fixed a logging deadlock introduced in kobo 0.36.0
+- worker: fixed a locked TaskManager sometimes opening tasks
+
 kobo 0.36.0
 -----------
 
