@@ -31,6 +31,13 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.36.2
+-----------
+
+### BUG FIXES
+
+- worker: fixed another logging deadlock introduced in kobo 0.36.0
+
 kobo 0.36.1
 -----------
 
