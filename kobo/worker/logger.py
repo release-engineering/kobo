@@ -89,6 +89,11 @@ class LoggingThread(threading.Thread):
 
     def write(self, data):
         """Add data to the queue and set the event for sending queue content."""
+        # Discard the data if the thread is not running to prevent deadlock
+        # when the queue is full.
+        if not self.is_alive():
+            return
+
         if threading.get_ident() != self.ident:
             self._queue.put(data)
             self._event.set()
