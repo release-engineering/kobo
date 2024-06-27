@@ -56,10 +56,12 @@ def get_worker_id(request):
 
 
 @validate_worker
-def get_worker_tasks(request):
+def get_worker_tasks(request, also_assigned=False):
     """
-    Get list of OPEN tasks executed on a worker.
+    Get list of OPEN (and maybe ASSIGNED) tasks executed on a worker.
 
+    @param also_assigned: Whether to return ASSIGNED tasks in addition to OPEN tasks.
+    @type  also_assigned: bool
     @rtype: list
     """
     task_list = []
@@ -67,7 +69,12 @@ def get_worker_tasks(request):
     # Worker.running_tasks returns both OPEN and ASSIGNED tasks but all calls
     # by the worker assume that only OPEN tasks will be returned.
     # See: https://github.com/release-engineering/kobo/pull/251#issue-2183712995
-    for task in request.worker.running_tasks().filter(state=TASK_STATES['OPEN']).order_by("-exclusive", "-awaited", "id"):
+    # Old behavior can be toggled with also_assigned parameter
+    if also_assigned:
+        tasks = request.worker.running_tasks().order_by("-exclusive", "-awaited", "id")
+    else:
+        tasks = request.worker.running_tasks().filter(state=TASK_STATES['OPEN']).order_by("-exclusive", "-awaited", "id")
+    for task in tasks:
         task_info = task.export()
 
         # set wakeup alert
