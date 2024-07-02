@@ -31,6 +31,13 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.37.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- hub: get_worker_tasks XMLRPC function now has an option to also return ASSIGNED tasks
+
 kobo 0.36.2
 -----------
 
