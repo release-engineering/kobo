@@ -91,6 +91,25 @@ class TestXmlRpcWorker(django.test.TransactionTestCase):
 
         self.assertEqual(len(tasks), 1)
         self.assertEqual(tasks[0]['state'], TASK_STATES['OPEN'])
+    
+    def test_get_worker_tasks_assigned(self):
+        for state in TASK_STATES:
+            Task.objects.create(
+                worker=self._worker,
+                arch=self._arch,
+                channel=self._channel,
+                owner=self._user,
+                state=TASK_STATES[state],
+            )
+
+        req = _make_request(self._worker)
+        tasks = worker.get_worker_tasks(req, True)
+
+        self.assertEqual(len(tasks), 2)
+        self.assertTrue(tasks[0]['id'] < tasks[1]['id'])
+
+        for task in tasks:
+            self.assertTrue(task['state'] in [TASK_STATES['ASSIGNED'], TASK_STATES['OPEN']])
 
     def test_get_worker_tasks_check_wait(self):
         t_parent = Task.objects.create(
