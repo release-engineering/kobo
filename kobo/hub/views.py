@@ -186,7 +186,7 @@ def _rendered_log_response(request, task, log_name):
 
 def _view_raw_file_by_ext(log_name):
     """return True if we can view raw file with log_name based on its extension"""
-    exts = [".htm", ".html"]
+    exts = getattr(settings, "VIEW_RAW_LOG_EXTENSIONS", [".htm", ".html"])
 
     for ext in exts:
         if log_name.endswith(ext):
