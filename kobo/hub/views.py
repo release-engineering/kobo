@@ -184,6 +184,17 @@ def _rendered_log_response(request, task, log_name):
     return render(request, "task/log.html", context)
 
 
+def _view_raw_file_by_ext(log_name):
+    """return True if we can view raw file with log_name based on its extension"""
+    exts = getattr(settings, "VIEW_RAW_LOG_EXTENSIONS", [".htm", ".html"])
+
+    for ext in exts:
+        if log_name.endswith(ext):
+            return True
+
+    return False
+
+
 def task_log(request, id, log_name):
     """
     IMPORTANT: reverse to 'task/log-json' *must* exist
@@ -197,7 +208,7 @@ def task_log(request, id, log_name):
 
     request_format = request.GET.get("format")
 
-    if request_format == "raw" or log_name.endswith(".html") or log_name.endswith(".htm"):
+    if request_format == "raw" or _view_raw_file_by_ext(log_name):
         return _streamed_log_response(task, log_name, offset, as_attachment=(request_format == 'raw'))
 
     return _rendered_log_response(request, task, log_name)
