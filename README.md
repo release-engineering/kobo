@@ -31,6 +31,13 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.38.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- hub: introduced `VIEW_RAW_LOG_EXTENSIONS` setting
+
 kobo 0.37.0
 -----------
 
