@@ -229,6 +229,9 @@ class FileCache(object):
     def __setitem__(self, name, value):
         self.file_cache[os.path.abspath(name)] = value
 
+    def __contains__(self, item):
+        return item in self.file_cache
+
     def __iter__(self):
         return iter(self.file_cache)
 

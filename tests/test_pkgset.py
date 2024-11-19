@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 import unittest
+import unittest.mock
 
 import os
 import warnings
@@ -217,6 +218,18 @@ class TestFileCacheClass(unittest.TestCase):
         self.assertEqual(len(items), 2)
         self.assertTrue(self.file1 in items)
         self.assertTrue(self.file2 in items)
+
+    def test_contains(self):
+        open(self.file1, "w").write("hello\n")
+        open(self.file2, "w").write("hello\n")
+
+        self.cache = FileCache()
+        wrap1 = self.cache.add(self.file1)
+        wrap2 = self.cache.add(self.file2)
+
+        with unittest.mock.patch("kobo.pkgset.FileCache.__iter__", side_effect=ValueError):
+            self.assertTrue(self.file1 in self.cache)
+            self.assertTrue(self.file2 in self.cache)
 
     def test_remove_by_file_path(self):
         self.test_add_two_different_files()
