@@ -129,7 +129,8 @@ class ClientCommand(kobo.cli.Command):
 class HubProxy(object):
     """A Hub client (thin ServerProxy wrapper)."""
 
-    def __init__(self, conf, client_type=None, logger=None, transport=None, auto_logout=None, **kwargs):
+    def __init__(self, conf, client_type=None, logger=None, transport=None,
+                 auto_logout=None, transport_args=None, **kwargs):
         self._conf = kobo.conf.PyConfigParser()
         self._hub = None
 
@@ -157,7 +158,7 @@ class HubProxy(object):
         if transport is not None:
             self._transport = transport
         else:
-            transport_args = {}
+            transport_args = transport_args or {}
             if self._hub_url.startswith("https://"):
                 TransportClass = kobo.xmlrpc.retry_request_decorator(kobo.xmlrpc.SafeCookieTransport)
                 if hasattr(ssl, 'create_default_context'):

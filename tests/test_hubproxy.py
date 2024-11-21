@@ -237,3 +237,18 @@ def test_proxies_to_xmlrpc(requests_session):
     # Last call should have invoked the method I requested
     (_, request_xml) = transport.fake_transport_calls[-1]
     assert b'some_obj.some_method' in request_xml
+
+
+def test_pass_transport_args(requests_session):
+    """HubProxy proxies to underlying XML-RPC ServerProxy"""
+    conf = PyConfigParser()
+    conf.load_from_dict({"HUB_URL": 'https://example.com/hub'})
+    transport_args = {"retry_count": 2, "retry_timeout": 45}
+    with mock.patch(
+            "kobo.xmlrpc.SafeCookieTransport") as mock_transport_class, mock.patch(
+            "kobo.xmlrpc.retry_request_decorator",
+            return_value=mock_transport_class):
+        HubProxy(conf, transport_args=transport_args)
+        mock_transport_class.assert_called_with(context=mock.ANY,
+                                                retry_count=2,
+                                                retry_timeout=45)
