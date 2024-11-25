@@ -31,6 +31,16 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.39.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- client: `HubProxy` now accepts `transport_args` to customize the
+  instantiation of the default transport
+- `kobo.pkgset.FileCache` now implements `__contains__` for improved
+  performance
+
 kobo 0.38.0
 -----------
 
