@@ -1243,10 +1243,11 @@ class TestTask(django.test.TransactionTestCase):
             state=TASK_STATES['FREE'],
         )
 
-        task.cancel_task()
+        task.cancel_task(self._user)
 
         task = Task.objects.get(id=task.id)
         self.assertEqual(task.state, TASK_STATES['CANCELED'])
+        self.assertEqual(task.cancelled_by, self._user)
 
     def test_interrupt_task(self):
         task = Task.objects.create(

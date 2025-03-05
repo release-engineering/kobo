@@ -578,6 +578,8 @@ class Task(models.Model):
     resubmitted_by      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="resubmitted_by1", on_delete=models.CASCADE)
     resubmitted_from    = models.ForeignKey("self", null=True, blank=True, related_name="resubmitted_from1", on_delete=models.CASCADE)
 
+    cancelled_by        = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE)
+
     subtask_count       = models.PositiveIntegerField(default=0, help_text=_("Subtask count.<br />This is a generated field."))
 
     # override default *objects* Manager
@@ -895,12 +897,14 @@ class Task(models.Model):
 
         try:
             self.__lock(self.worker_id, new_state=TASK_STATES["CANCELED"], initial_states=(TASK_STATES["FREE"], TASK_STATES["ASSIGNED"], TASK_STATES["OPEN"], TASK_STATES["CREATED"]))
+            self.cancelled_by = user
+            self.save()
         except (MultipleObjectsReturned, ObjectDoesNotExist):
             raise Exception("Cannot cancel task %d, state is %s" % (self.id, self.get_state_display()))
 
         if recursive:
             for task in self.subtasks():
-                task.cancel_task(recursive=True)
+                task.cancel_task(user=user, recursive=True)
         self.logs.gzip_logs()
 
     def cancel_subtasks(self):

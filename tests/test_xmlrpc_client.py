@@ -187,7 +187,7 @@ class TestXmlRpcClient(django.test.TransactionTestCase):
 
     def test_cancel_task(self):
         task_id = Task.create_task(self._user.username, 'task', 'method')
-        ret = client.cancel_task(_make_request(), task_id)
+        ret = client.cancel_task(_make_request(self._user), task_id)
         self.assertIsNone(ret)
 
         t = Task.objects.get(id=task_id)
