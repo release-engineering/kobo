@@ -27,6 +27,17 @@
     <td class="{{ task.get_state_display }}">{{ task.get_state_display }}</td>
   </tr>
 
+  {% if task.state == "CANCELED" %}
+  <tr>
+    <th>{% trans "Cancelled by" %}</th>
+    {% if task.cancelled_by %}
+      <td>{{ task.cancelled_by }}</td>
+    {% else %}
+      <td>Unavailable</td>
+    {% endif %}
+  </tr>
+{% endif %}
+
   <tr>
     <th>{% trans "Worker" %}</th>
     <td>{% if task.worker %}{{ task.worker }}{% endif %}</td>
