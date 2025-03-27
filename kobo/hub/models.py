@@ -578,7 +578,7 @@ class Task(models.Model):
     resubmitted_by      = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="resubmitted_by1", on_delete=models.CASCADE)
     resubmitted_from    = models.ForeignKey("self", null=True, blank=True, related_name="resubmitted_from1", on_delete=models.CASCADE)
 
-    canceled_by         = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE)
+    canceled_by         = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="canceled_by1", on_delete=models.CASCADE)
 
     subtask_count       = models.PositiveIntegerField(default=0, help_text=_("Subtask count.<br />This is a generated field."))
 
