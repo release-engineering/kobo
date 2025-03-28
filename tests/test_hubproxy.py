@@ -1,9 +1,15 @@
+import socket
+import http.client as httplib
+import xmlrpc.client
+
+import six.moves.xmlrpc_client as xmlrpclib
+
 import pytest
 import gssapi
 import mock
 import sys
 
-from kobo.xmlrpc import SafeCookieTransport
+from kobo.xmlrpc import SafeCookieTransport, retry_request_decorator
 from kobo.conf import PyConfigParser
 from kobo.client import HubProxy
 
@@ -35,6 +41,31 @@ class FakeTransport(SafeCookieTransport):
         self.fake_transport_calls.append((path, request))
         return []
 
+
+def error_raising_transport(exception, bad_function, exception_args=(),
+                            exception_kwargs={}):
+    # Fake Transport class that raises specific exceptions.
+    class FakeTransport(SafeCookieTransport):
+        """A fake XML-RPC transport where every request succeeds without doing anything.
+
+        Subclasses the real SafeCookieTransport so we get a real CookieJar.
+        """
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.exception_count = 0
+
+        def request(self, host, path, request, verbose=False):
+            # Only raise error for a specific faulty function. Hub proxy makes
+            # a lot of requests during init we want to allow. Request is binary
+            # xml which should contain our function as a string
+            if bad_function in request:
+                self.exception_count += 1
+                raise exception(*exception_args, **exception_kwargs)
+
+            return []
+
+    return FakeTransport
 
 def test_login_token_oidc(requests_session):
     """Login with OIDC client credentials flow."""
@@ -252,3 +283,60 @@ def test_pass_transport_args(requests_session):
         mock_transport_class.assert_called_with(context=mock.ANY,
                                                 retry_count=2,
                                                 retry_timeout=45)
+
+
+@pytest.mark.parametrize("exception, exception_args, exception_kwargs",
+                         [(socket.error, (), {}),
+                          (httplib.CannotSendRequest, (), {}),
+                          (xmlrpclib.Fault, ["1", "PermissionDenied"], {})]
+                         )
+def test_proxy_retries_on_error(requests_session, capsys, exception, exception_args, exception_kwargs):
+    """HubProxy proxy retry class captures exceptions"""
+    retry_count = 2
+    conf = PyConfigParser()
+    conf.load_from_dict({"HUB_URL": 'https://example.com/hub'})
+    TransportClass = retry_request_decorator(
+        error_raising_transport(exception, b"faulty.function", exception_args, exception_kwargs)
+    )
+    transport = TransportClass(retry_count=retry_count, retry_timeout=1)
+    proxy = HubProxy(conf, transport=transport)
+
+    with pytest.raises(exception):
+        proxy.faulty.function()
+
+    assert transport.exception_count == retry_count + 1
+    captured = capsys.readouterr()
+    assert captured.err.count("XML-RPC connection to example.com failed") == retry_count
+
+
+
+@pytest.mark.parametrize("exception_string, retried",
+                         [("PermissionDenied: Login required.", True),
+                          ("SomeOtherError: hub broke.", False)]
+                         )
+def test_proxy_xmlrpc_fault(requests_session, capsys, exception_string, retried):
+    """HubProxy proxy retries xmlrpc fault on PermissionDenied errors"""
+    retry_count = 2
+    conf = PyConfigParser()
+    conf.load_from_dict({"HUB_URL": 'https://example.com/hub'})
+    TransportClass = retry_request_decorator(
+        error_raising_transport(xmlrpc.client.Fault,
+                                b"faulty.function",
+                                [1, exception_string],
+                                {})
+    )
+    transport = TransportClass(retry_count=retry_count, retry_timeout=1)
+    proxy = HubProxy(conf, transport=transport)
+
+    with pytest.raises(xmlrpc.client.Fault):
+        proxy.faulty.function()
+
+    if retried:
+        assert transport.exception_count == retry_count + 1
+        captured = capsys.readouterr()
+        assert captured.err.count("XML-RPC connection to example.com failed") == retry_count
+    else:
+        assert transport.exception_count == 1
+        captured = capsys.readouterr()
+        assert captured.err.count(
+            "XML-RPC connection to example.com failed") == 0
