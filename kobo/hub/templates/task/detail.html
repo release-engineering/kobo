@@ -30,8 +30,8 @@
   {% if task.state == "CANCELED" %}
   <tr>
     <th>{% trans "Cancelled by" %}</th>
-    {% if task.cancelled_by %}
-      <td>{{ task.cancelled_by }}</td>
+    {% if task.canceled_by %}
+      <td>{{ task.canceled_by }}</td>
     {% else %}
       <td>Unavailable</td>
     {% endif %}
