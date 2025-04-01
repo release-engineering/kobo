@@ -31,6 +31,15 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.40.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- hub: Task model now records the user who cancelled a task.
+- client: `HubProxy` now retries PermissionDenied errors to mitigate false
+  negatives that might appear immediately after login.
+
 kobo 0.39.0
 -----------
 
