@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from django.utils.deprecation import MiddlewareMixin
-
 from kobo.django.menu import menu
 
 
@@ -20,10 +18,18 @@ class LazyMenu(object):
         return request._cached_menu
 
 
-class MenuMiddleware(MiddlewareMixin):
+class MenuMiddleware():
     """
     @summary: Middleware for menu object.
     """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        self.process_request(request)
+        response = self.get_response(request)
+        return response
+
     def process_request(self, request):
         """
         @summary: Adds menu to request object
