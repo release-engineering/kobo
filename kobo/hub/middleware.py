@@ -2,8 +2,6 @@
 
 from __future__ import absolute_import
 
-from django.utils.deprecation import MiddlewareMixin
-
 from .models import Worker
 
 
@@ -26,12 +24,20 @@ class LazyWorker(object):
         return request._cached_worker
 
 
-class WorkerMiddleware(MiddlewareMixin):
+class WorkerMiddleware():
     """Sets a request.worker.
 
     - Worker instance if username exists in database
     - None otherwise
     """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        self.process_request(request)
+        response = self.get_response(request)
+        return response
 
     def process_request(self, request):
         assert hasattr(request, "user"), "Worker middleware requires authentication middleware to be installed. Also make sure the database is set and writable."
