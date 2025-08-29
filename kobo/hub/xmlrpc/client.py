@@ -39,14 +39,24 @@ def shutdown_worker(request, worker_name, kill=False):
 def enable_worker(request, worker_name):
     """enable_worker(worker_name): none
     """
-    models.Worker.objects.filter(name=worker_name).update(enabled=True)
+    try:
+        worker = models.Worker.objects.get(name=worker_name)
+        worker.enabled = True
+        worker.save()
+    except ObjectDoesNotExist:
+        pass
 
 
 @admin_required
 def disable_worker(request, worker_name):
     """disable_worker(worker_name, kill): None
     """
-    models.Worker.objects.filter(name=worker_name).update(enabled=False)
+    try:
+        worker = models.Worker.objects.get(name=worker_name)
+        worker.enabled = False
+        worker.save()
+    except ObjectDoesNotExist:
+        pass
 
 def get_worker_info(request, worker_name):
     try:
