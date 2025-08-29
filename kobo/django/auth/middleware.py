@@ -1,9 +1,8 @@
 from django.contrib.auth.middleware import RemoteUserMiddleware
-from django.utils.deprecation import MiddlewareMixin
 
 from kobo.django.helpers import call_if_callable
 
-class LimitedRemoteUserMiddleware(RemoteUserMiddleware, MiddlewareMixin):
+class LimitedRemoteUserMiddleware(RemoteUserMiddleware):
     '''
     Same behaviour as RemoteUserMiddleware except that it doesn't logout user
     if is already logged in.
