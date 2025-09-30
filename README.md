@@ -31,6 +31,18 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.41.0
+-----------
+
+### FEATURES & IMPROVEMENTS
+
+- hub: improved Django 5.2 compatibility by modernizing middleware code
+
+### BUG FIXES
+
+- hub: fixed enable-worker command to properly refresh ready state when workers are re-enabled
+- hub: added missing Django migration to avoid migration warnings
+
 kobo 0.40.0
 -----------
 
