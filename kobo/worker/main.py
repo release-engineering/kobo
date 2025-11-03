@@ -4,7 +4,7 @@
 import os
 import sys
 import signal
-import optparse
+import argparse
 import logging
 
 # IMPORTANT: import taskd first to set os.environ["PROJECT_DEFAULT_CONFIG_FILE"]
@@ -100,38 +100,36 @@ def main_loop(conf, foreground=False, task_manager_class=None):
 
 
 def main(conf, argv=None, task_manager_class=None):
-    parser = optparse.OptionParser()
-    parser.add_option(
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
         "-f", "--foreground",
         default=False,
         action="store_true",
         help="run in foreground (do not spawn a daemon)",
     )
-    parser.add_option(
+    parser.add_argument(
         "-k", "--kill",
         default=False,
         action="store_true",
         help="kill the daemon",
     )
-    parser.add_option(
+    parser.add_argument(
         "-p", "--pid-file",
         help="specify a pid file",
     )
-    opts, args = parser.parse_args(argv)
+    args = parser.parse_args(argv)
 
-    pid_file = opts.pid_file
-    if pid_file is None:
-        pid_file = conf.get("PID_FILE")
+    pid_file = args.pid_file or conf.get("PID_FILE")
 
     if pid_file is None:
         parser.error("No pid file specified.")
 
-    if opts.kill:
+    if args.kill:
         pid = open(pid_file, "r").read()
         os.kill(int(pid), 15)
         sys.exit(0)
 
-    if opts.foreground:
+    if args.foreground:
         main_loop(conf, foreground=True, task_manager_class=task_manager_class)
     else:
         kobo.process.daemonize(

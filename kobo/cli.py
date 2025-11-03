@@ -22,9 +22,9 @@ class MyCommandContainer(CommandContainer):
 --------------------------
 # It usually makes sense to inherit directly from Command class.
 # All common methods and attributes should be in the container.
-# Specify any OptionParser options in options() method.
-# OptionParser.parse_args() result is automatically passed to run(*args, **kwargs) method.
-# A OptionParser instance os available in self.parser attribute.
+# Specify command arguments in the options() method using add_argument().
+# ArgumentParser.parse_args() result is automatically passed to run(*args, **kwargs) method.
+# An ArgumentParser instance is available in self.parser attribute.
 
 class Make_Dirs(Command):
     '''create directories'''
@@ -32,8 +32,8 @@ class Make_Dirs(Command):
     admin = False
 
     def options(self):
-        self.parser.usage = "%%prog %s [options] <user>" % self.normalized_name
-        self.parser.add_option("-m", "--mode", help="set directory perms (0xxx)")
+        self.parser.usage = "%(prog)s %s [options] <user>" % self.normalized_name
+        self.parser.add_argument("-m", "--mode", help="set directory perms (0xxx)")
 
     def run(self, *args, **kwargs):
         if len(args) < 1:
@@ -68,9 +68,8 @@ parser.run()
 
 from __future__ import print_function
 import sys
-import optparse
+import argparse
 import datetime
-from optparse import Option
 from six.moves.xmlrpc_client import Fault
 
 from kobo.plugins import Plugin, PluginContainer
@@ -183,17 +182,15 @@ class CommandContainer(PluginContainer):
         return name.lower().replace('_', '-').replace(' ', '-')
 
 
-class CommandOptionParser(optparse.OptionParser):
+class CommandOptionParser(argparse.ArgumentParser):
     """Enhanced OptionParser with plugin support."""
     def __init__(self,
             usage=None,
-            option_list=None,
-            option_class=Option,
             version=None,
             conflict_handler="error",
             description=None,
-            formatter=None,
-            add_help_option=True,
+            formatter_class=None,
+            add_help=True,
             prog=None,
             command_container=None,
             default_command="help",
@@ -201,14 +198,25 @@ class CommandOptionParser(optparse.OptionParser):
             add_hub_option=False,
             default_profile="",
             configuration_directory="/etc"):
-
-        usage = usage or "%prog <command> [args] [--help]"
+        usage = usage or "%(prog)s <command> [args] [--help]"
         self.container = command_container
         self.default_command = default_command
         self.command = None
-        formatter = formatter or optparse.IndentedHelpFormatter(max_help_position=33)
+        formatter_class = formatter_class or argparse.RawTextHelpFormatter
 
-        optparse.OptionParser.__init__(self, usage, option_list, option_class, version, conflict_handler, description, formatter, add_help_option, prog)
+        # Initialize the argument parser
+        super(CommandOptionParser, self).__init__(
+            prog=prog,
+            usage=usage,
+            description=description,
+            conflict_handler=conflict_handler,
+            add_help=add_help,
+            formatter_class=formatter_class,
+        )
+
+        # Add version argument if provided
+        if version:
+            self.add_argument('--version', action='version', version=version)
 
         if add_username_password_options:
             self._add_opts(
@@ -263,7 +271,7 @@ class CommandOptionParser(optparse.OptionParser):
 
     def parse_args(self, args=None, values=None):
         """return (command_instance, opts, args)"""
-        args = self._get_args(args)
+        args = args if args is not None else sys.argv[1:]
         command = None
 
         if len(args) > 0 and not args[0].startswith("-"):
@@ -281,25 +289,37 @@ class CommandOptionParser(optparse.OptionParser):
         if self.command != cmd.normalized_name:
             self.command = cmd.normalized_name
             cmd.options()
-        cmd_opts, cmd_args = optparse.OptionParser.parse_args(self, args, values)
-        return (cmd, cmd_opts, cmd_args)
 
-    def run(self, args=None, values=None):
+        # Parse arguments using argparse
+        parsed_args = super(CommandOptionParser, self).parse_args(args)
+
+        # Get remaining positional arguments (if any)
+        remaining_args = getattr(parsed_args, 'args', [])
+
+        return (cmd, parsed_args, remaining_args)
+
+    def run(self, args=None):
         """parse arguments and run a command"""
-        cmd, cmd_opts, cmd_args = self.parse_args(args, values)
-        cmd_kwargs = cmd_opts.__dict__
+        # Get command instance and parsed arguments
+        cmd, parsed_args, remaining_args = self.parse_args(args)
 
-        # this block should only be evaluated if default_profile has been set at instantiation
+        # Convert Namespace to dictionary for kwargs
+        cmd_kwargs = vars(parsed_args)
+
+        # Handle profile if specified
         if self.default_profile and 'profile' in cmd_kwargs:
-          self._load_profile(cmd_kwargs['profile'])
+            self._load_profile(cmd_kwargs['profile'])
 
-        cmd.run(*cmd_args, **cmd_kwargs)
+        # Run command with positional args and keyword args
+        cmd.run(*remaining_args, **cmd_kwargs)
 
     def _add_opts(self, *args):
         """populates one or more options with their respective help texts"""
-        option_list = [optparse.Option(option, help=help_text) for option, help_text in args]
 
-        self._populate_option_list(option_list=option_list, add_help=False)
+        for option, help_text in args:
+            # Strip leading dashes and use as destination
+            dest = option.lstrip('-').replace('-', '_')
+            self.add_argument(option, dest=dest, help=help_text)
 
     def _load_profile(self, profile):
         """load configuration file under location <CONFIGURATION_DIRECTORY>/<PROFILE>.conf"""
@@ -326,9 +346,12 @@ class Help_Admin(Command):
 
     def options(self):
         # override default --help option
-        opt = self.parser.get_option("--help")
-        opt.action = "store_true"
-        opt.dest = "help"
+        self.parser.add_argument(
+            "--help",
+            action="store_true",
+            dest="help",
+            help="show help message and exit"
+        )
 
     def run(self, *args, **kwargs):
         self.parser.print_help(admin=True)
@@ -366,12 +389,14 @@ class Help_RST(Command):
         print("--------")
 
         for command_name, CommandClass in sorted(self.parser.container.plugins.items()):
-            parser = optparse.OptionParser(usage=self.parser.usage)
+            parser = argparse.ArgumentParser(
+                usage=self.parser.usage,
+                formatter_class=argparse.RawTextHelpFormatter
+            )
             cmd = CommandClass(parser)
             cmd.normalized_name = command_name
             cmd.options()
             cmd.container = self.parser.container
-            cmd_opts, cmd_args = parser.parse_args()
 
             print(command_name)
             print("-" * len(command_name))
@@ -380,24 +405,39 @@ class Help_RST(Command):
                 print("[ADMIN ONLY]", end=' ')
 
             print(cmd.__doc__.strip(), end="\n\n")
-            usage = parser.get_usage().strip().replace("Usage: ", "**Usage:** ", 1)
+            
+            # Get formatted usage
+            usage = parser.format_usage()
             if usage:
-                print(usage, end="\n\n")
+                print(usage.replace("usage: ", "**Usage:** "), end="\n\n")
 
-            for opt in sorted(parser.option_list, key=str):
-                if "-h/--help" in str(opt):
+            # Process and display arguments
+            for action in parser._actions:
+                # Skip help action
+                if action.dest == 'help':
                     continue
-                if opt.nargs:
-                    metavar = opt.metavar or opt.dest.upper()
-                opt_list = []
-                for opt_str in opt._short_opts + opt._long_opts:
-                    if opt.nargs is not None:
-                        opt_list.append("%s=%s" % (opt_str, metavar))
+
+                # Format option strings
+                opts = []
+                for opt_str in action.option_strings:
+                    if action.metavar:
+                        opts.append(f"{opt_str}={action.metavar}")
+                    elif action.nargs:
+                        opts.append(f"{opt_str}={action.dest.upper()}")
                     else:
-                        opt_list.append(opt_str)
-                print("/".join(opt_list))
-                print("  %s" % opt.help)
-                if opt.action == "append":
+                        opts.append(opt_str)
+                
+                if opts:  # Optional arguments
+                    print("/".join(opts))
+                elif action.dest != 'help':  # Positional arguments
+                    print(action.dest)
+                
+                # Print help text
+                if action.help:
+                    print(f"  {action.help}")
+                
+                # Show if argument can be specified multiple times
+                if action.nargs in ('+', '*', argparse.REMAINDER):
                     print("\n  This option can be specified multiple times")
                 print()
             print()

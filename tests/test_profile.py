@@ -23,17 +23,24 @@ class TestBaseClientCommandContainer(unittest.TestCase):
 
     def test_profile_option_unset(self):
         parser = CommandOptionParser(command_container=self.command_container)
-        option = parser.get_option("--profile")
 
         self.assertEqual(parser.default_profile, "")
-        self.assertEqual(option, None)
+
+        option_strings = [opt for a in parser._actions for opt in a.option_strings]
+        self.assertNotIn("--profile", option_strings)
 
     def test_profile_option_set(self):
         parser = CommandOptionParser(command_container=self.command_container, default_profile="default-profile")
-        option = parser.get_option("--profile")
 
         self.assertEqual(parser.default_profile, "default-profile")
-        self.assertEqual(option.get_opt_string(), "--profile")
+
+        option = next(
+            (a for a in parser._actions if "--profile" in a.option_strings),
+            None
+        )
+
+        self.assertIsNotNone(option)
+        self.assertIn("--profile", option.option_strings)
         self.assertEqual(option.help, "specify profile (default: default-profile)")
 
     def test_configuration_directory_option_unset(self):

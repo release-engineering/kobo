@@ -9,7 +9,7 @@ Notification module.
 
 import smtplib
 import sys
-import optparse
+import argparse
 
 import kobo.shortcuts
 import six
@@ -54,28 +54,28 @@ class EmailNotification(object):
 
 def main(argv):
     """Main function for command line usage"""
-    parser = optparse.OptionParser("usage: %prog <options> <to_addr> [to_addr]...")
-    parser.add_option(
+    parser = argparse.ArgumentParser(description="Send email notifications")
+    parser.add_argument(
         "--server",
         help="specify SMTP server address"
     )
-    parser.add_option(
+    parser.add_argument(
         "-f",
         "--from",
         dest="from_addr",
         help="set the From address"
     )
-    parser.add_option(
+    parser.add_argument(
         "-s",
         "--subject",
         help="set email Subject"
     )
-    parser.add_option(
+    parser.add_argument(
         "-r",
         "--reply-to",
         help="set the Reply-To address"
     )
-    parser.add_option(
+    parser.add_argument(
         "-x",
         "--xheader",
         nargs=2,
@@ -83,15 +83,20 @@ def main(argv):
         action="append",
         help="set X-Headers; takes two arguments (-x X-Spam eggs)"
     )
+    parser.add_argument(
+        "recipients",
+        nargs="+",
+        help="recipient email addresses"
+    )
 
-    (opts, args) = parser.parse_args(argv)
+    args = parser.parse_args(argv)
 
-    server = opts.server
-    from_addr = opts.from_addr
-    subject = opts.subject
-    reply_to = opts.reply_to
-    xheaders = opts.xheaders and dict(opts.xheaders) or {}
-    recipients = args
+    server = args.server
+    from_addr = args.from_addr
+    subject = args.subject
+    reply_to = args.reply_to
+    xheaders = args.xheaders and dict(args.xheaders) or {}
+    recipients = args.recipients
 
     if not server:
         parser.error("SMTP server address required")
