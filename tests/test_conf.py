@@ -184,3 +184,39 @@ class TestDuplicateKeys(unittest.TestCase):
 
         self.assertEqual(str(ctx.exception),
                          "Duplicate dict key 'bar' in file None on line 3")
+
+
+class TestManyComments(unittest.TestCase):
+    """
+    Regression tests for RecursionError with many consecutive comment/blank
+    lines.
+    """
+
+    def _make_config_with_comments(self, n):
+        lines = ["# comment %d" % i for i in range(n)]
+        lines.append("x = 1")
+        return "\n".join(lines)
+
+    def test_many_comments_from_string(self):
+        cfg = self._make_config_with_comments(1000)
+        conf = PyConfigParser()
+        conf.load_from_string(cfg)
+        self.assertEqual(conf["x"], 1)
+
+    def test_many_comments_from_file(self):
+        cfg = self._make_config_with_comments(1000)
+        conf = PyConfigParser()
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".conf", delete=False) as f:
+            f.write(cfg)
+            path = f.name
+        try:
+            conf.load_from_file(path)
+            self.assertEqual(conf["x"], 1)
+        finally:
+            os.unlink(path)
+
+    def test_many_blank_lines_from_string(self):
+        cfg = "\n" * 1000 + "x = 1\n"
+        conf = PyConfigParser()
+        conf.load_from_string(cfg)
+        self.assertEqual(conf["x"], 1)

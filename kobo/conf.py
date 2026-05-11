@@ -184,18 +184,18 @@ class PyConfigParser(dict):
 
     def _get_token(self, skip_newline=True):
         """Get a new token from token generator."""
-        self._tok_number, self._tok_value, self._tok_begin, self._tok_end, self._tok_line = next(self._tokens)
-        self._tok_name = token.tok_name.get(self._tok_number, None)
+        while True:
+            self._tok_number, self._tok_value, self._tok_begin, self._tok_end, self._tok_line = next(self._tokens)
+            self._tok_name = token.tok_name.get(self._tok_number, None)
 
-        if self._debug:
-            print("%2s %16s %s" % (self._tok_number, self._tok_name, self._tok_value.strip()))
+            if self._debug:
+                print("%2s %16s %s" % (self._tok_number, self._tok_name, self._tok_value.strip()))
 
-        # skip some tokens
-        if self._tok_name in ["COMMENT", "INDENT", "DEDENT"]:
-            self._get_token(skip_newline=skip_newline)
-
-        if skip_newline and self._tok_name in ["NL", "NEWLINE"]:
-            self._get_token()
+            if self._tok_name in ["COMMENT", "INDENT", "DEDENT"]:
+                continue
+            if skip_newline and self._tok_name in ["NL", "NEWLINE"]:
+                continue
+            break
 
     def _get_NAME(self):
         """Return a NAME token value."""
