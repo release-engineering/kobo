@@ -31,6 +31,13 @@ Please submit pull requests against https://github.com/release-engineering/kobo.
 Changelog
 =========
 
+kobo 0.42.0
+-----------
+
+### BUG FIXES
+
+- fixed RecursionError in config parsing
+
 kobo 0.41.0
 -----------
 
